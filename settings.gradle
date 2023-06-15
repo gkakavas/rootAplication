@@ -1,0 +1,3 @@
+rootProject.name = 'rootApplication'
+include "app"
+include "frontend"

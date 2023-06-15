@@ -1,0 +1,52 @@
+version: '3.9'
+
+services:
+
+  backend:
+    container_name: SpringBootApp
+    image: spring_boot_app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+  postgres:
+    container_name: PostgresDB
+    image: postgres:13.11
+    environment:
+       POSTGRES_DB: ${POSTGRES_DB}
+       POSTGRES_USER: ${POSTGRES_USER}
+       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+
+  pgAdmin:
+    container_name: pgAdmin
+    image: dpage/pgadmin4:7
+    environment:
+       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+       PGADMIN_LISTEN_PORT: ${PGADMIN_LISTEN_PORT}
+    depends_on:
+        - postgres
+    ports:
+      - "5050:5050"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
