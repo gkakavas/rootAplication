@@ -10,5 +10,10 @@
         <module name="com.example.rootApplication.app.main" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="rootApplication" target="17" />
+      <module name="rootApplication.main" target="17" />
+      <module name="rootApplication.test" target="17" />
+    </bytecodeTargetLevel>
   </component>
 </project>
