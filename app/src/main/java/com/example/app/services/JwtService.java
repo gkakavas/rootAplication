@@ -7,7 +7,6 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
@@ -16,7 +15,7 @@ import java.util.function.Function;
 
 @Service
 public class JwtService {
-    private static final String SECRET_KEY = "BD7D471F77CFAF2643C25D86B681B";
+    private static final String SECRET_KEY = "BD7D471F77CFA2643C25D86B681B45N6952PT770YR6PR8E3VF1NY45W";
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -49,7 +48,7 @@ public class JwtService {
     }
 
     private Date extractExpiration(String token) {
-      return extractClaim(token,Claims::getExpiration);
+        return extractClaim(token,Claims::getExpiration);
     }
 
     private Claims extractAllClaims(String token){

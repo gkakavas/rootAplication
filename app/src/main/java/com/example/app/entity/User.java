@@ -20,7 +20,7 @@ import java.util.List;
 
 public class User implements UserDetails {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue
     private Integer id;
     private String password;
     private String firstname;
