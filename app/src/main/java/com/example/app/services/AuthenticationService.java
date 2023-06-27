@@ -1,12 +1,11 @@
 package com.example.app.services;
 
-import com.example.app.config.JwtAuthenticationFilter;
-import com.example.app.controller.AuthenticationRequest;
-import com.example.app.controller.AuthenticationResponse;
-import com.example.app.controller.RegisterRequest;
-import com.example.app.entity.Role;
-import com.example.app.entity.User;
-import com.example.app.repository.UserRepository;
+import com.example.app.controllers.AuthenticationRequest;
+import com.example.app.controllers.AuthenticationResponse;
+import com.example.app.controllers.RegisterRequest;
+import com.example.app.entities.Role;
+import com.example.app.entities.User;
+import com.example.app.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,7 +25,8 @@ public class AuthenticationService {
                 .lastname(request.getLastname())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER)
+                .role(request.getRole())
+                .specialization(request.getSpecialization())
                 .build();
         repository.save(user);
 
@@ -40,6 +40,10 @@ public class AuthenticationService {
     public AuthenticationResponse authenticate (AuthenticationRequest request){
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         var user = repository.findByEmail(request.getEmail()).orElseThrow();
-        return null;
+        var jwtToken = jwtService.generateToken(user);
+
+        return AuthenticationResponse.builder()
+                .token(jwtToken)
+                .build();
     }
 }

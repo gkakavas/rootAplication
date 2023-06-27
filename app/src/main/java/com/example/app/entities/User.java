@@ -1,4 +1,4 @@
-package com.example.app.entity;
+package com.example.app.entities;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -26,6 +26,7 @@ public class User implements UserDetails {
     private String firstname;
     private String lastname;
     private String email;
+    private String specialization;
 
     @Enumerated(EnumType.STRING)
     private Role role;

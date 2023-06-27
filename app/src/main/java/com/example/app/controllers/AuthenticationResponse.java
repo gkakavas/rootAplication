@@ -1,4 +1,4 @@
-package com.example.app.controller;
+package com.example.app.controllers;
 
 import lombok.*;
 
