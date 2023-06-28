@@ -1,8 +1,8 @@
 package com.example.app.entities;
 
 public enum Role {
-    USER,
-    HR,
-    MANAGER,
-    ADMIN
+    ROLE_USER,
+    ROLE_HR,
+    ROLE_MANAGER,
+    ROLE_ADMIN
 }

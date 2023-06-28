@@ -12,12 +12,15 @@ import java.util.List;
 @RestController
 @RequestMapping("/admin")
 @RequiredArgsConstructor
-//@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
     private final PersonalDetailsService service;
     @GetMapping("/profile")
     public List<User> retrieveAllUsers (){
+
         return service.retrieveAllUsers();
     }
+
+
+
 }
 
