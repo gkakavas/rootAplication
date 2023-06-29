@@ -1,5 +1,8 @@
 package com.example.app.controllers;
 
+import com.example.app.models.AuthenticationRequest;
+import com.example.app.models.AuthenticationResponse;
+import com.example.app.models.RegisterRequest;
 import com.example.app.services.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

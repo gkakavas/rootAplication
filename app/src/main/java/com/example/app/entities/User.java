@@ -1,15 +1,17 @@
 package com.example.app.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import java.sql.Date;
+import java.time.Instant;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Builder
@@ -21,12 +23,18 @@ import java.util.List;
 public class User implements UserDetails {
     @Id
     @GeneratedValue
-    private Integer id;
+    private Integer  id;
     private String password;
     private String firstname;
     private String lastname;
     private String email;
     private String specialization;
+    private String currentProject;
+    private Instant registerDate;
+    private Instant lastLogin;
+
+    @ManyToMany
+    private Set<Event> eventSet = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
     private Role role;
@@ -35,7 +43,6 @@ public class User implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));
     }
-
     @Override
     public String getPassword() {
         return password;
