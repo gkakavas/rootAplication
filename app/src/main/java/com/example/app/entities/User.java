@@ -23,7 +23,7 @@ import java.util.Set;
 public class User implements UserDetails {
     @Id
     @GeneratedValue
-    private Integer  id;
+    private Integer userId;
     private String password;
     private String firstname;
     private String lastname;
@@ -34,7 +34,12 @@ public class User implements UserDetails {
     private Instant lastLogin;
 
     @ManyToMany
-    private Set<Event> eventSet = new HashSet<>();
+    @JoinTable(name="user_event",
+            joinColumns=@JoinColumn(name="user_id"),
+            inverseJoinColumns =@JoinColumn(name="event_id")
+    )
+    @Builder.Default
+    private Set<Event> userHasEvents = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
     private Role role;

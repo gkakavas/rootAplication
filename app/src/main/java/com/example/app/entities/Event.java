@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -19,13 +18,13 @@ import java.util.Set;
 public class Event {
     @Id
     @GeneratedValue
-    private Integer id;
+    private Integer eventId;
     private String eventDescription;
     private String eventBody;
     private String eventCreator;
     private String eventDateTime;
 
-    @ManyToMany
-    private Set<User> userEvents = new HashSet<>();
-
+    @Builder.Default
+    @ManyToMany(mappedBy = "userHasEvents")
+    private Set<User> userSet = new HashSet<>();
 }

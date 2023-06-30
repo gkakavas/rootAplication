@@ -1,23 +1,40 @@
 package com.example.app.services;
 
 import com.example.app.entities.User;
+import com.example.app.models.PersonalDetailsResponse;
+import com.example.app.models.UserProfileResponse;
 import com.example.app.repositories.UserRepository;
+import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
+
 
 import java.util.List;
-import java.util.Optional;
-
-
 @Service
 @RequiredArgsConstructor
 public class PersonalDetailsService{
 private final UserRepository userRepo;
-    public List<User> retrieveAllUsers(){
-        return userRepo.findAll();
-}
-    public Optional<User> retrieveAUser(String email){
-        return userRepo.findByEmail(email);
+private final List<PersonalDetailsResponse> pDR;
+    public List<PersonalDetailsResponse> retrieveAllUsers(){
+        List<User> users = userRepo.findAll();
+        for(User user:users){
+            pDR.add(new PersonalDetailsResponse(user.getUserId(),
+                    user.getFirstname(),
+                    user.getLastname(),
+                    user.getEmail()));
+        };
+        return pDR;
+        }
+
+    public UserProfileResponse retrieveUserProfile(Integer id){
+        var user = userRepo.findById(id);
+        user.ifPresent(->{
+            Builder().UserProfileResponse
+
+        }
+
+        );
+
+
     }
 }
