@@ -6,10 +6,13 @@ import com.example.app.models.UserProfileResponse;
 import com.example.app.repositories.UserRepository;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 
 import java.util.List;
+import java.util.function.Consumer;
+
 @Service
 @RequiredArgsConstructor
 public class PersonalDetailsService{
@@ -28,13 +31,17 @@ private final List<PersonalDetailsResponse> pDR;
 
     public UserProfileResponse retrieveUserProfile(Integer id){
         var user = userRepo.findById(id);
-        user.ifPresent(->{
-            Builder().UserProfileResponse
-
+        if(user.isPresent()){
+           var userProfResp = UserProfileResponse.builder()
+                    .user_id(user.get().getUserId())
+                    .firstname(user.get().getFirstname())
+                    .lastname(user.get().getLastname())
+                    .specialization(user.get().getSpecialization())
+                    .email(user.get().getEmail())
+                    .build();
+            return userProfResp;
         }
-
-        );
-
-
+        else
+            throw new UsernameNotFoundException("Don't find user with this id");
     }
 }
