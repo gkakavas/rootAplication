@@ -24,7 +24,8 @@ public class Event {
     private String eventCreator;
     private String eventDateTime;
 
-    @Builder.Default
     @ManyToMany(mappedBy = "userHasEvents")
-    private Set<User> userSet = new HashSet<>();
+    //@Builder.Default
+    //we have a set of users that one event have all the users
+    private final Set<User> userSet = new HashSet<>();
 }

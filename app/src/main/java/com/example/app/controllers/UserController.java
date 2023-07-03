@@ -1,12 +1,7 @@
 package com.example.app.controllers;
 
-import com.example.app.entities.Event;
-import com.example.app.entities.User;
-import com.example.app.models.CreateEventRequest;
-import com.example.app.models.PersonalDetailsResponse;
-import com.example.app.models.UserProfileResponse;
-import com.example.app.services.CRUDUserEventService;
-import com.example.app.services.PersonalDetailsService;
+import com.example.app.models.*;
+import com.example.app.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,9 +12,13 @@ import java.util.List;
 @RequestMapping("/user")
 @RequiredArgsConstructor
 public class UserController {
-    private final PersonalDetailsService service;
-    private final CRUDUserEventService cRUDService;
-    @GetMapping("/profile/")
+    private final UserService service;
+    @GetMapping("/account")
+    public ResponseEntity<PersonalAccountResponse> retrievePersonalAccount(
+            @RequestHeader("Authorization") PersonalAccountRequest requestToken){
+            return ResponseEntity.ok(service.retrievePersonalAccount(requestToken));
+    }
+    @GetMapping("/profiles")
     public ResponseEntity<List<PersonalDetailsResponse>> retrieveAllUsers (){
         return ResponseEntity.ok(service.retrieveAllUsers());
     }
@@ -27,5 +26,16 @@ public class UserController {
     @GetMapping("/profile/{id}")
     public ResponseEntity<UserProfileResponse> retrieveUserProfile(@PathVariable Integer id){
         return ResponseEntity.ok(service.retrieveUserProfile(id));
+    }
+
+    @DeleteMapping("/profile/delete/{id}")
+    public ResponseEntity<Integer> deleteAUser(@PathVariable Integer id){
+    return ResponseEntity.ok(service.deleteUser(id));
+    }
+
+    @PutMapping("/profile/update/{id}")
+    public ResponseEntity<UpdateUserResponse> updateAUser(@PathVariable Integer id,
+                                                          @RequestBody UpdateUserRequest request){
+        return ResponseEntity.ok(service.updateUser(id,request));
     }
 }

@@ -5,8 +5,6 @@ import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import java.sql.Date;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.HashSet;
@@ -17,7 +15,7 @@ import java.util.Set;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
+@Entity(name = "User")
 @Table(name="_user")
 
 public class User implements UserDetails {
@@ -32,17 +30,18 @@ public class User implements UserDetails {
     private String currentProject;
     private Instant registerDate;
     private Instant lastLogin;
+    @Enumerated(EnumType.STRING)
+    private Role role;
 
     @ManyToMany
     @JoinTable(name="user_event",
             joinColumns=@JoinColumn(name="user_id"),
             inverseJoinColumns =@JoinColumn(name="event_id")
     )
-    @Builder.Default
-    private Set<Event> userHasEvents = new HashSet<>();
 
-    @Enumerated(EnumType.STRING)
-    private Role role;
+    //@Builder.Default
+    // for every instance of this user object we have a set of events that user HAS
+    private final Set<Event> userHasEvents = new HashSet<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

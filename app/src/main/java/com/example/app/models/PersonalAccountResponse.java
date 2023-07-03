@@ -5,14 +5,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
+
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class UserProfileResponse {
-    private Integer userId;
+@AllArgsConstructor
+public class PersonalAccountResponse {
     private String firstname;
     private String lastname;
-    private String specialization;
     private String email;
+    private String specialization;
+    private String currentProject;
+    private Instant registerDate;
+    private Instant lastLogin;
 }

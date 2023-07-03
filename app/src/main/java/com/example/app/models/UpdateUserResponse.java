@@ -9,10 +9,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserProfileResponse {
+public class UpdateUserResponse {
     private Integer userId;
     private String firstname;
     private String lastname;
-    private String specialization;
     private String email;
+    private String specialization;
+    private String currentProject;
 }
+
