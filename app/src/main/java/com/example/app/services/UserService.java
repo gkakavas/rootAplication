@@ -7,12 +7,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class UserService {
+public class UserService implements CrudService<UserResponseEntity, UserRequestEntity>{
     private final JwtService jwtService;
     private final UserRepository userRepo;
     private final List<PersonalDetailsResponse> pDR;
@@ -95,5 +97,61 @@ public class UserService {
             e.printStackTrace();
             return null;
         }
+    }
+    public UserProfileResponse retrieveUserProfile(String email) {
+        try {
+            var user = userRepo.findByEmail(email);
+            if (user.isPresent()) {
+                var userProfResp = UserProfileResponse.builder()
+                        .userId(user.get().getUserId())
+                        .firstname(user.get().getFirstname())
+                        .lastname(user.get().getLastname())
+                        .specialization(user.get().getSpecialization())
+                        .email(user.get().getEmail())
+                        .build();
+                return userProfResp;
+            } else
+                return null;
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+    @Override
+    public UserResponseEntity read(UUID id) {
+        var user = userRepo.findById(id).orElse(null);
+        return UserResponseEntity.builder()
+                .userId(user.getUserId())
+                .firstname(user.getFirstname())
+                .lastname(user.getLastname())
+                .email(user.getEmail())
+                .specialization(user.getSpecialization())
+                .build();
+    }
+    @Override
+    public List<UserResponseEntity> read() {
+        List<User> users = userRepo.findAll();
+        List<UserResponseEntity> userList = users.stream()
+                .map(user -> new UserResponseEntity(user.getUserId(),
+                        user.getFirstname(),
+                        user.getLastname(),
+                        user.getEmail(),
+                        user.getSpecialization()))
+                .collect(Collectors.toList());
+        return userList;
+    }
+    @Override
+    public UserResponseEntity update(UserRequestEntity request) {
+        var oldUser = userRepo.findById(request.getUserId()).orElse(null);
+        if(oldUser!=null && request!=null)
+            var newUser = oldUser.setFirstname();
+        return null;
+    }
+
+    @Override
+    public void delete(UUID id) {
+
     }
 }

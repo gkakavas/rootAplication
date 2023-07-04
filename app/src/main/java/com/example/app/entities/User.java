@@ -2,14 +2,12 @@ package com.example.app.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.GenericGenerator;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import java.time.Instant;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Data
 @Builder
@@ -20,8 +18,8 @@ import java.util.Set;
 
 public class User implements UserDetails {
     @Id
-    @GeneratedValue
-    private Integer userId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID userId;
     private String password;
     private String firstname;
     private String lastname;
@@ -38,10 +36,9 @@ public class User implements UserDetails {
             joinColumns=@JoinColumn(name="user_id"),
             inverseJoinColumns =@JoinColumn(name="event_id")
     )
-
-    //@Builder.Default
+    @Builder.Default
     // for every instance of this user object we have a set of events that user HAS
-    private final Set<Event> userHasEvents = new HashSet<>();
+    private Set<Event> userHasEvents = new HashSet<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

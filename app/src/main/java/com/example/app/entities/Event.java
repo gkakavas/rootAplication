@@ -1,12 +1,17 @@
 package com.example.app.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.GenericGenerator;
+
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -17,15 +22,17 @@ import java.util.Set;
 
 public class Event {
     @Id
-    @GeneratedValue
-    private Integer eventId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID eventId;
     private String eventDescription;
     private String eventBody;
     private String eventCreator;
-    private String eventDateTime;
+    private LocalDateTime eventDateTime;
+    private LocalDateTime eventExpiration;
 
+    @JsonIgnore
     @ManyToMany(mappedBy = "userHasEvents")
-    //@Builder.Default
+    @Builder.Default
     //we have a set of users that one event have all the users
-    private final Set<User> userSet = new HashSet<>();
+    private Set<User> usersJoinInEvent = new HashSet<>();
 }

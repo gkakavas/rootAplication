@@ -38,4 +38,6 @@ public class UserController {
                                                           @RequestBody UpdateUserRequest request){
         return ResponseEntity.ok(service.updateUser(id,request));
     }
+
+
 }
