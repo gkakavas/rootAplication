@@ -2,42 +2,48 @@ package com.example.app.controllers;
 
 import com.example.app.models.*;
 import com.example.app.services.UserService;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+import java.util.UUID;
 
 @RestController
+@Validated
 @RequestMapping("/user")
 @RequiredArgsConstructor
-public class UserController {
+public class UserController implements CrudController<UserResponseEntity, UserRequestEntity>{
     private final UserService service;
-    @GetMapping("/account")
-    public ResponseEntity<PersonalAccountResponse> retrievePersonalAccount(
-            @RequestHeader("Authorization") PersonalAccountRequest requestToken){
-            return ResponseEntity.ok(service.retrievePersonalAccount(requestToken));
+    @Override
+    public ResponseEntity<UserResponseEntity> create(@NotNull UserRequestEntity userRequestEntity) {
+        return ResponseEntity.ok(service.create(userRequestEntity));
     }
-    @GetMapping("/profiles")
-    public ResponseEntity<List<PersonalDetailsResponse>> retrieveAllUsers (){
-        return ResponseEntity.ok(service.retrieveAllUsers());
-    }
-
-    @GetMapping("/profile/{id}")
-    public ResponseEntity<UserProfileResponse> retrieveUserProfile(@PathVariable Integer id){
-        return ResponseEntity.ok(service.retrieveUserProfile(id));
+    @Override
+    public ResponseEntity<UserResponseEntity> readOne(@NotNull UUID id) {
+        return ResponseEntity.ok(service.read(id));
     }
 
-    @DeleteMapping("/profile/delete/{id}")
-    public ResponseEntity<Integer> deleteAUser(@PathVariable Integer id){
-    return ResponseEntity.ok(service.deleteUser(id));
+    @Override
+    public List<UserResponseEntity> readAll() {
+        return service.read();
     }
 
-    @PutMapping("/profile/update/{id}")
-    public ResponseEntity<UpdateUserResponse> updateAUser(@PathVariable Integer id,
-                                                          @RequestBody UpdateUserRequest request){
-        return ResponseEntity.ok(service.updateUser(id,request));
+    @Override
+    public ResponseEntity<UserResponseEntity> update(@NotNull UUID id, @NotNull UserRequestEntity userRequestEntity) {
+        return ResponseEntity.ok(service.update(id, userRequestEntity));
     }
 
+    @Override
+    public ResponseEntity<UserResponseEntity> delete(@NotNull UUID id) {
+        var isRemoved = service.delete(id);
 
+        if (!isRemoved) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(HttpStatus.ACCEPTED);
+    }
 }
+

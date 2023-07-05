@@ -1,28 +1,51 @@
 package com.example.app.controllers;
 
-import com.example.app.models.CreateEventRequest;
-import com.example.app.models.CreateEventResponse;
+import com.example.app.models.EventRequestEntity;
+import com.example.app.models.EventResponseEntity;
 import com.example.app.services.EventService;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/event")
 
-public class EventController {
+public class EventController implements CrudController<EventResponseEntity, EventRequestEntity> {
     private final EventService eventService;
 
-    @PostMapping("/create")
-    public ResponseEntity<CreateEventResponse> createEvent(@RequestBody CreateEventRequest request){
-        return ResponseEntity.ok(eventService.createEvent(request));
+    @Override
+    public ResponseEntity<EventResponseEntity> create(@NotNull EventRequestEntity request) {
+        return ResponseEntity.ok(eventService.create(request));
     }
 
-    @PostMapping("/{eventId}/user/{userId}")
-    public ResponseEntity<CreateEventResponse> addUserToEvent(
-            @PathVariable Integer eventId, @PathVariable Integer userId) {
-        return ResponseEntity.ok(eventService.addUserToEvent(eventId, userId));
+    @Override
+    public ResponseEntity<EventResponseEntity> readOne(@NotNull UUID id) {
+        return ResponseEntity.ok(eventService.read(id));
+    }
 
+    @Override
+    public List<EventResponseEntity> readAll() {
+        return eventService.read();
+    }
+
+    @Override
+    public ResponseEntity<EventResponseEntity> update(@NotNull UUID id, @NotNull EventRequestEntity request) {
+        return ResponseEntity.ok(eventService.update(id, request));
+    }
+
+    @Override
+    public ResponseEntity<EventResponseEntity> delete(@NotNull UUID id) {
+        var isRemoved = eventService.delete(id);
+
+        if (!isRemoved) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 }

@@ -1,14 +1,16 @@
 package com.example.app.entities;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.*;
-import org.hibernate.annotations.GenericGenerator;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.validation.annotation.Validated;
 import java.time.Instant;
 import java.util.*;
 
+@Validated
 @Data
 @Builder
 @AllArgsConstructor
@@ -20,6 +22,7 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID userId;
+    @Size(min = 8, max = 20)
     private String password;
     private String firstname;
     private String lastname;
@@ -31,10 +34,10 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
     @JoinTable(name="user_event",
-            joinColumns=@JoinColumn(name="user_id"),
-            inverseJoinColumns =@JoinColumn(name="event_id")
+            joinColumns={@JoinColumn(name="user_id")},
+            inverseJoinColumns ={@JoinColumn(name="event_id")}
     )
     @Builder.Default
     // for every instance of this user object we have a set of events that user HAS
@@ -65,8 +68,7 @@ public class User implements UserDetails {
     }
 
     @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
+    public boolean isCredentialsNonExpired() {return true;
     }
 
     @Override

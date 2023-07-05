@@ -6,13 +6,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class FindOneEventResponse {
-    private Integer eventId;
+public class EventResponseEntity {
+    private UUID eventId;
     private String eventDescription;
     private String eventBody;
     private String eventCreator;

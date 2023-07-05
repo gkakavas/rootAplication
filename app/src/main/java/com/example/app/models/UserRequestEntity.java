@@ -1,11 +1,12 @@
 package com.example.app.models;
 
+import com.example.app.entities.Role;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.UUID;
 
 @Data
 @Builder
@@ -13,20 +14,22 @@ import java.util.UUID;
 @NoArgsConstructor
 
 public class UserRequestEntity {
-    private UUID userId;
+    @NotNull
     private String firstname;
+    @NotNull
     private String lastname;
+    @NotNull
+    private String password;
+    @NotNull
+    @Email
     private String email;
+    @NotNull
     private String specialization;
+    @NotNull
+    private Role role;
 
-    public UserRequestEntity(UUID id){
-        this.userId = id;
-    }
-
-    public UserRequestEntity(String email){
+    public UserRequestEntity(@NotNull String email){
         this.email = email;
     }
-
-
-}
+    }
 

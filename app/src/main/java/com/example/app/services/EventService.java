@@ -2,87 +2,106 @@ package com.example.app.services;
 
 import com.example.app.entities.Event;
 import com.example.app.entities.User;
-import com.example.app.models.CreateEventRequest;
-import com.example.app.models.CreateEventResponse;
-import com.example.app.models.FindOneEventRequest;
-import com.example.app.models.FindOneEventResponse;
+import com.example.app.models.*;
 import com.example.app.repositories.EventRepository;
 import com.example.app.repositories.UserRepository;
 import lombok.*;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 @Service
 @RequiredArgsConstructor
-public class EventService {
+public class EventService implements CrudService<EventResponseEntity,EventRequestEntity> {
     private final EventRepository eventRepo;
-    private final UserRepository userRepo;
-    private final UserService userService;
+    @Override
+    public EventResponseEntity create(EventRequestEntity request) {
+        var newEvent = Event.builder()
+                .eventCreator(request.getEventCreator())
+                .eventDescription(request.getEventDescription())
+                .eventBody(request.getEventBody())
+                .eventDateTime(request.getEventDateTime())
+                .eventExpiration(request.getEventExpiration())
+                .build();
 
-    public CreateEventResponse createEvent(CreateEventRequest request){
-        try {
-            var user = userService.retrieveUserProfile(request.getEventCreator());
-            Event event = Event.builder()//
-                    .eventCreator(user.getEmail()) //
-                    .eventBody(request.getEventBody())
-                    .eventDescription(request.getEventDescription())
-                    .eventDateTime(request.getEventDateTime())
-                    .eventExpiration(request.getEventExpiration())
-                    .build();
-            eventRepo.save(event);
-            return CreateEventResponse.builder()
-                    .eventCreator(event.getEventCreator())
-                    .eventBody(event.getEventBody())
-                    .eventDescription(event.getEventDescription())
-                    .eventDateTime(event.getEventDateTime())
-                    .eventExpiration(event.getEventExpiration())
-                    .build();
-        }catch(IllegalArgumentException e){
-            e.printStackTrace();
-        }
-        return null;
-        }
-
-    public List<Event> retrieveAllEvents(){
-       List<Event> allEvents =  eventRepo.findAll();
-       return allEvents;
+        var event =eventRepo.save(newEvent);
+        return EventResponseEntity.builder()
+                .eventId(event.getEventId())
+                .eventCreator(event.getEventCreator())
+                .eventDescription(event.getEventDescription())
+                .eventBody(event.getEventBody())
+                .eventDateTime(event.getEventDateTime())
+                .eventExpiration(event.getEventExpiration())
+                .build();
     }
 
-    public FindOneEventResponse findOneEvent(FindOneEventRequest request){
-        var event = eventRepo.findById(request.getEventId());
-        if(event.isPresent()){
-            return FindOneEventResponse.builder()
-                    .eventId(event.get().getEventId())
-                    .eventCreator(event.get().getEventCreator())
-                    .eventBody(event.get().getEventBody())
-                    .eventDescription(event.get().getEventDescription())
-                    .eventDateTime(event.get().getEventDateTime())
-                    .eventExpiration(event.get().getEventExpiration())
-                    .build();
-        }
-        else
-            throw new IllegalArgumentException();
-    }
-
-    public CreateEventResponse addUserToEvent(Integer eventId, Integer userId) {
-            var user = userRepo.findById(userId).orElse(null);
-            var event = eventRepo.findById(eventId).orElse(null);
-            if(user!=null && event!=null) {
-                user.getUserHasEvents().add(event);
-                event.getUsersJoinInEvent().add(user);
-                userRepo.save(user);
-                eventRepo.save(event);
-                return CreateEventResponse.builder()
+    @Override
+    public EventResponseEntity read(UUID id) {
+        if (id != null)
+            try {
+                Event event = eventRepo.findById(id).orElseThrow(()
+                       -> new IllegalArgumentException("Not found event with this id"));
+                return EventResponseEntity.builder()
+                        .eventId(event.getEventId())
                         .eventCreator(event.getEventCreator())
                         .eventDescription(event.getEventDescription())
                         .eventBody(event.getEventBody())
-                        .eventExpiration(event.getEventExpiration())
                         .eventDateTime(event.getEventDateTime())
-                        .eventJoinInUser(event.getUsersJoinInEvent())
+                        .eventExpiration(event.getEventExpiration())
                         .build();
+            }catch(IllegalArgumentException e){
+                e.printStackTrace();
             }
-            else
-                throw new IllegalArgumentException();
+        return null;
+    }
+
+    @Override
+    public List<EventResponseEntity> read() {
+        List<Event> events = eventRepo.findAll();
+        List<EventResponseEntity> eventList = events.stream()
+                .map(event -> new EventResponseEntity(
+                        event.getEventId(),
+                        event.getEventDescription(),
+                        event.getEventBody(),
+                        event.getEventCreator(),
+                        event.getEventDateTime(),
+                        event.getEventExpiration()))
+                .collect(Collectors.toList());
+        return eventList;
+    }
+    @Override
+    public EventResponseEntity update(UUID id, EventRequestEntity request) {
+        var event = eventRepo.findById(id).orElseThrow(()
+                -> new IllegalArgumentException("Not found user with this id"));
+        if(event!=null&&request!=null){
+            event.setEventBody(request.getEventBody());
+            event.setEventCreator(request.getEventCreator());
+            event.setEventDescription(request.getEventDescription());
+            event.setEventDateTime(request.getEventDateTime());
+            event.setEventExpiration(request.getEventExpiration());
+            var updatedEvent = eventRepo.save(event);
+            return EventResponseEntity.builder()
+                    .eventId(id)
+                    .eventBody(updatedEvent.getEventBody())
+                    .eventDescription(updatedEvent.getEventDescription())
+                    .eventCreator(updatedEvent.getEventCreator())
+                    .eventDateTime(updatedEvent.getEventDateTime())
+                    .eventExpiration(updatedEvent.getEventExpiration())
+                    .build();
+        }
+       return null;
+    }
+    @Override
+    public boolean delete(UUID id) {
+        if(id!=null){
+            eventRepo.deleteById(id);
+            return true;
+        }
+        return false;
     }
 }
