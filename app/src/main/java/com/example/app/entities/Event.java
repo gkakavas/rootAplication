@@ -36,8 +36,4 @@ public class Event {
     //we have a set of users that one event have all the users
     private Set<User> usersJoinInEvent = new HashSet<>();
 
-    public void addUser(User user){
-        usersJoinInEvent.add(user);
-        user.getUserHasEvents().add(this);
-    }
 }

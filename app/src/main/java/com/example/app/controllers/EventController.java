@@ -1,5 +1,6 @@
 package com.example.app.controllers;
 
+import com.example.app.entities.Event;
 import com.example.app.models.EventRequestEntity;
 import com.example.app.models.EventResponseEntity;
 import com.example.app.services.EventService;
@@ -47,5 +48,13 @@ public class EventController implements CrudController<EventResponseEntity, Even
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
+    }
+
+    @PostMapping("/{eventId}/user/{userId}")
+    public ResponseEntity<EventResponseEntity> addUserToEvent(
+                        @PathVariable Iterable<UUID> eventId,
+                        @PathVariable UUID userId
+    ){
+        return ResponseEntity.ok(eventService.addUsersToEvent(eventId, userId));
     }
 }

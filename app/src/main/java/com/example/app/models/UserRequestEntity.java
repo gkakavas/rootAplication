@@ -14,21 +14,20 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 
 public class UserRequestEntity {
-    @NotNull
     private String firstname;
-    @NotNull
+
     private String lastname;
-    @NotNull
+
     private String password;
-    @NotNull
+
     @Email
     private String email;
-    @NotNull
+
     private String specialization;
-    @NotNull
+
     private Role role;
 
-    public UserRequestEntity(@NotNull String email){
+    public UserRequestEntity(String email){
         this.email = email;
     }
     }

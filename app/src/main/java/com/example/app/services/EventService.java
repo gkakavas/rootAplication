@@ -7,18 +7,16 @@ import com.example.app.repositories.EventRepository;
 import com.example.app.repositories.UserRepository;
 import lombok.*;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
 
 @Service
 @RequiredArgsConstructor
 public class EventService implements CrudService<EventResponseEntity,EventRequestEntity> {
     private final EventRepository eventRepo;
+    private final UserRepository userRepo;
     @Override
     public EventResponseEntity create(EventRequestEntity request) {
         var newEvent = Event.builder()
@@ -28,7 +26,6 @@ public class EventService implements CrudService<EventResponseEntity,EventReques
                 .eventDateTime(request.getEventDateTime())
                 .eventExpiration(request.getEventExpiration())
                 .build();
-
         var event =eventRepo.save(newEvent);
         return EventResponseEntity.builder()
                 .eventId(event.getEventId())
@@ -39,7 +36,6 @@ public class EventService implements CrudService<EventResponseEntity,EventReques
                 .eventExpiration(event.getEventExpiration())
                 .build();
     }
-
     @Override
     public EventResponseEntity read(UUID id) {
         if (id != null)
@@ -53,6 +49,7 @@ public class EventService implements CrudService<EventResponseEntity,EventReques
                         .eventBody(event.getEventBody())
                         .eventDateTime(event.getEventDateTime())
                         .eventExpiration(event.getEventExpiration())
+                        .userSet(event.getUsersJoinInEvent())
                         .build();
             }catch(IllegalArgumentException e){
                 e.printStackTrace();
@@ -70,14 +67,15 @@ public class EventService implements CrudService<EventResponseEntity,EventReques
                         event.getEventBody(),
                         event.getEventCreator(),
                         event.getEventDateTime(),
-                        event.getEventExpiration()))
+                        event.getEventExpiration(),
+                        event.getUsersJoinInEvent()))
                 .collect(Collectors.toList());
         return eventList;
     }
     @Override
     public EventResponseEntity update(UUID id, EventRequestEntity request) {
         var event = eventRepo.findById(id).orElseThrow(()
-                -> new IllegalArgumentException("Not found user with this id"));
+                -> new IllegalArgumentException("Not found event with this id"));
         if(event!=null&&request!=null){
             event.setEventBody(request.getEventBody());
             event.setEventCreator(request.getEventCreator());
@@ -103,5 +101,23 @@ public class EventService implements CrudService<EventResponseEntity,EventReques
             return true;
         }
         return false;
+    }
+
+    public EventResponseEntity addUsersToEvent(Iterable<UUID> userIdList, UUID eventId){
+        try {
+            List<User> userList = userRepo.findAllById(userIdList);
+            Event event = eventRepo.findById(eventId).orElseThrow(() -> new IllegalArgumentException());
+            for(User user:userList){
+            user.getUserHasEvents().add(event);
+            userRepo.save(user);
+            }
+            var newUserList = userRepo.findAllById(userIdList);
+            return EventResponseEntity.builder()
+
+                    .build();
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
