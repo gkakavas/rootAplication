@@ -1,8 +1,8 @@
 package com.example.app.services;
 
-import com.example.app.models.AuthenticationRequest;
-import com.example.app.models.AuthenticationResponse;
-import com.example.app.models.RegisterRequest;
+import com.example.app.models.requests.AuthenticationRequest;
+import com.example.app.models.responses.AuthenticationResponse;
+import com.example.app.models.requests.RegisterRequest;
 import com.example.app.entities.User;
 import com.example.app.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +10,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +27,7 @@ public class AuthenticationService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole())
                 .specialization(request.getSpecialization())
-                .registerDate(Instant.now())
+                .registerDate(LocalDateTime.now())
                 .build();
         repository.save(user);
 
@@ -42,7 +42,7 @@ public class AuthenticationService {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         var user = repository.findByEmail(request.getEmail()).orElseThrow();
         var jwtToken = jwtService.generateToken(user);
-        user.setLastLogin(Instant.now());
+        user.setLastLogin(LocalDateTime.now());
         repository.save(user);
         return AuthenticationResponse.builder()
                 .token(jwtToken)

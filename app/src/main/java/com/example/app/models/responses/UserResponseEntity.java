@@ -1,4 +1,4 @@
-package com.example.app.models;
+package com.example.app.models.responses;
 
 import com.example.app.entities.Event;
 import lombok.AllArgsConstructor;
@@ -15,6 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserResponseEntity {
+
     private UUID userId;
     private String firstname;
     private String lastname;

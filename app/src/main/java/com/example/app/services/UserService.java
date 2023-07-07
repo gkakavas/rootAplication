@@ -1,9 +1,9 @@
 package com.example.app.services;
 
-import com.example.app.entities.Event;
 import com.example.app.entities.User;
-import com.example.app.models.*;
-import com.example.app.repositories.EventRepository;
+import com.example.app.models.requests.RegisterRequest;
+import com.example.app.models.requests.UserRequestEntity;
+import com.example.app.models.responses.UserResponseEntity;
 import com.example.app.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 public class UserService implements CrudService<UserResponseEntity, UserRequestEntity>{
     private final UserRepository userRepo;
     private final AuthenticationService authService;
-    private final EventRepository eventRepo;
     @Override
     public UserResponseEntity create(UserRequestEntity request) {
         if(request!=null)
@@ -93,31 +92,4 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
         }
         return false;
     }
-
-//    public List<UserResponseEntity> addEventsToUser(UUID eventId,Iterable<UUID> userIds) {
-//        try {
-//            List<User> users = userRepo.findAllById(userIds);
-//            Event event = eventRepo.findById(eventId).orElseThrow(() -> new IllegalArgumentException());
-//            List<UserResponseEntity> UREList = new ArrayList<>();
-//            for(User user:users){
-//            user.getUserHasEvents().add(event);
-//            userRepo.save(user);
-//            UREList.add(new UserResponseEntity(
-//                    user.getUserId(),
-//                    user.getFirstname(),
-//                    user.getLastname(),
-//                    user.getEmail(),
-//                    user.getSpecialization(),
-//                    user.getUserHasEvents()
-//            ));
-//            }
-//            return UREList;
-//        } catch (IllegalArgumentException e) {
-//            e.printStackTrace();
-//        }
-//        return null;
-//    }
-
-
-
 }

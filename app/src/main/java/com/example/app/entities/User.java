@@ -1,24 +1,27 @@
 package com.example.app.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity(name = "User")
+@Entity(name="User")
 @Table(name="_user")
 
 public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @NotNull
     private UUID userId;
     private String password;
     private String firstname;
@@ -26,12 +29,14 @@ public class User implements UserDetails {
     private String email;
     private String specialization;
     private String currentProject;
-    private Instant registerDate;
-    private Instant lastLogin;
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime registerDate;
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime lastLogin;
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
+    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinTable(name = "user_event",
             joinColumns = {@JoinColumn(name = "user_id")},
             inverseJoinColumns = {@JoinColumn(name = "event_id")}
@@ -39,7 +44,6 @@ public class User implements UserDetails {
     @Builder.Default
     // for every instance of this user object we have a set of events that user HAS
     private Set<Event> userHasEvents = new HashSet<>();
-
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -74,19 +78,6 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
-    }
-
-    public void addEvent(Event event) {
-        this.userHasEvents.add(event);
-        event.getUsersJoinInEvent().add(this);
-    }
-
-    public void removeEvent(UUID eventId) {
-        Event event = this.userHasEvents.stream().filter(e -> e.getEventId() == eventId).findFirst().orElse(null);
-        if (event != null) {
-            this.userHasEvents.remove(event);
-            event.getUsersJoinInEvent().remove(this);
-        }
     }
 }
 

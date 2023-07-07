@@ -1,4 +1,4 @@
-package com.example.app.models;
+package com.example.app.models.responses;
 
 import com.example.app.entities.User;
 import lombok.AllArgsConstructor;

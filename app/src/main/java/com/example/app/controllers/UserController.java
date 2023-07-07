@@ -1,7 +1,9 @@
 package com.example.app.controllers;
 
-import com.example.app.models.*;
+import com.example.app.models.requests.UserRequestEntity;
+import com.example.app.models.responses.UserResponseEntity;
 import com.example.app.services.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +19,7 @@ import java.util.UUID;
 public class UserController implements CrudController<UserResponseEntity, UserRequestEntity>{
     private final UserService service;
     @Override
-    public ResponseEntity<UserResponseEntity> create(UserRequestEntity userRequestEntity) {
+    public ResponseEntity<UserResponseEntity> create(@Valid UserRequestEntity userRequestEntity) {
         return ResponseEntity.ok(service.create(userRequestEntity));
     }
     @Override
@@ -31,7 +33,7 @@ public class UserController implements CrudController<UserResponseEntity, UserRe
     }
 
     @Override
-    public ResponseEntity<UserResponseEntity> update(UUID id,UserRequestEntity userRequestEntity) {
+    public ResponseEntity<UserResponseEntity> update(UUID id,@Valid UserRequestEntity userRequestEntity) {
         return ResponseEntity.ok(service.update(id, userRequestEntity));
     }
 
@@ -45,10 +47,6 @@ public class UserController implements CrudController<UserResponseEntity, UserRe
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 
-//    @PostMapping("/event/{eventId}")
-//    public ResponseEntity<List<UserResponseEntity>> addUserToEvent(
-//            @PathVariable UUID eventId, @RequestBody List<UUID> userIds){
-//        return ResponseEntity.ok(service.addEventsToUser(eventId, userIds));
-//    }
+
 }
 

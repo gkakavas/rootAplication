@@ -2,20 +2,22 @@ package com.example.app.services;
 
 import com.example.app.entities.Event;
 import com.example.app.entities.User;
-import com.example.app.models.*;
+import com.example.app.models.requests.EventRequestEntity;
+import com.example.app.models.responses.EventResponseEntity;
 import com.example.app.repositories.EventRepository;
 import com.example.app.repositories.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.*;
 import org.springframework.stereotype.Service;
+
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class EventService implements CrudService<EventResponseEntity,EventRequestEntity> {
+public class EventService implements CrudService<EventResponseEntity, EventRequestEntity> {
     private final EventRepository eventRepo;
     private final UserRepository userRepo;
     @Override
@@ -128,5 +130,44 @@ public class EventService implements CrudService<EventResponseEntity,EventReques
                     event.getEventExpiration(),
                     event.getUsersJoinInEvent()
             );
+    }
+    @Transactional
+    public EventResponseEntity addUsersToEvent(UUID eventId,List<UUID> userIds){
+        List<User> users = userRepo.findAllById(userIds);
+        var event = eventRepo.findById(eventId).orElseThrow(() -> new IllegalArgumentException("Not found event with this id"));
+            event.getUsersJoinInEvent().addAll(users);
+            users.forEach(user -> {
+                user.getUserHasEvents().add(event);
+                    userRepo.save(user);
+            });
+            eventRepo.save(event);
+            return new EventResponseEntity(
+                    event.getEventId(),
+                    event.getEventDescription(),
+                    event.getEventBody(),
+                    event.getEventCreator(),
+                    event.getEventDateTime(),
+                    event.getEventExpiration(),
+                    event.getUsersJoinInEvent());
+
+    }
+
+    public EventResponseEntity deleteUsersFromEvent(UUID eventId,List<UUID> userIds){
+        var event = eventRepo.findById(eventId).orElseThrow(()->new IllegalArgumentException("Not found event with this id"));
+        var users = userRepo.findAllById(userIds);
+        users.forEach(event.getUsersJoinInEvent()::remove);
+        eventRepo.save(event);
+        for(User user:users){
+            user.getUserHasEvents().remove(event);
+            userRepo.save(user);
+        }
+        return new EventResponseEntity(
+                event.getEventId(),
+                event.getEventDescription(),
+                event.getEventBody(),
+                event.getEventCreator(),
+                event.getEventDateTime(),
+                event.getEventExpiration(),
+                event.getUsersJoinInEvent());
     }
 }

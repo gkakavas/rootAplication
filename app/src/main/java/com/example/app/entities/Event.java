@@ -17,7 +17,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
+@Entity(name="Event")
 @Table(name="_event")
 
 public class Event {
@@ -30,8 +30,7 @@ public class Event {
     private LocalDateTime eventDateTime;
     private LocalDateTime eventExpiration;
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "userHasEvents", cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
+    @ManyToMany(mappedBy = "userHasEvents", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @Builder.Default
     //we have a set of users that one event have all the users
     private Set<User> usersJoinInEvent = new HashSet<>();
