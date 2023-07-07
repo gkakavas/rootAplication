@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -50,11 +51,11 @@ public class EventController implements CrudController<EventResponseEntity, Even
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 
-    @PostMapping("/{eventId}/user/{userId}")
-    public ResponseEntity<EventResponseEntity> addUserToEvent(
-                        @PathVariable Iterable<UUID> eventId,
-                        @PathVariable UUID userId
+    @PostMapping("/create/users")
+    public ResponseEntity<EventResponseEntity> createEventWithUsers(
+                        @RequestParam List<UUID> userIds,
+                         @RequestBody EventRequestEntity request
     ){
-        return ResponseEntity.ok(eventService.addUsersToEvent(eventId, userId));
+        return ResponseEntity.ok(eventService.createEventWithUsers(userIds,request));
     }
 }

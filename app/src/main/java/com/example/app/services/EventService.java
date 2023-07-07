@@ -9,6 +9,7 @@ import lombok.*;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -103,21 +104,29 @@ public class EventService implements CrudService<EventResponseEntity,EventReques
         return false;
     }
 
-    public EventResponseEntity addUsersToEvent(Iterable<UUID> userIdList, UUID eventId){
-        try {
-            List<User> userList = userRepo.findAllById(userIdList);
-            Event event = eventRepo.findById(eventId).orElseThrow(() -> new IllegalArgumentException());
-            for(User user:userList){
-            user.getUserHasEvents().add(event);
-            userRepo.save(user);
-            }
-            var newUserList = userRepo.findAllById(userIdList);
-            return EventResponseEntity.builder()
-
+    public EventResponseEntity createEventWithUsers(List<UUID> userIdsList, EventRequestEntity request){
+        List<User> users = userRepo.findAllById(userIdsList);
+            var event = Event.builder()
+                    .eventBody(request.getEventBody())
+                    .eventCreator(request.getEventCreator())
+                    .eventDescription(request.getEventDescription())
+                    .eventDateTime(request.getEventDateTime())
+                    .eventExpiration(request.getEventExpiration())
                     .build();
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        }
-        return null;
+            event.getUsersJoinInEvent().addAll(users);
+            for(User user:users){
+                user.getUserHasEvents().add(event);
+                userRepo.save(user);
+            }
+            eventRepo.save(event);
+            return new EventResponseEntity(
+                    event.getEventId(),
+                    event.getEventDescription(),
+                    event.getEventBody(),
+                    event.getEventCreator(),
+                    event.getEventDateTime(),
+                    event.getEventExpiration(),
+                    event.getUsersJoinInEvent()
+            );
     }
 }

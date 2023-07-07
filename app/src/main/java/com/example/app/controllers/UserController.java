@@ -45,10 +45,10 @@ public class UserController implements CrudController<UserResponseEntity, UserRe
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 
-    @PostMapping("/event/{eventId}")
-    public ResponseEntity<List<UserResponseEntity>> addUserToEvent(
-            @PathVariable UUID eventId, @RequestBody List<UUID> userIds){
-        return ResponseEntity.ok(service.addEventsToUser(eventId, userIds));
-    }
+//    @PostMapping("/event/{eventId}")
+//    public ResponseEntity<List<UserResponseEntity>> addUserToEvent(
+//            @PathVariable UUID eventId, @RequestBody List<UUID> userIds){
+//        return ResponseEntity.ok(service.addEventsToUser(eventId, userIds));
+//    }
 }
 

@@ -5,12 +5,8 @@ import com.example.app.entities.User;
 import com.example.app.models.*;
 import com.example.app.repositories.EventRepository;
 import com.example.app.repositories.UserRepository;
-import lombok.Builder;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecutor;
 import org.springframework.stereotype.Service;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -98,27 +94,30 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
         return false;
     }
 
-    public List<UserResponseEntity> addEventsToUser( UUID eventId,Iterable<UUID> userIds) {
-        try {
-            List<User> users = userRepo.findAllById(userIds);
-            Event event = eventRepo.findById(eventId).orElseThrow(() -> new IllegalArgumentException());
-            List<UserResponseEntity> UREList = new ArrayList<>();
-            for(User user:users){
-            user.getUserHasEvents().add(event);
-            userRepo.save(user);
-            UREList.add(new UserResponseEntity(
-                    user.getUserId(),
-                    user.getFirstname(),
-                    user.getLastname(),
-                    user.getEmail(),
-                    user.getSpecialization(),
-                    user.getUserHasEvents()
-            ));
-            }
-            return UREList;
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
+//    public List<UserResponseEntity> addEventsToUser(UUID eventId,Iterable<UUID> userIds) {
+//        try {
+//            List<User> users = userRepo.findAllById(userIds);
+//            Event event = eventRepo.findById(eventId).orElseThrow(() -> new IllegalArgumentException());
+//            List<UserResponseEntity> UREList = new ArrayList<>();
+//            for(User user:users){
+//            user.getUserHasEvents().add(event);
+//            userRepo.save(user);
+//            UREList.add(new UserResponseEntity(
+//                    user.getUserId(),
+//                    user.getFirstname(),
+//                    user.getLastname(),
+//                    user.getEmail(),
+//                    user.getSpecialization(),
+//                    user.getUserHasEvents()
+//            ));
+//            }
+//            return UREList;
+//        } catch (IllegalArgumentException e) {
+//            e.printStackTrace();
+//        }
+//        return null;
+//    }
+
+
+
 }
