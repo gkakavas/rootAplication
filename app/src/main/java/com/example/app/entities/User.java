@@ -50,7 +50,9 @@ public class User implements UserDetails {
     @JoinColumn(name= "group_id")
     private Group group;
 
+
     @OneToMany(mappedBy = "user")
+    @Builder.Default
     private Set<File> userHasFiles = new HashSet<>();
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
