@@ -1,7 +1,9 @@
 package com.example.app.controllers;
 
 import com.example.app.models.requests.EventRequestEntity;
+import com.example.app.models.requests.RegisterRequest;
 import com.example.app.models.responses.EventResponseEntity;
+import com.example.app.models.responses.UserResponseEntity;
 import com.example.app.services.EventService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -16,17 +18,17 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/event")
-
 public class EventController implements CrudController<EventResponseEntity, EventRequestEntity> {
     private final EventService eventService;
 
     @Override
-    public ResponseEntity<EventResponseEntity> create(@NotNull @Valid EventRequestEntity request) {
-        return ResponseEntity.ok(eventService.create(request));
+    public ResponseEntity<EventResponseEntity> create(@Valid EventRequestEntity request, String header) {
+        return ResponseEntity.ok(eventService.create(request,header));
     }
 
     @Override
     public ResponseEntity<EventResponseEntity> readOne(@NotNull @Valid UUID id) {
+
         return ResponseEntity.ok(eventService.read(id));
     }
 
@@ -50,26 +52,26 @@ public class EventController implements CrudController<EventResponseEntity, Even
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<EventResponseEntity> createEventWithUsers(
-                        @RequestParam List<UUID> userIds,
-                         @RequestBody @Valid EventRequestEntity request
-    ){
-        return ResponseEntity.ok(eventService.createEventWithUsers(userIds,request));
-    }
-
-    @PutMapping("/{eventId}/addUsers")
-    public ResponseEntity<EventResponseEntity> addUsersToEvent(
-            @PathVariable UUID eventId, @RequestParam List<UUID> userIds
-
-    ){
-        return ResponseEntity.ok(eventService.addUsersToEvent(eventId,userIds));
-    }
-    @PutMapping("/{eventId}/deleteUsers")
-    public ResponseEntity<EventResponseEntity> deleteUsersFromEvent(
-            @RequestParam List<UUID> userIds,
-            @PathVariable UUID eventId
-    ) {
-        return ResponseEntity.ok(eventService.deleteUsersFromEvent(eventId,userIds));
-    }
+//    @PostMapping("/createWith")
+//    public ResponseEntity<EventResponseEntity> createEventWithUsers(
+//                        @RequestParam List<UUID> userIds,
+//                         @RequestBody @Valid EventRequestEntity request
+//    ){
+//        return ResponseEntity.ok(eventService.createEventWithUsers(userIds,request));
+//    }
+//
+//    @PutMapping("/{eventId}/addUsers")
+//    public ResponseEntity<EventResponseEntity> addUsersToEvent(
+//            @PathVariable UUID eventId, @RequestParam List<UUID> userIds
+//
+//    ){
+//        return ResponseEntity.ok(eventService.addUsersToEvent(eventId,userIds));
+//    }
+//    @PutMapping("/{eventId}/deleteUsers")
+//    public ResponseEntity<EventResponseEntity> deleteUsersFromEvent(
+//            @RequestParam List<UUID> userIds,
+//            @PathVariable UUID eventId
+//    ) {
+//        return ResponseEntity.ok(eventService.deleteUsersFromEvent(eventId,userIds));
+//    }
 }

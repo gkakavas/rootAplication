@@ -1,13 +1,16 @@
 package com.example.app.controllers;
 
+import com.example.app.models.requests.GroupRequestEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 @RequestMapping("/Default")
 public interface CrudController <RESPONSE_ENTITY ,REQUEST_ENTITY>{
-    @PostMapping("/create/")
-    ResponseEntity<RESPONSE_ENTITY> create(@RequestBody REQUEST_ENTITY entity);
+    @PostMapping("/create")
+    ResponseEntity<RESPONSE_ENTITY> create(@RequestBody REQUEST_ENTITY request,
+                                           @RequestHeader(HttpHeaders.AUTHORIZATION) String header);
     @GetMapping("/{id}")
     ResponseEntity<RESPONSE_ENTITY> readOne(@PathVariable UUID id);
     @GetMapping ("/")

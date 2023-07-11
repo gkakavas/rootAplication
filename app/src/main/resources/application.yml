@@ -1,7 +1,6 @@
 Spring:
   Datasource:
     url: jdbc:postgresql://postgres:5432/postgres
-
     username: User
     password: 4y7sV96vA9wv46VR
     driver-class-name: org.postgresql.Driver
@@ -14,4 +13,9 @@ Spring:
         format_sql: true
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-
+Logging:
+  level:
+    root: INFO
+    com.example: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

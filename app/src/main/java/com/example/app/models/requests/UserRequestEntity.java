@@ -1,5 +1,6 @@
 package com.example.app.models.requests;
 
+import com.example.app.entities.Group;
 import com.example.app.entities.Role;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -11,6 +12,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.UUID;
 
 @Data
 @Builder
@@ -31,9 +34,13 @@ public class UserRequestEntity {
     @Email
     private String email;
     private String specialization;
+    private UUID group;
+    private String currentProject;
     @NotNull
     @Enumerated(value = EnumType.STRING)
     private Role role;
 
-    }
+
+
+}
 

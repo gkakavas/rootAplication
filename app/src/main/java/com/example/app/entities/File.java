@@ -33,4 +33,8 @@ public class File {
     private Boolean approved;
     private UUID approvedBy;
     private LocalDateTime approvedDate;
+
+    @ManyToOne
+    @JoinColumn(name= "user_id")
+    private User user;
 }

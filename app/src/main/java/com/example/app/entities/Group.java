@@ -1,23 +1,28 @@
 package com.example.app.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
-@Data
+@Getter
+@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
+@Entity(name="Group")
 @Table(name = "_group")
-public class UserGroup {
+public class Group {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID groupId;
     private String groupName;
     private UUID groupCreator;
+    private LocalDateTime groupCreationDate;
 
+    @OneToMany(mappedBy = "group")
+    @Builder.Default
+    private Set<User> groupHasUsers = new HashSet<>();
 }
