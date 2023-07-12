@@ -8,6 +8,7 @@ import com.example.app.services.EventService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,13 @@ public class EventController implements CrudController<EventResponseEntity, Even
     @Override
     public ResponseEntity<EventResponseEntity> create(@Valid EventRequestEntity request, String header) {
         return ResponseEntity.ok(eventService.create(request,header));
+    }
+
+    @PostMapping("/createGroupEvent")
+    public ResponseEntity<EventResponseEntity> createByGroup(@RequestBody EventRequestEntity request,
+                                                      @RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader,
+                                                        @RequestParam UUID groupId){
+        return new ResponseEntity<>(eventService.createForGroup(request,authHeader,groupId),HttpStatus.CREATED);
     }
 
     @Override

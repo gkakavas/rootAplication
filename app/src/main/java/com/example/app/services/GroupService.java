@@ -1,6 +1,7 @@
 package com.example.app.services;
 
 import com.example.app.entities.Group;
+import com.example.app.entities.User;
 import com.example.app.models.requests.GroupRequestEntity;
 import com.example.app.models.responses.GroupResponseEntity;
 import com.example.app.repositories.GroupRepository;
@@ -27,15 +28,19 @@ public class GroupService implements CrudService<GroupResponseEntity, GroupReque
     public GroupResponseEntity create(GroupRequestEntity request,String header) {
         if(header.contains("Bearer")&&request!=null) {
             var users = userRepo.findAllById(request.getIdsSet());
-            var user = userRepo.findByEmail(jwtService.extractUsername(header.substring(7)))
+            var creator = userRepo.findByEmail(jwtService.extractUsername(header.substring(7)))
                                                             .orElseThrow(() -> new RuntimeException());
             var group = Group.builder()
                     .groupName(request.getGroupName())
-                    .groupCreator(user.getUserId())
+                    .groupCreator(creator.getUserId())
                     .groupCreationDate(LocalDateTime.now())
                     .build();
             group.getGroupHasUsers().addAll(users);
             var newGroup = groupRepo.save(group);
+            for(User user:users){
+                user.setGroup(group);
+                userRepo.save(user);
+            }
             return GroupResponseEntity.builder()
                     .groupId(newGroup.getGroupId())
                     .groupName(newGroup.getGroupName())
@@ -81,9 +86,14 @@ public class GroupService implements CrudService<GroupResponseEntity, GroupReque
     public GroupResponseEntity update(UUID id, GroupRequestEntity request) {
         if (id != null && request != null) {
             var group = groupRepo.findById(id).orElseThrow(()->new IllegalArgumentException("Not Found group with this id"));
+            var users = userRepo.findAllById(request.getIdsSet());
             group.setGroupName(request.getGroupName());
-            group.getGroupHasUsers().addAll(userRepo.findAllById(request.getIdsSet()));
+            group.getGroupHasUsers().addAll(users);
             var newGroup = groupRepo.save(group);
+            for(User user:users){
+                user.setGroup(group);
+                userRepo.save(user);
+            }
             var response = GroupResponseEntity.builder()
                     .groupId(newGroup.getGroupId())
                     .groupName(newGroup.getGroupName())

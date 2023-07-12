@@ -8,9 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -23,7 +22,7 @@ public class UserController implements CrudController<UserResponseEntity, UserRe
     public ResponseEntity<UserResponseEntity> create(@Valid UserRequestEntity request,String header) {
         var response = service.create(request,header);
         if(response!=null) {
-            return new ResponseEntity<>(service.create(request, header), HttpStatus.CREATED);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
         }
         else
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -32,7 +31,7 @@ public class UserController implements CrudController<UserResponseEntity, UserRe
     public ResponseEntity<UserResponseEntity> readOne(UUID id) {
         var response = service.read(id);
         if(response!=null) {
-            return new ResponseEntity<>(service.read(id), HttpStatus.OK);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         }
         else
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
@@ -43,7 +42,7 @@ public class UserController implements CrudController<UserResponseEntity, UserRe
     public List<UserResponseEntity> readAll() {
         var response = service.read();
         if(response!=null) {
-            return service.read();
+            return response;
         }
         else
             return null;
@@ -53,7 +52,7 @@ public class UserController implements CrudController<UserResponseEntity, UserRe
     public ResponseEntity<UserResponseEntity> update(UUID id,@Valid UserRequestEntity request) {
         var response = service.read(id);
         if(response!=null) {
-            return new ResponseEntity<>(service.update(id,request), HttpStatus.OK);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         }
         else
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -68,6 +67,12 @@ public class UserController implements CrudController<UserResponseEntity, UserRe
         }
         else
             return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PatchMapping("/{userId}")
+    public ResponseEntity<UserResponseEntity> patch(@PathVariable UUID userId,
+                                                    @RequestParam Map<String,String> userField){
+        return new ResponseEntity<>(service.patch(userId,userField),HttpStatus.OK);
     }
 }
 

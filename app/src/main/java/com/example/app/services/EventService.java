@@ -5,18 +5,19 @@ import com.example.app.entities.User;
 import com.example.app.models.requests.EventRequestEntity;
 import com.example.app.models.responses.EventResponseEntity;
 import com.example.app.repositories.EventRepository;
+import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import lombok.*;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class EventService implements CrudService<EventResponseEntity, EventRequestEntity> {
     private final EventRepository eventRepo;
+    private final JwtService jwtService;
+    private final GroupRepository groupRepo;
     private final UserRepository userRepo;
     @Override
     public EventResponseEntity create(EventRequestEntity request, String creatorEmail) {
@@ -112,68 +113,33 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
         return false;
     }
 
-//    public EventResponseEntity createEventWithUsers(List<UUID> userIdsList, EventRequestEntity request){
-//        List<User> users = userRepo.findAllById(userIdsList);
-//            var event = Event.builder()
-//                    .eventBody(request.getEventBody())
-//                    .eventCreator(request.getEventCreator())
-//                    .eventDescription(request.getEventDescription())
-//                    .eventDateTime(request.getEventDateTime())
-//                    .eventExpiration(request.getEventExpiration())
-//                    .build();
-//            event.getUsersJoinInEvent().addAll(users);
-//            for(User user:users){
-//                user.getUserHasEvents().add(event);
-//                userRepo.save(user);
-//            }
-//            eventRepo.save(event);
-//            return new EventResponseEntity(
-//                    event.getEventId(),
-//                    event.getEventDescription(),
-//                    event.getEventBody(),
-//                    event.getEventCreator(),
-//                    event.getEventDateTime(),
-//                    event.getEventExpiration(),
-//                    event.getUsersJoinInEvent()
-//            );
-//    }
-//
-//    public EventResponseEntity addUsersToEvent(UUID eventId,List<UUID> userIds){
-//        List<User> users = userRepo.findAllById(userIds);
-//        var event = eventRepo.findById(eventId).orElseThrow(() -> new IllegalArgumentException("Not found event with this id"));
-//            event.getUsersJoinInEvent().addAll(users);
-//            users.forEach(user -> {
-//                user.getUserHasEvents().add(event);
-//                    userRepo.save(user);
-//            });
-//            eventRepo.save(event);
-//            return new EventResponseEntity(
-//                    event.getEventId(),
-//                    event.getEventDescription(),
-//                    event.getEventBody(),
-//                    event.getEventCreator(),
-//                    event.getEventDateTime(),
-//                    event.getEventExpiration(),
-//                    event.getUsersJoinInEvent());
-//
-//    }
-//
-//    public EventResponseEntity deleteUsersFromEvent(UUID eventId,List<UUID> userIds){
-//        var event = eventRepo.findById(eventId).orElseThrow(()->new IllegalArgumentException("Not found event with this id"));
-//        var users = userRepo.findAllById(userIds);
-//        users.forEach(event.getUsersJoinInEvent()::remove);
-//        eventRepo.save(event);
-//        for(User user:users){
-//            user.getUserHasEvents().remove(event);
-//            userRepo.save(user);
-//        }
-//        return new EventResponseEntity(
-//                event.getEventId(),
-//                event.getEventDescription(),
-//                event.getEventBody(),
-//                event.getEventCreator(),
-//                event.getEventDateTime(),
-//                event.getEventExpiration(),
-//                event.getUsersJoinInEvent());
-//    }
+    public EventResponseEntity createForGroup(EventRequestEntity request, String token, UUID groupId) {
+        if (groupId != null && request != null) {
+            var group = groupRepo.findById(groupId).orElseThrow(()->new IllegalArgumentException(""));
+            Set<User> userSet = new HashSet<>(userRepo.findAllByGroup(group));
+            Event event = Event.builder()
+                    .eventDescription(request.getEventBody())
+                    .eventBody(request.getEventBody())
+                    .eventCreator(jwtService.extractUsername(token.substring(7)))
+                    .eventDateTime(request.getEventDateTime())
+                    .eventExpiration(request.getEventExpiration())
+                    .build();
+            event.getUsersJoinInEvent().addAll(userSet);
+           var newEvent = eventRepo.save(event);
+           for(User user:userSet){
+               user.getUserHasEvents().add(newEvent);
+               userRepo.save(user);
+           }
+            return EventResponseEntity.builder()
+                    .eventId(newEvent.getEventId())
+                    .eventDescription(newEvent.getEventDescription())
+                    .eventBody(newEvent.getEventBody())
+                    .eventCreator(newEvent.getEventCreator())
+                    .eventDateTime(newEvent.getEventDateTime())
+                    .eventExpiration(newEvent.getEventExpiration())
+                    .userSet(newEvent.getUsersJoinInEvent())
+                    .build();
+        }
+        return null;
+    }
 }

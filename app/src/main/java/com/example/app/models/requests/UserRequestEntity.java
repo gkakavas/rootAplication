@@ -34,12 +34,12 @@ public class UserRequestEntity {
     private String email;
     private String specialization;
     private UUID group;
+    private UUID event;
+    private UUID file;
     private String currentProject;
     @NotNull
     @Enumerated(value = EnumType.STRING)
     private Role role;
-
-
 
 }
 

@@ -1,5 +1,6 @@
 package com.example.app.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -26,6 +27,7 @@ public class User implements UserDetails {
     private String password;
     private String firstname;
     private String lastname;
+    @Column(unique = true)
     private String email;
     private String specialization;
     private String currentProject;
@@ -46,14 +48,21 @@ public class User implements UserDetails {
     // for every instance of this user object we have a set of events that user HAS
     private Set<Event> userHasEvents = new HashSet<>();
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name= "group_id")
     private Group group;
 
 
-    @OneToMany(mappedBy = "user")
+    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinTable(name = "user_file",
+            joinColumns = {@JoinColumn(name = "user_id")},
+            inverseJoinColumns = {@JoinColumn(name = "file_id")}
+    )
     @Builder.Default
+    // for every instance of this user object we have a set of events that user HAS
     private Set<File> userHasFiles = new HashSet<>();
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));

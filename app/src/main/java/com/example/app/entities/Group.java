@@ -22,7 +22,7 @@ public class Group {
     private UUID groupCreator;
     private LocalDateTime groupCreationDate;
 
-    @OneToMany(mappedBy = "group")
+    @OneToMany(mappedBy = "group",cascade= CascadeType.ALL)
     @Builder.Default
     private Set<User> groupHasUsers = new HashSet<>();
 }

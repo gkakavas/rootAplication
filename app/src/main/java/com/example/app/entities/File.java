@@ -1,5 +1,6 @@
 package com.example.app.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -10,6 +11,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URL;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Data
@@ -34,7 +37,9 @@ public class File {
     private UUID approvedBy;
     private LocalDateTime approvedDate;
 
-    @ManyToOne
-    @JoinColumn(name= "user_id")
-    private User user;
+    @JsonIgnore
+    @ManyToMany(mappedBy = "userHasFiles", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @Builder.Default
+    //we have a set of users that one event have all the users
+    private Set<User> fileBelongToUsers = new HashSet<>();
 }
