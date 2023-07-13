@@ -27,19 +27,16 @@ public class File {
     @NotNull
     private UUID fileId;
     private String filename;
-    private Float fileSize;
+    private Long fileSize;
     private String fileType;
     private LocalDateTime uploadDate;
-    private UUID uploadedBy;
-    private String pathToServer;
     private String accessUrl;
     private Boolean approved;
     private UUID approvedBy;
     private LocalDateTime approvedDate;
 
     @JsonIgnore
-    @ManyToMany(mappedBy = "userHasFiles", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
-    @Builder.Default
-    //we have a set of users that one event have all the users
-    private Set<User> fileBelongToUsers = new HashSet<>();
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @JoinColumn(name= "user_id")
+    private User uploadedBy;
 }

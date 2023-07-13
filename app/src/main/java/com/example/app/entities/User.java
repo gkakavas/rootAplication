@@ -54,13 +54,8 @@ public class User implements UserDetails {
     private Group group;
 
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    @JoinTable(name = "user_file",
-            joinColumns = {@JoinColumn(name = "user_id")},
-            inverseJoinColumns = {@JoinColumn(name = "file_id")}
-    )
+    @OneToMany(mappedBy = "uploadedBy",fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @Builder.Default
-    // for every instance of this user object we have a set of events that user HAS
     private Set<File> userHasFiles = new HashSet<>();
 
     @Override
