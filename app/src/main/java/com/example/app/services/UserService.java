@@ -7,6 +7,7 @@ import com.example.app.repositories.EventRepository;
 import com.example.app.repositories.FileRepository;
 import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
+import com.example.app.utils.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,33 +22,15 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     private final EventRepository eventRepo;
     private final FileRepository fileRepo;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
     @Override
-    public UserResponseEntity create(UserRequestEntity request, String token)  {
+    public UserResponseEntity create(UserRequestEntity request, String token, UUID groupId)  {
         if(request!=null){
-            var user = User.builder()
-                    .password(passwordEncoder.encode("Cdb3zgy2"))
-                    .firstname(request.getFirstname())
-                    .lastname(request.getLastname())
-                    .email(request.getEmail())
-                    .specialization(request.getSpecialization())
-                    .currentProject(request.getCurrentProject())
-                    .createdBy(jwtService.extractUsername(token.substring(7)))
-                    .registerDate(LocalDateTime.now())
-                    .role(request.getRole())
-                    .group(groupRepo.findById(request.getGroup()).orElse(null))
-                    .build();
-            var newUser =  userRepo.save(user);
-            var group = newUser.getGroup();
-            groupRepo.save(group);
-            return UserResponseEntity.builder()
-                    .userId(newUser.getUserId())
-                    .firstname(newUser.getFirstname())
-                    .lastname(newUser.getLastname())
-                    .specialization(newUser.getSpecialization())
-                    .currentProject(newUser.getCurrentProject())
-                    .email(newUser.getEmail())
-                    .createdBy(newUser.getCreatedBy())
-                    .build();
+            var userCreator = userRepo.findByEmail(jwtService.extractUsername(token.substring(7)));
+            var group = groupRepo.findById(groupId).orElse(null);
+            var user =  userRepo.save(userMapper.convertToEntity(
+                    request,userCreator.get().getUserId(), group));
+            return userMapper.convertToResponse(user);
         }
         return null;
     }
@@ -56,13 +39,7 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
         var user = userRepo.findByEmail(email).orElseThrow(()
                 ->new IllegalArgumentException("Not found user with this email"));
         if(user!=null) {
-            return UserResponseEntity.builder()
-                    .userId(user.getUserId())
-                    .firstname(user.getFirstname())
-                    .lastname(user.getLastname())
-                    .email(user.getEmail())
-                    .specialization(user.getSpecialization())
-                    .build();
+            return userMapper.convertToResponse(user);
         }
         return null;
     }
@@ -70,13 +47,7 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     public UserResponseEntity read(UUID id) {
         var user = userRepo.findById(id).orElseThrow(()->new IllegalArgumentException("Not found user with this id"));
         if(user!=null) {
-            return UserResponseEntity.builder()
-                    .userId(user.getUserId())
-                    .firstname(user.getFirstname())
-                    .lastname(user.getLastname())
-                    .email(user.getEmail())
-                    .specialization(user.getSpecialization())
-                    .build();
+            return userMapper.convertToResponse(user);
         }
         return null;
     }
@@ -86,18 +57,7 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
         if(users!=null) {
             List<UserResponseEntity> userList = new ArrayList<>();
             for(User user:users){
-                userList.add(new UserResponseEntity(
-                        user.getUserId(),
-                        user.getFirstname(),
-                        user.getLastname(),
-                        user.getEmail(),
-                        user.getSpecialization(),
-                        user.getCurrentProject(),
-                        user.getCreatedBy(),
-                        user.getRole(),
-                        user.getGroup(),
-                        user.getUserHasFiles(),
-                        user.getUserHasEvents()));
+                userList.add(userMapper.convertToResponse(user));
             }
             return userList;
         }
@@ -108,15 +68,7 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
         var user = userRepo.findById(id).orElseThrow(()
                 ->new IllegalArgumentException("Not found user with this id"));
         if(user!=null && request!=null) {
-            user.setFirstname(request.getFirstname());
-            user.setLastname(request.getLastname());
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
-            user.setEmail(request.getEmail());
-            user.setSpecialization(request.getSpecialization());
-            user.setCurrentProject(request.getCurrentProject());
-            user.getUserHasEvents().add(eventRepo.findById(request.getEvent()).orElse(null));
-            user.setGroup(groupRepo.findById(request.getGroup()).orElse(null));
-            user.getUserHasFiles().add(fileRepo.findById(request.getFile()).orElse(null));
+            userMapper.convertToEntity(request,user.)
             var updatedUser = userRepo.save(user);
             return UserResponseEntity.builder()
                     .userId(updatedUser.getUserId())

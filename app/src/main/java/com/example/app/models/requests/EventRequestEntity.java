@@ -1,5 +1,6 @@
 package com.example.app.models.requests;
 
+import com.example.app.entities.User;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -9,6 +10,9 @@ import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @Builder
@@ -28,4 +32,7 @@ public class EventRequestEntity {
     @NotNull
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventExpiration;
+
+    @Builder.Default
+    private Set<User> userSet = new HashSet<>();
 }

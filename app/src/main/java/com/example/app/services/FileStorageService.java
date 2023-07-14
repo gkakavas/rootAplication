@@ -13,14 +13,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +30,6 @@ public class FileStorageService {
 
     public void init() {
         try {
-            //make the root directory in our case "uploads"
             Files.createDirectories(root);
         } catch (IOException e) {
             throw new RuntimeException("Could not initialize folder for upload!");
@@ -62,8 +58,6 @@ public class FileStorageService {
                     .uploadDate(LocalDateTime.now())
                     .uploadedBy(user)
                     .build();
-            user.getUserHasFiles().add(newFile);
-            userRepo.save(user);
             var response = fileRepo.save(newFile);
             return FileStorageProperties
                     .builder()
@@ -82,36 +76,46 @@ public class FileStorageService {
        return null;
     }
 
-    public Resource read(UUID userId) {
-        var user = userRepo.findById(userId).orElse(null);
-        var files = fileRepo.findAllByUploadedBy(user);
-        for (File file : files) {
+    public Resource download(UUID fileId) {
+        var file = fileRepo.findById(fileId).orElseThrow(()->new RuntimeException("Not Found file with this id"));
             try {
-                Path filePath = root.resolve(filename);
-                Resource resource = new UrlResource(filePath.toUri());
-
+                Path pathToFile = Path.of(file.getAccessUrl());
+                Resource resource = new UrlResource(pathToFile.toUri());
                 if (resource.exists() || resource.isReadable()) {
                     return resource;
-                } else {
+                }
+                else {
                     throw new RuntimeException("Could not read the file!");
                 }
             } catch (MalformedURLException e) {
                 throw new RuntimeException("Error: " + e.getMessage());
             }
-        }
     }
-
 
     public void deleteAll() {
         FileSystemUtils.deleteRecursively(root.toFile());
     }
 
 
-    public Stream<Path> readAll() {
+    public List<File> readAll(UUID userId) {
+        var files = fileRepo.findAllByUploadedBy(userRepo.findById(userId).orElse(null));
+        if(!files.isEmpty()){
+            return files;
+        }
+        else
+            throw new RuntimeException("This user has not files");
+    }
+
+    public boolean delete(UUID fileId) {
+        var file = fileRepo.findById(fileId);
+        Path pathOfFile = Path.of(file.get().getAccessUrl());
         try {
-            return Files.walk(this.root, 1).filter(path -> !path.equals(this.root)).map(this.root::relativize);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not load the files!");
+            Files.delete(pathOfFile);
+            fileRepo.deleteById(fileId);
+            return true;
+        }catch(IOException|IllegalArgumentException e){
+            e.printStackTrace();
+            return false;
         }
     }
 }

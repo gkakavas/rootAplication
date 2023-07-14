@@ -31,7 +31,7 @@ public class User implements UserDetails {
     private String email;
     private String specialization;
     private String currentProject;
-    private String createdBy;
+    private UUID createdBy;
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime registerDate;
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
