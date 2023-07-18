@@ -12,7 +12,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class UserMapper {
-private PasswordEncoder passwordEncoder;
+private final PasswordEncoder passwordEncoder;
 
     public User convertToEntity(UserRequestEntity request, UUID userCreator, Group userGroup) {
         User user = new User();
@@ -44,8 +44,8 @@ private PasswordEncoder passwordEncoder;
         response.setCreatedBy(user.getCreatedBy());
         response.setRole(user.getRole());
         response.setGroup(user.getGroup());
-        response.getFiles().addAll(user.getUserHasFiles());
-        response.getEvents().addAll(user.getUserHasEvents());
+        response.setEvents(user.getUserHasEvents());
+        response.setFiles(user.getUserHasFiles());
         return response;
     }
 }

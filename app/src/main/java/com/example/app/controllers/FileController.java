@@ -4,6 +4,7 @@ import com.example.app.entities.File;
 import com.example.app.models.responses.FileStorageProperties;
 import com.example.app.repositories.FileRepository;
 import com.example.app.services.FileStorageService;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -12,8 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,7 +23,7 @@ public class FileController {
     private final FileStorageService fileStorageService;
     private final FileRepository fileRepo;
     @PostMapping("/upload")
-    public ResponseEntity<FileStorageProperties> create(@RequestParam("file") MultipartFile file,
+    public ResponseEntity<FileStorageProperties> create(@RequestBody @NotNull MultipartFile file,
                                                         @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
         var response = fileStorageService.upload(file, token);
         if (response != null)

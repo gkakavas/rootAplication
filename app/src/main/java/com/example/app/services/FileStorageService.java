@@ -4,6 +4,8 @@ import com.example.app.entities.File;
 import com.example.app.models.responses.FileStorageProperties;
 import com.example.app.repositories.FileRepository;
 import com.example.app.repositories.UserRepository;
+import com.example.app.utils.FileMapper;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -17,6 +19,7 @@ import java.nio.file.*;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -27,7 +30,7 @@ public class FileStorageService {
     private final JwtService jwtService;
     private final UserRepository userRepo;
     private final FileRepository fileRepo;
-
+    private final FileMapper fileMapper;
     public void init() {
         try {
             Files.createDirectories(root);
@@ -39,36 +42,20 @@ public class FileStorageService {
     public FileStorageProperties upload(MultipartFile file, String token) {
         try {
             var user = userRepo.findByEmail(jwtService.extractUsername
-                    (token.substring(7))).orElse(null);
+                    (token.substring(7))).orElseThrow(()->new RuntimeException("Not found user with this Bearer"));
             try {
                 var userPath = Files.createDirectories(this.root.resolve(user.getUserId().toString()));
-                Files.copy(file.getInputStream(), userPath.resolve(file.getOriginalFilename()));
+                Files.copy(file.getInputStream(), userPath.resolve(Objects.requireNonNull(file.getOriginalFilename())));
             } catch (Exception e) {
                 if (e instanceof FileAlreadyExistsException) {
                     throw new RuntimeException("A file of that name already exists.");
                 }
                 throw new RuntimeException(e.getMessage());
             }
-            var newFile = File.builder()
-                    .filename(file.getOriginalFilename())
-                    .fileSize(file.getSize())
-                    .fileType(file.getContentType())
-                    .accessUrl(this.root.resolve(user.getUserId().toString())
-                            .resolve(file.getOriginalFilename()).toString())
-                    .uploadDate(LocalDateTime.now())
-                    .uploadedBy(user)
-                    .build();
-            var response = fileRepo.save(newFile);
-            return FileStorageProperties
-                    .builder()
-                    .fileId(response.getFileId())
-                    .filename(response.getFilename())
-                    .fileSize(response.getFileSize())
-                    .fileType(response.getFileType())
-                    .accessUrl(response.getAccessUrl())
-                    .uploadDate(response.getUploadDate())
-                    .uploadedBy(response.getUploadedBy())
-                    .build();
+            var newFile = fileMapper.extractMultipartInfo(file,user,this.root.resolve(user.getUserId().toString())
+                    .resolve(file.getOriginalFilename()).toString());
+            var responseFile = fileRepo.save(newFile);
+            return fileMapper.convertToResponse(responseFile);
         }catch(Exception e){
             if(e instanceof SQLException)
                 throw new RuntimeException("Not found user with this email");

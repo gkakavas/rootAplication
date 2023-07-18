@@ -4,6 +4,7 @@ import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.UserResponseEntity;
 import com.example.app.services.UserService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,7 @@ import java.util.UUID;
 public class UserController implements CrudController<UserResponseEntity, UserRequestEntity>{
     private final UserService service;
     @Override
-    public ResponseEntity<UserResponseEntity> create(@Valid UserRequestEntity request,String header) {
+    public ResponseEntity<UserResponseEntity> create(@Valid UserRequestEntity request, String header) {
         var response = service.create(request,header);
         if(response!=null) {
             return new ResponseEntity<>(response, HttpStatus.CREATED);

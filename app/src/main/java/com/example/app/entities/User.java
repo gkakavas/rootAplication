@@ -58,6 +58,13 @@ public class User implements UserDetails {
     @Builder.Default
     private Set<File> userHasFiles = new HashSet<>();
 
+    @OneToMany(mappedBy = "requestedBy", cascade = CascadeType.ALL)
+    @Builder.Default
+    private Set<Leave> userRequestedLeaves = new HashSet<>();
+
+    @OneToOne
+    @JoinColumn(name = "timesheet_id", referencedColumnName = "timesheetId")
+    private Timesheet timesheet;
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));

@@ -14,7 +14,6 @@ public class EventMapper {
         event.setEventCreator(eventCreator);
         event.setEventDateTime(request.getEventDateTime());
         event.setEventExpiration(request.getEventExpiration());
-        event.getUsersJoinInEvent().addAll(request.getUserSet());
         return event;
     }
     public EventResponseEntity convertToResponse(Event event){

@@ -1,7 +1,6 @@
 package com.example.app.models.responses;
 
 import lombok.*;
-
 @Data
 @Builder
 @AllArgsConstructor

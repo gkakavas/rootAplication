@@ -7,6 +7,7 @@ import com.example.app.models.responses.EventResponseEntity;
 import com.example.app.repositories.EventRepository;
 import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
+import com.example.app.utils.EventMapper;
 import lombok.*;
 import org.springframework.stereotype.Service;
 
@@ -16,28 +17,24 @@ import java.util.*;
 @RequiredArgsConstructor
 public class EventService implements CrudService<EventResponseEntity, EventRequestEntity> {
     private final EventRepository eventRepo;
-    private final JwtService jwtService;
     private final GroupRepository groupRepo;
     private final UserRepository userRepo;
+    private final JwtService jwtService;
+    private final EventMapper eventMapper;
     @Override
-    public EventResponseEntity create(EventRequestEntity request, String creatorEmail) {
-        if(request!=null&&creatorEmail!=null) {
-            var newEvent = Event.builder()
-                    .eventCreator(request.getEventCreator())
-                    .eventDescription(request.getEventDescription())
-                    .eventBody(request.getEventBody())
-                    .eventDateTime(request.getEventDateTime())
-                    .eventExpiration(request.getEventExpiration())
-                    .build();
+    public EventResponseEntity create(EventRequestEntity request, String token) {
+        if(request!=null&&token!=null) {
+            var newEvent = eventMapper.convertToEvent(request,jwtService.extractUsername(token.substring(7)));
+            var users = userRepo.findAllById(request.getUserIds());
+            if(request.getUserIds()!=null) {
+                newEvent.getUsersJoinInEvent().addAll(users);
+            }
             var event = eventRepo.save(newEvent);
-            return EventResponseEntity.builder()
-                    .eventId(event.getEventId())
-                    .eventCreator(event.getEventCreator())
-                    .eventDescription(event.getEventDescription())
-                    .eventBody(event.getEventBody())
-                    .eventDateTime(event.getEventDateTime())
-                    .eventExpiration(event.getEventExpiration())
-                    .build();
+            for(User user:users){
+                user.getUserHasEvents().add(event);
+                userRepo.save(user);
+            }
+            return eventMapper.convertToResponse(event);
         }
         return null;
     }
@@ -47,15 +44,7 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
             Event event = eventRepo.findById(id).orElseThrow(()
                     -> new IllegalArgumentException("Not found event with this id"));
             if(event!=null) {
-                return EventResponseEntity.builder()
-                        .eventId(event.getEventId())
-                        .eventCreator(event.getEventCreator())
-                        .eventDescription(event.getEventDescription())
-                        .eventBody(event.getEventBody())
-                        .eventDateTime(event.getEventDateTime())
-                        .eventExpiration(event.getEventExpiration())
-                        .userSet(event.getUsersJoinInEvent())
-                        .build();
+                return eventMapper.convertToResponse(event);
             }
         }
         return null;
@@ -64,21 +53,11 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
     @Override
     public List<EventResponseEntity> read() {
         List<Event> events = eventRepo.findAll();
-        if(events!=null) {
             List<EventResponseEntity> eventList = new ArrayList<>();
             for (Event event : events) {
-                eventList.add(new EventResponseEntity(
-                        event.getEventId(),
-                        event.getEventDescription(),
-                        event.getEventBody(),
-                        event.getEventCreator(),
-                        event.getEventDateTime(),
-                        event.getEventExpiration(),
-                        event.getUsersJoinInEvent()));
+                eventList.add(eventMapper.convertToResponse(event));
             }
-            return eventList;
-        }
-        return null;
+        return eventList;
     }
     @Override
     public EventResponseEntity update(UUID id, EventRequestEntity request) {
@@ -86,20 +65,9 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
             var event = eventRepo.findById(id).orElseThrow(()
                     -> new IllegalArgumentException("Not found event with this id"));
             if (event != null && request != null) {
-                event.setEventBody(request.getEventBody());
-                event.setEventCreator(request.getEventCreator());
-                event.setEventDescription(request.getEventDescription());
-                event.setEventDateTime(request.getEventDateTime());
-                event.setEventExpiration(request.getEventExpiration());
+                eventMapper.convertToEvent(request,event.getEventCreator());
                 var updatedEvent = eventRepo.save(event);
-                return EventResponseEntity.builder()
-                        .eventId(id)
-                        .eventBody(updatedEvent.getEventBody())
-                        .eventDescription(updatedEvent.getEventDescription())
-                        .eventCreator(updatedEvent.getEventCreator())
-                        .eventDateTime(updatedEvent.getEventDateTime())
-                        .eventExpiration(updatedEvent.getEventExpiration())
-                        .build();
+                return eventMapper.convertToResponse(updatedEvent);
             }
         }
        return null;
@@ -117,28 +85,14 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
         if (groupId != null && request != null) {
             var group = groupRepo.findById(groupId).orElseThrow(()->new IllegalArgumentException(""));
             Set<User> userSet = new HashSet<>(userRepo.findAllByGroup(group));
-            Event event = Event.builder()
-                    .eventDescription(request.getEventBody())
-                    .eventBody(request.getEventBody())
-                    .eventCreator(jwtService.extractUsername(token.substring(7)))
-                    .eventDateTime(request.getEventDateTime())
-                    .eventExpiration(request.getEventExpiration())
-                    .build();
+            Event event = eventMapper.convertToEvent(request,token);
             event.getUsersJoinInEvent().addAll(userSet);
            var newEvent = eventRepo.save(event);
            for(User user:userSet){
                user.getUserHasEvents().add(newEvent);
                userRepo.save(user);
            }
-            return EventResponseEntity.builder()
-                    .eventId(newEvent.getEventId())
-                    .eventDescription(newEvent.getEventDescription())
-                    .eventBody(newEvent.getEventBody())
-                    .eventCreator(newEvent.getEventCreator())
-                    .eventDateTime(newEvent.getEventDateTime())
-                    .eventExpiration(newEvent.getEventExpiration())
-                    .userSet(newEvent.getUsersJoinInEvent())
-                    .build();
+            return eventMapper.convertToResponse(newEvent);
         }
         return null;
     }

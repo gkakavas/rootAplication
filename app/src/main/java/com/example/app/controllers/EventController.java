@@ -59,27 +59,4 @@ public class EventController implements CrudController<EventResponseEntity, Even
         }
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
-
-//    @PostMapping("/createWith")
-//    public ResponseEntity<EventResponseEntity> createEventWithUsers(
-//                        @RequestParam List<UUID> userIds,
-//                         @RequestBody @Valid EventRequestEntity request
-//    ){
-//        return ResponseEntity.ok(eventService.createEventWithUsers(userIds,request));
-//    }
-//
-//    @PutMapping("/{eventId}/addUsers")
-//    public ResponseEntity<EventResponseEntity> addUsersToEvent(
-//            @PathVariable UUID eventId, @RequestParam List<UUID> userIds
-//
-//    ){
-//        return ResponseEntity.ok(eventService.addUsersToEvent(eventId,userIds));
-//    }
-//    @PutMapping("/{eventId}/deleteUsers")
-//    public ResponseEntity<EventResponseEntity> deleteUsersFromEvent(
-//            @RequestParam List<UUID> userIds,
-//            @PathVariable UUID eventId
-//    ) {
-//        return ResponseEntity.ok(eventService.deleteUsersFromEvent(eventId,userIds));
-//    }
 }

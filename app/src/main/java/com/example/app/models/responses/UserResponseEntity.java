@@ -25,7 +25,7 @@ public class UserResponseEntity {
     private String email;
     private String specialization;
     private String currentProject;
-    private String createdBy;
+    private UUID createdBy;
     private Role role;
     private Group group;
     @Builder.Default

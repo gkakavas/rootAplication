@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -20,8 +21,9 @@ import java.util.Set;
 @NoArgsConstructor
 public class EventRequestEntity {
 
+    @NotNull(message = "Event Description is required")
     private String eventDescription;
-    @NotNull
+    @NotNull(message = "Event Body is required")
     private String eventBody;
     @NotNull
     @Email
@@ -34,5 +36,5 @@ public class EventRequestEntity {
     private LocalDateTime eventExpiration;
 
     @Builder.Default
-    private Set<User> userSet = new HashSet<>();
+    private Set<UUID> userIds = new HashSet<>();
 }
