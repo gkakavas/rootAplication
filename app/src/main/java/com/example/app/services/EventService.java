@@ -25,8 +25,8 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
     public EventResponseEntity create(EventRequestEntity request, String token) {
         if(request!=null&&token!=null) {
             var newEvent = eventMapper.convertToEvent(request,jwtService.extractUsername(token.substring(7)));
-            var users = userRepo.findAllById(request.getUserIds());
-            if(request.getUserIds()!=null) {
+            var users = userRepo.findAllById(request.getIdsSet());
+            if(request.getIdsSet()!=null) {
                 newEvent.getUsersJoinInEvent().addAll(users);
             }
             var event = eventRepo.save(newEvent);

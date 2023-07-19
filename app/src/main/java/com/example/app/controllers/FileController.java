@@ -23,38 +23,22 @@ public class FileController {
     private final FileStorageService fileStorageService;
     private final FileRepository fileRepo;
     @PostMapping("/upload")
-    public ResponseEntity<FileStorageProperties> create(@RequestBody @NotNull MultipartFile file,
+    public ResponseEntity<FileStorageProperties> upload(@RequestBody MultipartFile file,
                                                         @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
-        var response = fileStorageService.upload(file, token);
-        if (response != null)
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        else
-            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(fileStorageService.upload(file,token), HttpStatus.CREATED);
     }
     @GetMapping("/download")
     public ResponseEntity<Resource> download(@RequestParam("fileId") UUID fileId) {
-        var response = fileStorageService.download(fileId);
-        if (response != null)
-            return new ResponseEntity<>(response,HttpStatus.OK);
-        else
-            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(fileStorageService.download(fileId),HttpStatus.OK);
     }
-    @GetMapping("")
+    @GetMapping("/")
     public ResponseEntity<List<File>> readAll(@RequestParam("userId") UUID userId) {
-        var response = fileStorageService.readAll(userId);
-        if (response != null)
-            return new ResponseEntity<>(response,HttpStatus.OK);
-        else
-            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(fileStorageService.readAll(userId),HttpStatus.OK);
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity delete(@RequestParam("fileId") UUID fileId) {
-        if (fileRepo.existsById(fileId)) {
-            var response = fileStorageService.delete(fileId);
-            if (response == true)
-                return new ResponseEntity(HttpStatus.ACCEPTED);
-        }
-            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+    public ResponseEntity<FileStorageProperties> delete(@RequestParam("fileId") UUID fileId) {
+        fileStorageService.delete(fileId);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

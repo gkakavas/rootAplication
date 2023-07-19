@@ -20,43 +20,39 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @RequestMapping("/event")
 public class EventController implements CrudController<EventResponseEntity, EventRequestEntity> {
-    private final EventService eventService;
+    private final EventService service;
 
     @Override
-    public ResponseEntity<EventResponseEntity> create(@Valid EventRequestEntity request, String header) {
-        return ResponseEntity.ok(eventService.create(request,header));
+    public ResponseEntity<EventResponseEntity> create(@Valid EventRequestEntity request, String token) {
+        return new ResponseEntity<>(service.create(request,token),HttpStatus.OK);
     }
 
     @PostMapping("/createGroupEvent")
-    public ResponseEntity<EventResponseEntity> createByGroup(@RequestBody EventRequestEntity request,
-                                                      @RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader,
-                                                        @RequestParam UUID groupId){
-        return new ResponseEntity<>(eventService.createForGroup(request,authHeader,groupId),HttpStatus.CREATED);
+    public ResponseEntity<EventResponseEntity> createByGroup(
+            @RequestBody @Valid EventRequestEntity request,
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
+            @RequestParam UUID groupId){
+        return new ResponseEntity<>(service.createForGroup(request,token,groupId),HttpStatus.CREATED);
     }
 
     @Override
-    public ResponseEntity<EventResponseEntity> readOne(@NotNull @Valid UUID id) {
-
-        return ResponseEntity.ok(eventService.read(id));
+    public ResponseEntity<EventResponseEntity> readOne(@Valid UUID id) {
+        return new ResponseEntity<>((service.read(id)),HttpStatus.OK);
     }
 
     @Override
     public List<EventResponseEntity> readAll() {
-        return eventService.read();
+        return service.read();
     }
 
     @Override
-    public ResponseEntity<EventResponseEntity> update(@NotNull UUID id, @NotNull @Valid EventRequestEntity request) {
-        return ResponseEntity.ok(eventService.update(id, request));
+    public ResponseEntity<EventResponseEntity> update(UUID id, @Valid EventRequestEntity request) {
+        return new ResponseEntity<>(service.update(id, request),HttpStatus.OK);
     }
 
     @Override
     public ResponseEntity<EventResponseEntity> delete(@NotNull UUID id) {
-        var isRemoved = eventService.delete(id);
-
-        if (!isRemoved) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(HttpStatus.ACCEPTED);
+        service.delete(id);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

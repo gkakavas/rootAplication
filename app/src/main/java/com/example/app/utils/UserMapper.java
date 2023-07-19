@@ -15,21 +15,21 @@ public class UserMapper {
 private final PasswordEncoder passwordEncoder;
 
     public User convertToEntity(UserRequestEntity request, UUID userCreator, Group userGroup) {
-        User user = new User();
-        user.setPassword(passwordEncoder.encode("Cdb3zgy2"));
-        user.setFirstname(request.getFirstname());
-        user.setLastname(request.getLastname());
-        user.setEmail(request.getEmail());
-        user.setSpecialization(request.getSpecialization());
-        user.setCurrentProject(request.getCurrentProject());
-        user.setCreatedBy(userCreator);
-        user.setRegisterDate(LocalDateTime.now());
-        user.setLastLogin(null);
-        user.setRole(request.getRole());
-        user.setGroup(userGroup);
-        user.setUserHasEvents(null);
-        user.setUserHasFiles(null);
-        return user;
+        return User.builder()
+            .password(passwordEncoder.encode("Cdb3zgy2"))
+            .firstname(request.getFirstname())
+            .lastname(request.getLastname())
+            .email(request.getEmail())
+            .specialization(request.getSpecialization())
+            .currentProject(request.getCurrentProject())
+            .createdBy(userCreator)
+            .registerDate(LocalDateTime.now())
+            .lastLogin(null)
+            .role(request.getRole())
+            .group(userGroup)
+            .userHasEvents(null)
+            .userHasFiles(null)
+            .build();
     }
 
     //Response for ROLE_ADMIN, ROLE_HR, ROLE_MANAGER

@@ -22,7 +22,7 @@ public class Leave {
     private LeaveType leaveType;
     private LocalDate leaveStarts;
     private LocalDate leaveEnds;
-    private String approvedBy;
+    private UUID approvedBy;
     private LocalDate approvedOn;
     private Boolean approved;
     @JsonIgnore

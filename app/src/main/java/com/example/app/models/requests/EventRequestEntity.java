@@ -2,6 +2,7 @@ package com.example.app.models.requests;
 
 import com.example.app.entities.User;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,20 +22,14 @@ import java.util.UUID;
 @NoArgsConstructor
 public class EventRequestEntity {
 
-    @NotNull(message = "Event Description is required")
+    @NotBlank(message = "Event Description is required")
     private String eventDescription;
-    @NotNull(message = "Event Body is required")
+    @NotBlank(message = "Event Body is required")
     private String eventBody;
-    @NotNull
-    @Email
-    private String eventCreator;
-    @NotNull
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDateTime;
-    @NotNull
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventExpiration;
-
     @Builder.Default
-    private Set<UUID> userIds = new HashSet<>();
+    private Set<UUID> idsSet = new HashSet<>();
 }

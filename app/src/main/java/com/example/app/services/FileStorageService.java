@@ -1,66 +1,71 @@
 package com.example.app.services;
 
 import com.example.app.entities.File;
+import com.example.app.entities.User;
 import com.example.app.models.responses.FileStorageProperties;
 import com.example.app.repositories.FileRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.utils.FileMapper;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.*;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class FileStorageService {
-    //
-    private final Path root = Paths.get("uploads");
     private final JwtService jwtService;
     private final UserRepository userRepo;
     private final FileRepository fileRepo;
     private final FileMapper fileMapper;
+    private final Path root = Paths.get("uploads");
+    private final Path timesheet = root.resolve("timesheets");
+    private final Path evaluation = root.resolve("evaluations");
+    public static final String
+            txt = "text/plain",
+            docx = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            xls = "application/vnd.ms-excel",
+            xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
     public void init() {
         try {
-            Files.createDirectories(root);
+            Files.createDirectories(timesheet);
+            Files.createDirectories(evaluation);
         } catch (IOException e) {
             throw new RuntimeException("Could not initialize folder for upload!");
         }
     }
 
     public FileStorageProperties upload(MultipartFile file, String token) {
-        try {
             var user = userRepo.findByEmail(jwtService.extractUsername
                     (token.substring(7))).orElseThrow(()->new RuntimeException("Not found user with this Bearer"));
             try {
-                var userPath = Files.createDirectories(this.root.resolve(user.getUserId().toString()));
-                Files.copy(file.getInputStream(), userPath.resolve(Objects.requireNonNull(file.getOriginalFilename())));
-            } catch (Exception e) {
-                if (e instanceof FileAlreadyExistsException) {
-                    throw new RuntimeException("A file of that name already exists.");
+                log.debug(file.getContentType());
+                if(Objects.equals(file.getContentType(), docx) || Objects.equals(file.getContentType(), txt)){
+                    var userPath = Files.createDirectories(evaluation.resolve(user.getUserId().toString()));
+                    Files.copy(file.getInputStream(),userPath.resolve(Objects.requireNonNull(file.getOriginalFilename())));
+                    return saveInDatabase(file,user,userPath);
                 }
-                throw new RuntimeException(e.getMessage());
+                else if(Objects.equals(file.getContentType(), xls) || Objects.equals(file.getContentType(), xlsx)){
+                    var userPath = Files.createDirectories(timesheet.resolve(user.getUserId().toString()));
+                    Files.copy(file.getInputStream(),userPath.resolve(Objects.requireNonNull(file.getOriginalFilename())));
+                    return saveInDatabase(file,user,userPath);
+                }
+            } catch (IOException e) {
+                    throw new RuntimeException("A file of that name already exists.");
             }
-            var newFile = fileMapper.extractMultipartInfo(file,user,this.root.resolve(user.getUserId().toString())
-                    .resolve(file.getOriginalFilename()).toString());
-            var responseFile = fileRepo.save(newFile);
-            return fileMapper.convertToResponse(responseFile);
-        }catch(Exception e){
-            if(e instanceof SQLException)
-                throw new RuntimeException("Not found user with this email");
-        }
-       return null;
+            return null;
     }
 
     public Resource download(UUID fileId) {
@@ -94,8 +99,9 @@ public class FileStorageService {
     }
 
     public boolean delete(UUID fileId) {
-        var file = fileRepo.findById(fileId);
-        Path pathOfFile = Path.of(file.get().getAccessUrl());
+        var file = fileRepo.findById(fileId).orElseThrow(()
+                ->new IllegalArgumentException("Not found file with this id"));
+        Path pathOfFile = Path.of(file.getAccessUrl());
         try {
             Files.delete(pathOfFile);
             fileRepo.deleteById(fileId);
@@ -104,5 +110,11 @@ public class FileStorageService {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public FileStorageProperties saveInDatabase(MultipartFile file, User user,Path userPath){
+        var newFile = fileMapper.extractMultipartInfo(file,user,
+                userPath.resolve(Objects.requireNonNull(file.getOriginalFilename())).toString());
+        return fileMapper.convertToResponse(fileRepo.save(newFile));
     }
 }

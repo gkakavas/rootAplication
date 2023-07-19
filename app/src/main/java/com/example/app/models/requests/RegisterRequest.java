@@ -16,19 +16,15 @@ import java.lang.reflect.Type;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RegisterRequest {
-    @NotNull
+
     @Size(min = 1, max = 255)
     private String firstname;
-    @NotNull
     @Size(min = 1, max = 255)
     private String lastname;
-    @NotNull
     @Email
     private String email;
-    @NotNull
     @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$", message = "Password must be at least 8 characters long and it contains at least one letter and one digit")
     private String password;
-    @NotNull
     @Enumerated(EnumType.STRING)
     private Role role;
     private String specialization;

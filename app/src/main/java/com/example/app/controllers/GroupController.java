@@ -5,7 +5,6 @@ import com.example.app.models.responses.GroupResponseEntity;
 import com.example.app.services.GroupService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,36 +15,29 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/group")
 @RequiredArgsConstructor
-@Slf4j
 public class GroupController implements CrudController<GroupResponseEntity,GroupRequestEntity>{
-    private final GroupService groupService;
+    private final GroupService service;
     @Override
-    public ResponseEntity<GroupResponseEntity> create(@Valid GroupRequestEntity request, String header) {
-        return ResponseEntity.ok(groupService.create(request,header));
+    public ResponseEntity<GroupResponseEntity> create(@Valid GroupRequestEntity request, String token) {
+        return new ResponseEntity<>(service.create(request,token),HttpStatus.OK);
     }
-
     @Override
     public ResponseEntity<GroupResponseEntity> readOne(UUID id) {
-        return ResponseEntity.ok(groupService.read(id));
+        return new ResponseEntity<>(service.read(id),HttpStatus.OK);
     }
 
     @Override
     public List<GroupResponseEntity> readAll() {
-        return groupService.read();
+        return service.read();
     }
 
     @Override
     public ResponseEntity<GroupResponseEntity> update(UUID id, GroupRequestEntity request) {
-        return ResponseEntity.ok(groupService.update(id,request));
+        return new ResponseEntity<>(service.update(id,request),HttpStatus.OK);
     }
-
     @Override
     public ResponseEntity<GroupResponseEntity> delete(UUID id) {
-        var isRemoved = groupService.delete(id);
-
-        if (!isRemoved) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        service.delete(id);
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 }

@@ -1,7 +1,6 @@
 package com.example.app.services;
 
 import com.example.app.entities.Leave;
-import com.example.app.entities.Role;
 import com.example.app.models.requests.LeaveRequestEntity;
 import com.example.app.models.responses.LeaveResponseEntity;
 import com.example.app.repositories.LeaveRepository;
@@ -9,14 +8,10 @@ import com.example.app.repositories.UserRepository;
 import com.example.app.utils.LeaveMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-
-import static java.time.LocalDate.parse;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +20,7 @@ public class LeaveService implements CrudService<LeaveResponseEntity, LeaveReque
     private final JwtService jwtService;
     private final UserRepository userRepo;
     private final LeaveMapper leaveMapper;
+
     @Override
     public LeaveResponseEntity create(LeaveRequestEntity request, String token) {
         if(request!=null&&token!=null){
@@ -34,7 +30,6 @@ public class LeaveService implements CrudService<LeaveResponseEntity, LeaveReque
         }
         return null;
     }
-
     @Override
     public LeaveResponseEntity read(UUID id) {
         if(id!=null){
@@ -81,7 +76,7 @@ public class LeaveService implements CrudService<LeaveResponseEntity, LeaveReque
             leave.setApprovedBy(userRepo.findByEmail(
                             jwtService.extractUsername(token.substring(7))).orElseThrow(
                             () -> new IllegalArgumentException("Not found user with this email"))
-                    .getUserId().toString());
+                    .getUserId());
             leave.setApprovedOn(LocalDate.now());
             leave.setApproved(true);
             var patcedLeave = leaveRepo.save(leave);

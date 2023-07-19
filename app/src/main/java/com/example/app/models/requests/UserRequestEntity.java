@@ -30,8 +30,6 @@ public class UserRequestEntity {
     private String email;
     private String specialization;
     private UUID group;
-    private UUID event;
-    private UUID file;
     private String currentProject;
     @NotBlank(message = "Role is required")
     @Enumerated(value = EnumType.STRING)

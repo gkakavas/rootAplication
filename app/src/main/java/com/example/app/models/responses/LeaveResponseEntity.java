@@ -16,7 +16,7 @@ public class LeaveResponseEntity {
     private LeaveType leaveType;
     private LocalDate leaveStarts;
     private LocalDate leaveEnds;
-    private String approvedBy;
+    private UUID approvedBy;
     private LocalDate approvedOn;
     private Boolean approved;
     private User requestedBy;

@@ -10,7 +10,7 @@ import java.util.UUID;
 public interface CrudController <RESPONSE_ENTITY ,REQUEST_ENTITY>{
     @PostMapping("/create")
     ResponseEntity<RESPONSE_ENTITY> create(@RequestBody REQUEST_ENTITY request,
-                                           @RequestHeader(HttpHeaders.AUTHORIZATION) String header);
+                                           @RequestHeader(HttpHeaders.AUTHORIZATION) String token);
     @GetMapping("/{id}")
     ResponseEntity<RESPONSE_ENTITY> readOne(@PathVariable UUID id);
     @GetMapping ("/")
