@@ -1,10 +1,9 @@
 package com.example.app.services;
 
 import com.example.app.entities.*;
+import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.UserResponseEntity;
-import com.example.app.repositories.EventRepository;
-import com.example.app.repositories.FileRepository;
 import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.utils.UserMapper;
@@ -24,7 +23,7 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     public UserResponseEntity create(UserRequestEntity request, String token)  {
         if(request!=null){
             var userCreator = userRepo.findByEmail(jwtService.extractUsername(token.substring(7)))
-                    .orElseThrow(()->new IllegalArgumentException("Not found user with this email"));
+                    .orElseThrow(()-> new UserNotFoundException("Not found user with this email"));
             var group = groupRepo.findById(request.getGroup()).orElse(null);
             var user =  userRepo.save(userMapper.convertToEntity(
                     request,userCreator.getUserId(), group));
