@@ -23,7 +23,6 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class FileStorageService {
     private final JwtService jwtService;
     private final UserRepository userRepo;
@@ -51,7 +50,6 @@ public class FileStorageService {
             var user = userRepo.findByEmail(jwtService.extractUsername
                     (token.substring(7))).orElseThrow(()->new RuntimeException("Not found user with this Bearer"));
             try {
-                log.debug(file.getContentType());
                 if(Objects.equals(file.getContentType(), docx) || Objects.equals(file.getContentType(), txt)){
                     var userPath = Files.createDirectories(evaluation.resolve(user.getUserId().toString()));
                     Files.copy(file.getInputStream(),userPath.resolve(Objects.requireNonNull(file.getOriginalFilename())));

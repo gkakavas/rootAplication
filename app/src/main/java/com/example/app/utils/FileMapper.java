@@ -12,29 +12,28 @@ import java.util.UUID;
 @Component
 public class FileMapper {
     public File extractMultipartInfo(MultipartFile multipartFile,User fileCreator,String accessUrl){
-        File file = new File();
-        file.setFilename(multipartFile.getOriginalFilename());
-        file.setFileSize(multipartFile.getSize());
-        file.setFileType(multipartFile.getContentType());
-        file.setUploadDate(LocalDateTime.now());
-        file.setAccessUrl(accessUrl);
-        file.setUploadedBy(fileCreator);
-        return file;
+        return File.builder()
+        .filename(multipartFile.getOriginalFilename())
+        .fileSize(multipartFile.getSize())
+        .fileType(multipartFile.getContentType())
+        .uploadDate(LocalDateTime.now())
+        .accessUrl(accessUrl)
+        .uploadedBy(fileCreator)
+        .build();
     }
 
     public FileStorageProperties convertToResponse(File file){
-        FileStorageProperties response = new FileStorageProperties();
-        response.setFileId(file.getFileId());
-        response.setFilename(file.getFilename());
-        response.setFileSize(file.getFileSize());
-        response.setFileType(file.getFileType());
-        response.setUploadDate(file.getUploadDate());
-        response.setAccessUrl(file.getAccessUrl());
-        response.setApproved(file.getApproved());
-        response.setApprovedBy(file.getApprovedBy());
-        response.setApprovedDate(file.getApprovedDate());
-        response.setUploadedBy(file.getUploadedBy());
-
-        return response;
+        return FileStorageProperties.builder()
+                .fileId(file.getFileId())
+                .filename(file.getFilename())
+                .fileSize(file.getFileSize())
+                .fileType(file.getFileType())
+                .uploadDate(file.getUploadDate())
+                .accessUrl(file.getAccessUrl())
+                .approved(file.getApproved())
+                .approvedBy(file.getApprovedBy())
+                .approvedDate(file.getApprovedDate())
+                .uploadedBy(file.getUploadedBy())
+                .build();
     }
 }

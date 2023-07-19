@@ -23,8 +23,9 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
     private final EventMapper eventMapper;
     @Override
     public EventResponseEntity create(EventRequestEntity request, String token) {
-        if(request!=null&&token!=null) {
-            var newEvent = eventMapper.convertToEvent(request,jwtService.extractUsername(token.substring(7)));
+        var eventCreator = userRepo.findByEmail(jwtService.extractUsername(token.substring(7)))
+                .orElseThrow(()->new IllegalArgumentException("Not Found user with this username"));
+            var newEvent = eventMapper.convertToEvent(request,eventCreator.getUserId());
             var users = userRepo.findAllById(request.getIdsSet());
             if(request.getIdsSet()!=null) {
                 newEvent.getUsersJoinInEvent().addAll(users);
@@ -35,8 +36,6 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
                 userRepo.save(user);
             }
             return eventMapper.convertToResponse(event);
-        }
-        return null;
     }
     @Override
     public EventResponseEntity read(UUID id) {
@@ -83,9 +82,11 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
 
     public EventResponseEntity createForGroup(EventRequestEntity request, String token, UUID groupId) {
         if (groupId != null && request != null) {
+            var eventCreator = userRepo.findByEmail(jwtService.extractUsername(token.substring(7)))
+                    .orElseThrow(()->new IllegalArgumentException("Not found user with this username"));
             var group = groupRepo.findById(groupId).orElseThrow(()->new IllegalArgumentException(""));
             Set<User> userSet = new HashSet<>(userRepo.findAllByGroup(group));
-            Event event = eventMapper.convertToEvent(request,token);
+            Event event = eventMapper.convertToEvent(request,eventCreator.getUserId());
             event.getUsersJoinInEvent().addAll(userSet);
            var newEvent = eventRepo.save(event);
            for(User user:userSet){

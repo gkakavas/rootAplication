@@ -23,13 +23,12 @@ public class Event {
     private UUID eventId;
     private String eventDescription;
     private String eventBody;
-    private String eventCreator;
+    private UUID eventCreator;
     private LocalDateTime eventDateTime;
     private LocalDateTime eventExpiration;
 
     @JsonIgnore
     @ManyToMany(mappedBy = "userHasEvents", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @Builder.Default
-    //we have a set of users that one event have all the users
     private Set<User> usersJoinInEvent = new HashSet<>();
 }

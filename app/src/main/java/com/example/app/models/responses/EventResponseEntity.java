@@ -19,7 +19,7 @@ public class EventResponseEntity {
     private UUID eventId;
     private String eventDescription;
     private String eventBody;
-    private String eventCreator;
+    private UUID eventCreator;
     private LocalDateTime eventDateTime;
     private LocalDateTime eventExpiration;
 

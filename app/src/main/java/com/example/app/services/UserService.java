@@ -19,6 +19,7 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     private final JwtService jwtService;
     private final GroupRepository groupRepo;
     private final UserMapper userMapper;
+    private final PasswordEncoder encoder;
     @Override
     public UserResponseEntity create(UserRequestEntity request, String token)  {
         if(request!=null){
@@ -51,25 +52,25 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     @Override
     public List<UserResponseEntity> read() {
         List<User> users = userRepo.findAll();
-        if(users!=null) {
             List<UserResponseEntity> userList = new ArrayList<>();
             for(User user:users){
                 userList.add(userMapper.convertToResponse(user));
             }
             return userList;
-        }
-        return null;
     }
     @Override
     public UserResponseEntity update(UUID id, UserRequestEntity request) {
         var user = userRepo.findById(id).orElseThrow(()
                 ->new IllegalArgumentException("Not found user with this id"));
-        if(user!=null && request!=null) {
-            var updatedUser = userMapper.convertToEntity(request,user.getCreatedBy(),user.getGroup());
-            var response = userRepo.save(updatedUser);
+            user.setPassword(encoder.encode(request.getPassword()));
+            user.setFirstname(request.getFirstname());
+            user.setLastname(request.getLastname());
+            user.setEmail(request.getEmail());
+            user.setSpecialization(request.getSpecialization());
+            user.setCurrentProject(request.getCurrentProject());
+            user.setRole(request.getRole());
+            var response = userRepo.save(user);
             return userMapper.convertToResponse(response);
-        }
-        return null;
     }
     @Override
     public boolean delete(UUID id) {

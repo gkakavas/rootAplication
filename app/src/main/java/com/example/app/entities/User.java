@@ -16,7 +16,7 @@ import java.util.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity(name=)
+@Entity(name="User")
 @Table(name="_user")
 
 public class User implements UserDetails {
