@@ -1,5 +1,7 @@
 package com.example.app.controllers;
 
+import com.example.app.exception.LeaveNotFoundException;
+import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.LeaveRequestEntity;
 import com.example.app.models.responses.LeaveResponseEntity;
 import com.example.app.services.LeaveService;
@@ -15,15 +17,15 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/leave")
 @RequiredArgsConstructor
-public class LeaveController implements CrudController<LeaveResponseEntity, LeaveRequestEntity> {
+public class LeaveController implements CrudController<LeaveResponseEntity, LeaveRequestEntity, LeaveNotFoundException> {
     private final LeaveService service;
     @Override
-    public ResponseEntity<LeaveResponseEntity> create(@Valid LeaveRequestEntity request, String token) {
+    public ResponseEntity<LeaveResponseEntity> create(@Valid LeaveRequestEntity request, String token) throws UserNotFoundException {
         return new ResponseEntity<>(service.create(request,token), HttpStatus.CREATED);
     }
 
     @Override
-    public ResponseEntity<LeaveResponseEntity> readOne(UUID id) {
+    public ResponseEntity<LeaveResponseEntity> readOne(UUID id) throws LeaveNotFoundException {
         return new ResponseEntity<>(service.read(id),HttpStatus.OK);
     }
 
@@ -33,19 +35,22 @@ public class LeaveController implements CrudController<LeaveResponseEntity, Leav
     }
 
     @Override
-    public ResponseEntity<LeaveResponseEntity> update(UUID id, @Valid LeaveRequestEntity request) {
+    public ResponseEntity<LeaveResponseEntity> update(UUID id, @Valid LeaveRequestEntity request)
+    throws LeaveNotFoundException{
         return new ResponseEntity<>(service.update(id,request), HttpStatus.OK);
     }
 
     @Override
-    public ResponseEntity<LeaveResponseEntity> delete(UUID id) {
+    public ResponseEntity<LeaveResponseEntity> delete(UUID id)
+    throws LeaveNotFoundException{
         service.delete(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }
     @PatchMapping("/approval/{id}")
     public ResponseEntity<LeaveResponseEntity> approveLeave(
             @PathVariable UUID id,
-            @RequestHeader(HttpHeaders.AUTHORIZATION) String token){
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String token)
+    throws LeaveNotFoundException,UserNotFoundException{
         return new ResponseEntity<>(service.approveLeave(id,token),HttpStatus.ACCEPTED);
     }
 }

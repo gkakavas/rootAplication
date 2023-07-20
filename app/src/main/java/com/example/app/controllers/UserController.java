@@ -1,5 +1,6 @@
 package com.example.app.controllers;
 
+import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.UserResponseEntity;
 import com.example.app.services.UserService;
@@ -18,14 +19,15 @@ import java.util.UUID;
 
 @RequestMapping("/user")
 @RequiredArgsConstructor
-public class UserController implements CrudController<UserResponseEntity, UserRequestEntity>{
+public class UserController implements CrudController<UserResponseEntity, UserRequestEntity, UserNotFoundException>{
     private final UserService service;
     @Override
-    public ResponseEntity<UserResponseEntity> create(@Valid UserRequestEntity request, String token) {
+    public ResponseEntity<UserResponseEntity> create
+            (@Valid UserRequestEntity request, String token) throws UserNotFoundException{
         return new ResponseEntity<>(service.create(request,token), HttpStatus.CREATED);
     }
     @Override
-    public ResponseEntity<UserResponseEntity> readOne(UUID id) {
+    public ResponseEntity<UserResponseEntity> readOne(UUID id) throws UserNotFoundException {
         return new ResponseEntity<>(service.read(id), HttpStatus.OK);
     }
 
@@ -35,20 +37,21 @@ public class UserController implements CrudController<UserResponseEntity, UserRe
     }
 
     @Override
-    public ResponseEntity<UserResponseEntity> update(UUID id,@Valid UserRequestEntity request) {
+    public ResponseEntity<UserResponseEntity> update(UUID id,@Valid UserRequestEntity request) throws UserNotFoundException{
         return new ResponseEntity<>(service.update(id,request), HttpStatus.OK);
     }
 
     @Override
-    public ResponseEntity<UserResponseEntity> delete(UUID id) {
+    public ResponseEntity<UserResponseEntity> delete(UUID id) throws UserNotFoundException {
         service.delete(id);
         return new ResponseEntity<>(HttpStatus.OK);
 
     }
 
     @PatchMapping("/patch/{userId}")
-    public ResponseEntity<UserResponseEntity> patch(@PathVariable UUID userId,
-                                                    @RequestParam Map<String,String> userField){
+    public ResponseEntity<UserResponseEntity> patch
+            (@PathVariable UUID userId, @RequestParam Map<String,String> userField)
+            throws UserNotFoundException{
         return new ResponseEntity<>(service.patch(userId,userField),HttpStatus.OK);
     }
 }

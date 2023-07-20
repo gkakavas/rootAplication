@@ -2,6 +2,9 @@ package com.example.app.services;
 
 import com.example.app.entities.Event;
 import com.example.app.entities.User;
+import com.example.app.exception.EventNotFoundException;
+import com.example.app.exception.GroupNotFoundException;
+import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.EventRequestEntity;
 import com.example.app.models.responses.EventResponseEntity;
 import com.example.app.repositories.EventRepository;
@@ -9,27 +12,27 @@ import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.utils.EventMapper;
 import lombok.*;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-public class EventService implements CrudService<EventResponseEntity, EventRequestEntity> {
+public class EventService implements CrudService<EventResponseEntity, EventRequestEntity, EventNotFoundException> {
     private final EventRepository eventRepo;
     private final GroupRepository groupRepo;
     private final UserRepository userRepo;
     private final JwtService jwtService;
     private final EventMapper eventMapper;
     @Override
-    public EventResponseEntity create(EventRequestEntity request, String token) {
+    public EventResponseEntity create(EventRequestEntity request, String token)
+    throws UserNotFoundException{
         var eventCreator = userRepo.findByEmail(jwtService.extractUsername(token.substring(7)))
-                .orElseThrow(()->new IllegalArgumentException("Not Found user with this username"));
+                .orElseThrow(UserNotFoundException::new);
             var newEvent = eventMapper.convertToEvent(request,eventCreator.getUserId());
             var users = userRepo.findAllById(request.getIdsSet());
-            if(request.getIdsSet()!=null) {
-                newEvent.getUsersJoinInEvent().addAll(users);
-            }
+            newEvent.getUsersJoinInEvent().addAll(users);
             var event = eventRepo.save(newEvent);
             for(User user:users){
                 user.getUserHasEvents().add(event);
@@ -38,10 +41,10 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
             return eventMapper.convertToResponse(event);
     }
     @Override
-    public EventResponseEntity read(UUID id) {
+    public EventResponseEntity read(UUID id)
+    throws EventNotFoundException{
         if (id != null) {
-            Event event = eventRepo.findById(id).orElseThrow(()
-                    -> new IllegalArgumentException("Not found event with this id"));
+            Event event = eventRepo.findById(id).orElseThrow(EventNotFoundException::new);
             if(event!=null) {
                 return eventMapper.convertToResponse(event);
             }
@@ -59,32 +62,37 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
         return eventList;
     }
     @Override
-    public EventResponseEntity update(UUID id, EventRequestEntity request) {
+    public EventResponseEntity update(UUID id, EventRequestEntity request)
+    throws EventNotFoundException{
         if(id!=null) {
-            var event = eventRepo.findById(id).orElseThrow(()
-                    -> new IllegalArgumentException("Not found event with this id"));
-            if (event != null && request != null) {
-                eventMapper.convertToEvent(request,event.getEventCreator());
-                var updatedEvent = eventRepo.save(event);
-                return eventMapper.convertToResponse(updatedEvent);
-            }
+            var event = eventRepo.findById(id).orElseThrow(EventNotFoundException::new);
+            event.setEventDescription(request.getEventDescription());
+            event.setEventBody(request.getEventBody());
+            event.setEventExpiration(request.getEventExpiration());
+            event.setEventDateTime(request.getEventDateTime());
+            var newEvent = eventRepo.save(event);
+            return eventMapper.convertToResponse(newEvent);
         }
        return null;
     }
     @Override
-    public boolean delete(UUID id) {
+    public boolean delete(UUID id)
+    throws EventNotFoundException{
         if(id!=null){
             eventRepo.deleteById(id);
             return true;
         }
-        return false;
+        else{
+            throw new EventNotFoundException();
+        }
     }
 
-    public EventResponseEntity createForGroup(EventRequestEntity request, String token, UUID groupId) {
+    public EventResponseEntity createForGroup(EventRequestEntity request, String token, UUID groupId)
+            throws GroupNotFoundException, UserNotFoundException {
         if (groupId != null && request != null) {
             var eventCreator = userRepo.findByEmail(jwtService.extractUsername(token.substring(7)))
-                    .orElseThrow(()->new IllegalArgumentException("Not found user with this username"));
-            var group = groupRepo.findById(groupId).orElseThrow(()->new IllegalArgumentException(""));
+                    .orElseThrow(UserNotFoundException::new);
+            var group = groupRepo.findById(groupId).orElseThrow(GroupNotFoundException::new);
             Set<User> userSet = new HashSet<>(userRepo.findAllByGroup(group));
             Event event = eventMapper.convertToEvent(request,eventCreator.getUserId());
             event.getUsersJoinInEvent().addAll(userSet);
@@ -96,5 +104,27 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
             return eventMapper.convertToResponse(newEvent);
         }
         return null;
+    }
+
+    public EventResponseEntity addUserToEvent(Set<UUID> idsSet, UUID eventId) throws EventNotFoundException{
+        var event = eventRepo.findById(eventId).orElseThrow(EventNotFoundException::new);
+        var users = userRepo.findAllById(idsSet);
+        users.forEach((user)->{
+            event.getUsersJoinInEvent().add(user);
+            user.getUserHasEvents().add(event);
+        });
+        var updatedEvent =  eventRepo.save(event);
+        return eventMapper.convertToResponse(updatedEvent);
+    }
+
+    public EventResponseEntity removeUserFromEvent(Set<UUID> idsSet, UUID eventId)throws EventNotFoundException{
+        var event = eventRepo.findById(eventId).orElseThrow(EventNotFoundException::new);
+        var users = userRepo.findAllById(idsSet);
+        users.forEach((user)->{
+            event.getUsersJoinInEvent().remove(user);
+            user.getUserHasEvents().remove(event);
+        });
+        var updatedEvent = eventRepo.save(event);
+        return eventMapper.convertToResponse(updatedEvent);
     }
 }

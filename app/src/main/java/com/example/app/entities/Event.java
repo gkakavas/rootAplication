@@ -28,7 +28,7 @@ public class Event {
     private LocalDateTime eventExpiration;
 
     @JsonIgnore
-    @ManyToMany(mappedBy = "userHasEvents", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "userHasEvents", cascade ={CascadeType.PERSIST}, fetch = FetchType.EAGER)
     @Builder.Default
     private Set<User> usersJoinInEvent = new HashSet<>();
 }

@@ -8,22 +8,23 @@ import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.utils.UserMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.*;
 @Service
 @RequiredArgsConstructor
-public class UserService implements CrudService<UserResponseEntity, UserRequestEntity>{
+public class UserService implements CrudService<UserResponseEntity, UserRequestEntity,UserNotFoundException>{
     private final UserRepository userRepo;
     private final JwtService jwtService;
     private final GroupRepository groupRepo;
     private final UserMapper userMapper;
     private final PasswordEncoder encoder;
     @Override
-    public UserResponseEntity create(UserRequestEntity request, String token)  {
+    public UserResponseEntity create(UserRequestEntity request, String token) throws UserNotFoundException {
         if(request!=null){
             var userCreator = userRepo.findByEmail(jwtService.extractUsername(token.substring(7)))
-                    .orElseThrow(()-> new UserNotFoundException("Not found user with this email"));
+                    .orElseThrow(UserNotFoundException::new);
             var group = groupRepo.findById(request.getGroup()).orElse(null);
             var user =  userRepo.save(userMapper.convertToEntity(
                     request,userCreator.getUserId(), group));
@@ -32,17 +33,16 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
         return null;
     }
 
-    public UserResponseEntity read(String email) {
-        var user = userRepo.findByEmail(email).orElseThrow(()
-                ->new IllegalArgumentException("Not found user with this email"));
+    public UserResponseEntity read(String email) throws UserNotFoundException {
+        var user = userRepo.findByEmail(email).orElseThrow(UserNotFoundException::new);
         if(user!=null) {
             return userMapper.convertToResponse(user);
         }
         return null;
     }
     @Override
-    public UserResponseEntity read(UUID id) {
-        var user = userRepo.findById(id).orElseThrow(()->new IllegalArgumentException("Not found user with this id"));
+    public UserResponseEntity read(UUID id) throws UserNotFoundException {
+        var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
         if(user!=null) {
             return userMapper.convertToResponse(user);
         }
@@ -58,9 +58,8 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
             return userList;
     }
     @Override
-    public UserResponseEntity update(UUID id, UserRequestEntity request) {
-        var user = userRepo.findById(id).orElseThrow(()
-                ->new IllegalArgumentException("Not found user with this id"));
+    public UserResponseEntity update(UUID id, UserRequestEntity request) throws UserNotFoundException {
+        var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
             user.setPassword(encoder.encode(request.getPassword()));
             user.setFirstname(request.getFirstname());
             user.setLastname(request.getLastname());
@@ -72,16 +71,18 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
             return userMapper.convertToResponse(response);
     }
     @Override
-    public boolean delete(UUID id) {
+    public boolean delete(UUID id) throws UserNotFoundException {
         if(id!=null){
             userRepo.deleteById(id);
             return true;
         }
-        return false;
+        else{
+            throw new UserNotFoundException();
+        }
     }
 
-    public UserResponseEntity patch(UUID userId, Map<String, String> userField) {
-        var user = userRepo.findById(userId).orElseThrow(()-> new IllegalArgumentException(""));
+    public UserResponseEntity patch(UUID userId, Map<String, String> userField) throws UserNotFoundException {
+        var user = userRepo.findById(userId).orElseThrow(UserNotFoundException::new);
         userField.keySet().forEach((key)-> {
                     switch (key) {
                         //case password:

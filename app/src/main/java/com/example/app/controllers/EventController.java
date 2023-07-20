@@ -1,5 +1,8 @@
 package com.example.app.controllers;
 
+import com.example.app.exception.EventNotFoundException;
+import com.example.app.exception.GroupNotFoundException;
+import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.EventRequestEntity;
 import com.example.app.models.requests.RegisterRequest;
 import com.example.app.models.responses.EventResponseEntity;
@@ -14,29 +17,34 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/event")
-public class EventController implements CrudController<EventResponseEntity, EventRequestEntity> {
+public class EventController implements CrudController<EventResponseEntity, EventRequestEntity, EventNotFoundException> {
     private final EventService service;
 
     @Override
-    public ResponseEntity<EventResponseEntity> create(@Valid EventRequestEntity request, String token) {
+    public ResponseEntity<EventResponseEntity> create(@Valid EventRequestEntity request, String token)
+    throws UserNotFoundException {
         return new ResponseEntity<>(service.create(request,token),HttpStatus.OK);
     }
 
     @PostMapping("/createGroupEvent")
-    public ResponseEntity<EventResponseEntity> createByGroup(
+    public ResponseEntity<EventResponseEntity> createByGroup
+            (
             @RequestBody @Valid EventRequestEntity request,
             @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
-            @RequestParam UUID groupId){
+            @RequestParam UUID groupId)
+            throws UserNotFoundException, GroupNotFoundException {
         return new ResponseEntity<>(service.createForGroup(request,token,groupId),HttpStatus.CREATED);
     }
 
     @Override
-    public ResponseEntity<EventResponseEntity> readOne(@Valid UUID id) {
+    public ResponseEntity<EventResponseEntity> readOne(@Valid UUID id)
+    throws EventNotFoundException{
         return new ResponseEntity<>((service.read(id)),HttpStatus.OK);
     }
 
@@ -46,13 +54,31 @@ public class EventController implements CrudController<EventResponseEntity, Even
     }
 
     @Override
-    public ResponseEntity<EventResponseEntity> update(UUID id, @Valid EventRequestEntity request) {
+    public ResponseEntity<EventResponseEntity> update(UUID id, @Valid EventRequestEntity request)
+    throws EventNotFoundException{
         return new ResponseEntity<>(service.update(id, request),HttpStatus.OK);
     }
 
     @Override
-    public ResponseEntity<EventResponseEntity> delete(@NotNull UUID id) {
+    public ResponseEntity<EventResponseEntity> delete(UUID id)
+    throws EventNotFoundException{
         service.delete(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+    @PatchMapping("/addUsers/{eventId}")
+    public ResponseEntity<EventResponseEntity> addUsersToEvent(
+            @PathVariable UUID eventId,@RequestParam Set<UUID> idsSet)
+    throws EventNotFoundException{
+        return new ResponseEntity<>(service.addUserToEvent(idsSet,eventId),HttpStatus.OK);
+    }
+
+    @PatchMapping("/removeUsers/{eventId}")
+    public ResponseEntity<EventResponseEntity> removeUsersFromEvent(
+            @PathVariable UUID eventId,@RequestParam Set<UUID> idsSet)
+    throws EventNotFoundException{
+        return new ResponseEntity<>(service.removeUserFromEvent(idsSet,eventId),HttpStatus.OK);
+    }
+
+    //ALL RESPONSE MUST IN FORM OF UUID NOT ON FORM OF OBJECTS
 }

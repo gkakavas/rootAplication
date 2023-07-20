@@ -1,10 +1,11 @@
 package com.example.app.utils;
 
 import com.example.app.entities.Event;
+import com.example.app.entities.User;
 import com.example.app.models.requests.EventRequestEntity;
 import com.example.app.models.responses.EventResponseEntity;
 import org.springframework.stereotype.Component;
-
+import java.util.Set;
 import java.util.UUID;
 
 @Component

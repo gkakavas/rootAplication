@@ -2,6 +2,9 @@ package com.example.app.services;
 
 import com.example.app.entities.Group;
 import com.example.app.entities.User;
+import com.example.app.exception.GroupNotFoundException;
+import com.example.app.exception.LeaveNotFoundException;
+import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.GroupRequestEntity;
 import com.example.app.models.responses.GroupResponseEntity;
 import com.example.app.repositories.GroupRepository;
@@ -19,16 +22,16 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class GroupService implements CrudService<GroupResponseEntity, GroupRequestEntity>{
+public class GroupService implements CrudService<GroupResponseEntity, GroupRequestEntity, GroupNotFoundException>{
     private final UserRepository userRepo;
     private final GroupRepository groupRepo;
     private final JwtService jwtService;
     private final GroupMapper groupMapper;
     @Override
-    public GroupResponseEntity create(GroupRequestEntity request,String token) {
+    public GroupResponseEntity create(GroupRequestEntity request,String token) throws UserNotFoundException {
             var users = userRepo.findAllById(request.getIdsSet());
             var groupCreator = userRepo.findByEmail(jwtService.extractUsername(token.substring(7)))
-                                                            .orElseThrow(RuntimeException::new);
+                                                            .orElseThrow(UserNotFoundException::new);
             var group = groupMapper.convertToGroup(request,groupCreator.getUserId());
             group.getGroupHasUsers().addAll(users);
             var newGroup = groupRepo.save(group);
@@ -40,8 +43,8 @@ public class GroupService implements CrudService<GroupResponseEntity, GroupReque
     }
 
     @Override
-    public GroupResponseEntity read(UUID id) {
-            var group = groupRepo.findById(id).orElseThrow(()->new IllegalArgumentException("Not Found group with this id"));
+    public GroupResponseEntity read(UUID id) throws GroupNotFoundException{
+            var group = groupRepo.findById(id).orElseThrow(GroupNotFoundException::new);
             return groupMapper.convertToResponse(group);
     }
     @Override
@@ -52,8 +55,8 @@ public class GroupService implements CrudService<GroupResponseEntity, GroupReque
                     .collect(Collectors.toList());
     }
     @Override
-    public GroupResponseEntity update(UUID id, GroupRequestEntity request) {
-            var group = groupRepo.findById(id).orElseThrow(()->new IllegalArgumentException("Not Found group with this id"));
+    public GroupResponseEntity update(UUID id, GroupRequestEntity request) throws GroupNotFoundException {
+            var group = groupRepo.findById(id).orElseThrow(GroupNotFoundException::new);
             var users = userRepo.findAllById(request.getIdsSet());
             group.setGroupName(request.getGroupName());
             group.getGroupHasUsers().addAll(users);
@@ -72,9 +75,14 @@ public class GroupService implements CrudService<GroupResponseEntity, GroupReque
             return response;
     }
     @Override
-    public boolean delete(UUID id) {
-        groupRepo.deleteById(id);
-        return true;
+    public boolean delete(UUID id) throws GroupNotFoundException{
+        if(id!=null) {
+            groupRepo.deleteById(id);
+            return true;
+        }
+        else{
+            throw new GroupNotFoundException();
+        }
     }
 
 }

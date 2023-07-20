@@ -23,6 +23,7 @@ public class UserRequestEntity {
     @NotBlank(message = "Lastname is required")
     @Size(min = 4, max = 50,message = "Lastname must be between 4 and 50 characters")
     private String lastname;
+    //only for update
     @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$", message = "Password must be at least 8 characters long and it contains at least one letter and one digit")
     private String password;
     @NotBlank(message = "Email is required")
@@ -31,7 +32,7 @@ public class UserRequestEntity {
     private String specialization;
     private UUID group;
     private String currentProject;
-    @NotBlank(message = "Role is required")
+    //must be validated for its type compatibility that gives the user
     @Enumerated(value = EnumType.STRING)
     private Role role;
 
