@@ -32,4 +32,5 @@ public class EventRequestEntity {
     private LocalDateTime eventExpiration;
     @Builder.Default
     private Set<UUID> idsSet = new HashSet<>();
+
 }

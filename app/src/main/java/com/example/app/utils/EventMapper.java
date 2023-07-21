@@ -30,5 +30,4 @@ public class EventMapper {
                 .userSet(event.getUsersJoinInEvent())
                 .build();
     }
-
 }

@@ -3,10 +3,16 @@ package com.example.app.utils;
 import com.example.app.entities.*;
 import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.UserResponseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -47,5 +53,17 @@ private final PasswordEncoder passwordEncoder;
         response.setEvents(user.getUserHasEvents());
         response.setFiles(user.getUserHasFiles());
         return response;
+    }
+
+    public User updateSetting(User user,UserRequestEntity request,Group group){
+        user.setPassword(request.getPassword());
+        user.setFirstname(request.getFirstname());
+        user.setLastname(request.getLastname());
+        user.setEmail(request.getEmail());
+        user.setSpecialization(request.getSpecialization());
+        user.setCurrentProject(request.getCurrentProject());
+        user.setRole(request.getRole());
+        user.setGroup(group);
+        return user;
     }
 }

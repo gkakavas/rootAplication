@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -68,17 +69,24 @@ public class EventController implements CrudController<EventResponseEntity, Even
 
     @PatchMapping("/addUsers/{eventId}")
     public ResponseEntity<EventResponseEntity> addUsersToEvent(
-            @PathVariable UUID eventId,@RequestParam Set<UUID> idsSet)
+            @PathVariable UUID eventId,@RequestBody Set<UUID> idsSet)
     throws EventNotFoundException{
         return new ResponseEntity<>(service.addUserToEvent(idsSet,eventId),HttpStatus.OK);
     }
 
     @PatchMapping("/removeUsers/{eventId}")
     public ResponseEntity<EventResponseEntity> removeUsersFromEvent(
-            @PathVariable UUID eventId,@RequestParam Set<UUID> idsSet)
+            @PathVariable UUID eventId,@RequestBody Set<UUID> idsSet)
     throws EventNotFoundException{
         return new ResponseEntity<>(service.removeUserFromEvent(idsSet,eventId),HttpStatus.OK);
     }
+
+    @PatchMapping("/patch/{eventId}")
+        public ResponseEntity<EventResponseEntity> patch(
+            @PathVariable UUID eventId, @RequestBody Map<String,Object> request)
+        throws EventNotFoundException{
+            return new ResponseEntity<>(service.patch(eventId,request),HttpStatus.OK);
+        }
 
     //ALL RESPONSE MUST IN FORM OF UUID NOT ON FORM OF OBJECTS
 }

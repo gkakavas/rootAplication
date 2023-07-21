@@ -1,9 +1,11 @@
 package com.example.app.services;
 
 import com.example.app.entities.*;
+import com.example.app.exception.GroupNotFoundException;
 import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.UserResponseEntity;
+import com.example.app.repositories.EventRepository;
 import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.utils.UserMapper;
@@ -20,6 +22,7 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     private final GroupRepository groupRepo;
     private final UserMapper userMapper;
     private final PasswordEncoder encoder;
+    private final EventRepository eventRepo;
     @Override
     public UserResponseEntity create(UserRequestEntity request, String token) throws UserNotFoundException {
         if(request!=null){
@@ -60,21 +63,22 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     @Override
     public UserResponseEntity update(UUID id, UserRequestEntity request) throws UserNotFoundException {
         var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
-            user.setPassword(encoder.encode(request.getPassword()));
-            user.setFirstname(request.getFirstname());
-            user.setLastname(request.getLastname());
-            user.setEmail(request.getEmail());
-            user.setSpecialization(request.getSpecialization());
-            user.setCurrentProject(request.getCurrentProject());
-            user.setRole(request.getRole());
-            var response = userRepo.save(user);
+            var updatedUser = userMapper.updateSetting(user,request,
+                    groupRepo.findById(request.getGroup()).orElse(null));
+            var response = userRepo.save(updatedUser);
             return userMapper.convertToResponse(response);
     }
     @Override
     public boolean delete(UUID id) throws UserNotFoundException {
         if(id!=null){
+            var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
+            user.getUserHasEvents().forEach((event)->{
+                event.getUsersJoinInEvent().remove(user);
+            });
+            user.getUserHasEvents().clear();
+            userRepo.save(user);
             userRepo.deleteById(id);
-            return true;
+         return true;
         }
         else{
             throw new UserNotFoundException();

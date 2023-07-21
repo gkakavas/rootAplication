@@ -22,7 +22,6 @@ public class EventResponseEntity {
     private UUID eventCreator;
     private LocalDateTime eventDateTime;
     private LocalDateTime eventExpiration;
-
     @Builder.Default
     private Set<User> userSet = new HashSet<>();
 }
