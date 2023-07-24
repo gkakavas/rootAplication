@@ -5,7 +5,7 @@ import com.example.app.models.responses.user.OtherUserResponse;
 import org.springframework.stereotype.Component;
 
 @Component
-public class UserToOtherUser {
+public class UserToOtherUser implements UserResponseEntity{
     //24/7
     public OtherUserResponse convertToOtherUser(User user){
         return new OtherUserResponse(
@@ -14,6 +14,7 @@ public class UserToOtherUser {
                 user.getLastname(),
                 user.getEmail(),
                 user.getSpecialization(),
-                user.getCurrentProject());
+                user.getCurrentProject(),
+                user.getGroup());
     }
 }

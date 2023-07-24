@@ -1,5 +1,6 @@
 package com.example.app.models.responses.user;
 
+import com.example.app.entities.Group;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,4 +18,5 @@ public class OtherUserResponse {
     private String email;
     private String specialization;
     private String currentProject;
+    private Group group;
 }

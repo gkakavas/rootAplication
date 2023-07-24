@@ -3,70 +3,87 @@ package com.example.app.services;
 import com.example.app.entities.*;
 import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.UserRequestEntity;
-import com.example.app.models.responses.UserResponseEntity;
 import com.example.app.models.responses.event.MyEventResponseEntity;
 import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
-import com.example.app.utils.UserMapper;
 import com.example.app.utils.event.EventToMyEvents;
 import com.example.app.utils.user.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ReflectionUtils;
+import java.lang.reflect.Field;
 import java.util.*;
 @Service
 @RequiredArgsConstructor
-public class UserService implements CrudService<Response, UserRequestEntity,UserNotFoundException>{
+public class UserService implements CrudService<com.example.app.utils.user.UserResponseEntity, UserRequestEntity,UserNotFoundException>{
     private final UserRepository userRepo;
     private final JwtService jwtService;
     private final GroupRepository groupRepo;
     private final UserToOtherUser toOther;
-    private final UserToMyHrManagerUser toMyHrManager;
     private final UserToAdminUser toAdmin;
     private final UserUpdateSetting updateUser;
     private final UserRequestEntityToUser toUser;
     private final EventToMyEvents converter;
     @Override
-    public Response create(UserRequestEntity request, String token) throws UserNotFoundException {
+    public UserResponseEntity create(UserRequestEntity request, String token) throws UserNotFoundException {
             var userCreator = userRepo.findByEmail(jwtService.extractUsername(token.substring(7)))
                     .orElseThrow(UserNotFoundException::new);
             var group = groupRepo.findById(request.getGroup()).orElse(null);
             var user =  userRepo.save(toUser.convertToEntity(
                     request,userCreator.getUserId(), group));
-            return  toAdmin.convertToAdminUser(user);
+            UserResponseEntity response = (UserResponseEntity) toAdmin.convertToAdminUser(user);
+            return response;
     }
 
-    public UserResponseEntity read(String email) throws UserNotFoundException {
+    /*public UserResponseEntity read(String email) throws UserNotFoundException {
         var user = userRepo.findByEmail(email).orElseThrow(UserNotFoundException::new);
         if(user!=null) {
             return userMapper.convertToResponse(user);
         }
         return null;
-    }
+    }*/
     @Override
     public UserResponseEntity read(UUID id) throws UserNotFoundException {
         var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
-        if(SecurityContextHolder.getContext().getAuthentication().getAuthorities().contains("ROLE_ADMIN")) {
-            return userMapper.convertToAdminResponse(user);
+        var roles = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
+        if(roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_ADMIN"))) {
+            return (UserResponseEntity) toAdmin.convertToAdminUser(user);
         }
-        return userMapper.convertToResponse(user);
+        else if(roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_USER"))||
+                roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_HR"))||
+                roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_MANAGER"))){
+            return (UserResponseEntity) toOther.convertToOtherUser(user);
+        }
+        else
+            throw new AccessDeniedException("Unauthorized request");
     }
     @Override
     public List<UserResponseEntity> read() {
         List<User> users = userRepo.findAll();
             List<UserResponseEntity> userList = new ArrayList<>();
-            for(User user:users){
-                userList.add(userMapper.convertToResponse(user));
-            }
+        var roles = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
+        if(roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_ADMIN"))) {
+            users.forEach(user -> userList.add((UserResponseEntity) toAdmin.convertToAdminUser(user)));
             return userList;
+        }
+        else if(roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_USER"))||
+                roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_HR"))||
+                roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_MANAGER"))){
+            users.forEach(user -> userList.add((UserResponseEntity) toOther.convertToOtherUser(user)));
+            return userList;
+        }
+        else
+            throw new AccessDeniedException("Unauthorized request");
     }
     @Override
     public UserResponseEntity update(UUID id, UserRequestEntity request) throws UserNotFoundException {
         var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
-            var updatedUser = userMapper.updateSetting(user,request,
+            var updatedUser = updateUser.updateSetting(user,request,
                     groupRepo.findById(request.getGroup()).orElse(null));
             var response = userRepo.save(updatedUser);
-            return userMapper.convertToResponse(response);
+            return (UserResponseEntity) toAdmin.convertToAdminUser(response);
     }
     @Override
     public boolean delete(UUID id) throws UserNotFoundException {
@@ -85,24 +102,22 @@ public class UserService implements CrudService<Response, UserRequestEntity,User
         }
     }
 
-    public UserResponseEntity patch(UUID userId, Map<String, String> userField) throws UserNotFoundException {
-        var user = userRepo.findById(userId).orElseThrow(UserNotFoundException::new);
-        userField.keySet().forEach((key)-> {
-                    switch (key) {
-                        //case password:
-                        case "firstname" -> user.setFirstname(userField.get(key));
-                        case "lastname" -> user.setLastname(userField.get(key));
-                        case "email" -> user.setEmail(userField.get(key));
-                        case "specialization" -> user.setSpecialization(userField.get(key));
-                        case "currentProject" -> user.setCurrentProject(userField.get(key));
-                        case "role" -> user.setRole(Role.valueOf(userField.get(key)));
-                        case "group" -> user.setGroup(groupRepo.findById(UUID.fromString(userField.get(key)))
-                                        .orElseThrow(() -> new IllegalArgumentException("")));
+    public UserResponseEntity patch(UUID userId, Map<String, String> userFields) throws UserNotFoundException {
+        if (!userFields.isEmpty()) {
+            var user = userRepo.findById(userId).orElseThrow(UserNotFoundException::new);
+            userFields.forEach((key, value) -> {
+                        Field field = ReflectionUtils.findField(UserRequestEntity.class, key);
+                        assert field != null;
+                        field.setAccessible(true);
+                        ReflectionUtils.setField(field, user, value);
                     }
-                }
-                );
+            );
             var patcedUser = userRepo.save(user);
-        return userMapper.convertToResponse(patcedUser);
+            return (UserResponseEntity) toAdmin.convertToAdminUser(patcedUser);
+        }
+        else
+            throw new NullPointerException("");
+
     }
 
     //24/7
