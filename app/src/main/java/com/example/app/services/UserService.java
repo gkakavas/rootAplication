@@ -1,39 +1,39 @@
 package com.example.app.services;
 
 import com.example.app.entities.*;
-import com.example.app.exception.GroupNotFoundException;
 import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.UserResponseEntity;
-import com.example.app.repositories.EventRepository;
+import com.example.app.models.responses.event.MyEventResponseEntity;
 import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.utils.UserMapper;
+import com.example.app.utils.event.EventToMyEvents;
+import com.example.app.utils.user.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import java.util.*;
 @Service
 @RequiredArgsConstructor
-public class UserService implements CrudService<UserResponseEntity, UserRequestEntity,UserNotFoundException>{
+public class UserService implements CrudService<Response, UserRequestEntity,UserNotFoundException>{
     private final UserRepository userRepo;
     private final JwtService jwtService;
     private final GroupRepository groupRepo;
-    private final UserMapper userMapper;
-    private final PasswordEncoder encoder;
-    private final EventRepository eventRepo;
+    private final UserToOtherUser toOther;
+    private final UserToMyHrManagerUser toMyHrManager;
+    private final UserToAdminUser toAdmin;
+    private final UserUpdateSetting updateUser;
+    private final UserRequestEntityToUser toUser;
+    private final EventToMyEvents converter;
     @Override
-    public UserResponseEntity create(UserRequestEntity request, String token) throws UserNotFoundException {
-        if(request!=null){
+    public Response create(UserRequestEntity request, String token) throws UserNotFoundException {
             var userCreator = userRepo.findByEmail(jwtService.extractUsername(token.substring(7)))
                     .orElseThrow(UserNotFoundException::new);
             var group = groupRepo.findById(request.getGroup()).orElse(null);
-            var user =  userRepo.save(userMapper.convertToEntity(
+            var user =  userRepo.save(toUser.convertToEntity(
                     request,userCreator.getUserId(), group));
-            return userMapper.convertToResponse(user);
-        }
-        return null;
+            return  toAdmin.convertToAdminUser(user);
     }
 
     public UserResponseEntity read(String email) throws UserNotFoundException {
@@ -46,10 +46,10 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     @Override
     public UserResponseEntity read(UUID id) throws UserNotFoundException {
         var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
-        if(user!=null) {
-            return userMapper.convertToResponse(user);
+        if(SecurityContextHolder.getContext().getAuthentication().getAuthorities().contains("ROLE_ADMIN")) {
+            return userMapper.convertToAdminResponse(user);
         }
-        return null;
+        return userMapper.convertToResponse(user);
     }
     @Override
     public List<UserResponseEntity> read() {
@@ -103,5 +103,13 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
                 );
             var patcedUser = userRepo.save(user);
         return userMapper.convertToResponse(patcedUser);
+    }
+
+    //24/7
+    public List<MyEventResponseEntity> readUserEvents(UUID userId)throws UserNotFoundException {
+        var userEvents = userRepo.findById(userId).orElseThrow(UserNotFoundException::new).getUserHasEvents();
+        List<MyEventResponseEntity> responseList = new ArrayList<>();
+        userEvents.forEach((event) -> responseList.add(converter.eventToMyEvent(event)));
+        return responseList;
     }
 }

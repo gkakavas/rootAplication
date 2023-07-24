@@ -4,7 +4,9 @@ import com.example.app.exception.EventNotFoundException;
 import com.example.app.exception.GroupNotFoundException;
 import com.example.app.exception.LeaveNotFoundException;
 import com.example.app.exception.UserNotFoundException;
+import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -55,6 +57,13 @@ public class ApplicationExceptionHandler {
         return errorMap;
     }
 
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(AccessDeniedException.class)
+    public Map<String, String>handleAccessDenied(AccessDeniedException ex){
+        Map<String,String> errorMap =  new HashMap<>();
+        errorMap.put("errorMessage", ex.getMessage());
+        return errorMap;
+    }
 //    exception when the id is not UUID type
 
 }

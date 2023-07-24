@@ -8,7 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+import org.springframework.security.core.GrantedAuthority;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -18,7 +19,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserResponseEntity {
-
     private UUID userId;
     private String firstname;
     private String lastname;
@@ -32,4 +32,15 @@ public class UserResponseEntity {
     private Set<File> files = new HashSet<>();
     @Builder.Default
     private Set<Event> events = new HashSet<>();
+    private Collection<? extends GrantedAuthority> authority;
+
+    public UserResponseEntity(UUID userId, String firstname, String lastname, String email, String specialization, String currentProject, Group group) {
+        this.userId = userId;
+        this.firstname = firstname;
+        this.lastname = lastname;
+        this.email = email;
+        this.specialization = specialization;
+        this.currentProject = currentProject;
+        this.group = group;
+    }
 }
