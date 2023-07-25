@@ -1,10 +1,9 @@
-package com.example.app.models.responses;
+package com.example.app.models.responses.event;
 
 import com.example.app.entities.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -14,8 +13,7 @@ import java.util.UUID;
 @Data
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor
-public class EventResponseEntity {
+public class AdminHrMngEventResponse implements EventResponseEntity{
     private UUID eventId;
     private String eventDescription;
     private String eventBody;
@@ -23,5 +21,5 @@ public class EventResponseEntity {
     private LocalDateTime eventDateTime;
     private LocalDateTime eventExpiration;
     @Builder.Default
-    private Set<User> userSet = new HashSet<>();
+    private Set<User> users = new HashSet<>();
 }

@@ -4,13 +4,14 @@ import com.example.app.exception.EventNotFoundException;
 import com.example.app.exception.GroupNotFoundException;
 import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.EventRequestEntity;
-import com.example.app.models.responses.EventResponseEntity;
+import com.example.app.models.responses.event.EventResponseEntity;
 import com.example.app.services.EventService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,7 +24,6 @@ import java.util.UUID;
 @RequestMapping("/event")
 public class EventController implements CrudController<EventResponseEntity, EventRequestEntity, EventNotFoundException> {
     private final EventService service;
-
     @Override
     public ResponseEntity<EventResponseEntity> create(@Valid EventRequestEntity request, String token)
     throws UserNotFoundException {
@@ -64,14 +64,14 @@ public class EventController implements CrudController<EventResponseEntity, Even
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @PatchMapping("/addUsers/{eventId}")
+    @PatchMapping("/{eventId}/addUsers")
     public ResponseEntity<EventResponseEntity> addUsersToEvent(
             @PathVariable UUID eventId,@RequestBody Set<UUID> idsSet)
     throws EventNotFoundException{
         return new ResponseEntity<>(service.addUserToEvent(idsSet,eventId),HttpStatus.OK);
     }
 
-    @PatchMapping("/removeUsers/{eventId}")
+    @PatchMapping("/{eventId}/removeUsers")
     public ResponseEntity<EventResponseEntity> removeUsersFromEvent(
             @PathVariable UUID eventId,@RequestBody Set<UUID> idsSet)
     throws EventNotFoundException{
@@ -84,6 +84,5 @@ public class EventController implements CrudController<EventResponseEntity, Even
         throws EventNotFoundException{
             return new ResponseEntity<>(service.patch(eventId,request),HttpStatus.OK);
         }
-
     //ALL RESPONSE MUST IN FORM OF UUID NOT ON FORM OF OBJECTS
 }

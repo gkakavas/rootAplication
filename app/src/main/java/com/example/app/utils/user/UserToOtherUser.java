@@ -2,12 +2,13 @@ package com.example.app.utils.user;
 
 import com.example.app.entities.User;
 import com.example.app.models.responses.user.OtherUserResponse;
+import com.example.app.models.responses.user.UserResponseEntity;
 import org.springframework.stereotype.Component;
 
 @Component
-public class UserToOtherUser implements UserResponseEntity{
+public class UserToOtherUser{
     //24/7
-    public OtherUserResponse convertToOtherUser(User user){
+    public UserResponseEntity convertToOtherUser(User user){
         return new OtherUserResponse(
                 user.getUserId(),
                 user.getFirstname(),

@@ -3,7 +3,8 @@ package com.example.app.services;
 import com.example.app.entities.*;
 import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.UserRequestEntity;
-import com.example.app.models.responses.event.MyEventResponseEntity;
+import com.example.app.models.responses.event.EventResponseEntity;
+import com.example.app.models.responses.user.UserResponseEntity;
 import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.utils.event.EventToMyEvents;
@@ -17,7 +18,7 @@ import java.lang.reflect.Field;
 import java.util.*;
 @Service
 @RequiredArgsConstructor
-public class UserService implements CrudService<com.example.app.utils.user.UserResponseEntity, UserRequestEntity,UserNotFoundException>{
+public class UserService implements CrudService<UserResponseEntity, UserRequestEntity,UserNotFoundException>{
     private final UserRepository userRepo;
     private final JwtService jwtService;
     private final GroupRepository groupRepo;
@@ -25,7 +26,7 @@ public class UserService implements CrudService<com.example.app.utils.user.UserR
     private final UserToAdminUser toAdmin;
     private final UserUpdateSetting updateUser;
     private final UserRequestEntityToUser toUser;
-    private final EventToMyEvents converter;
+    private final EventToMyEvents toMyEvent;
     @Override
     public UserResponseEntity create(UserRequestEntity request, String token) throws UserNotFoundException {
             var userCreator = userRepo.findByEmail(jwtService.extractUsername(token.substring(7)))
@@ -33,8 +34,7 @@ public class UserService implements CrudService<com.example.app.utils.user.UserR
             var group = groupRepo.findById(request.getGroup()).orElse(null);
             var user =  userRepo.save(toUser.convertToEntity(
                     request,userCreator.getUserId(), group));
-            UserResponseEntity response = (UserResponseEntity) toAdmin.convertToAdminUser(user);
-            return response;
+            return toAdmin.convertToAdminUser(user);
     }
 
     /*public UserResponseEntity read(String email) throws UserNotFoundException {
@@ -49,12 +49,12 @@ public class UserService implements CrudService<com.example.app.utils.user.UserR
         var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
         var roles = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
         if(roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_ADMIN"))) {
-            return (UserResponseEntity) toAdmin.convertToAdminUser(user);
+            return toAdmin.convertToAdminUser(user);
         }
         else if(roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_USER"))||
                 roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_HR"))||
                 roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_MANAGER"))){
-            return (UserResponseEntity) toOther.convertToOtherUser(user);
+            return toOther.convertToOtherUser(user);
         }
         else
             throw new AccessDeniedException("Unauthorized request");
@@ -65,13 +65,13 @@ public class UserService implements CrudService<com.example.app.utils.user.UserR
             List<UserResponseEntity> userList = new ArrayList<>();
         var roles = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
         if(roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_ADMIN"))) {
-            users.forEach(user -> userList.add((UserResponseEntity) toAdmin.convertToAdminUser(user)));
+            users.forEach(user -> userList.add(toAdmin.convertToAdminUser(user)));
             return userList;
         }
         else if(roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_USER"))||
                 roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_HR"))||
                 roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_MANAGER"))){
-            users.forEach(user -> userList.add((UserResponseEntity) toOther.convertToOtherUser(user)));
+            users.forEach(user -> userList.add(toOther.convertToOtherUser(user)));
             return userList;
         }
         else
@@ -83,15 +83,13 @@ public class UserService implements CrudService<com.example.app.utils.user.UserR
             var updatedUser = updateUser.updateSetting(user,request,
                     groupRepo.findById(request.getGroup()).orElse(null));
             var response = userRepo.save(updatedUser);
-            return (UserResponseEntity) toAdmin.convertToAdminUser(response);
+            return toAdmin.convertToAdminUser(response);
     }
     @Override
     public boolean delete(UUID id) throws UserNotFoundException {
         if(id!=null){
             var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
-            user.getUserHasEvents().forEach((event)->{
-                event.getUsersJoinInEvent().remove(user);
-            });
+            user.getUserHasEvents().forEach((event)-> event.getUsersJoinInEvent().remove(user));
             user.getUserHasEvents().clear();
             userRepo.save(user);
             userRepo.deleteById(id);
@@ -113,7 +111,7 @@ public class UserService implements CrudService<com.example.app.utils.user.UserR
                     }
             );
             var patcedUser = userRepo.save(user);
-            return (UserResponseEntity) toAdmin.convertToAdminUser(patcedUser);
+            return toAdmin.convertToAdminUser(patcedUser);
         }
         else
             throw new NullPointerException("");
@@ -121,10 +119,10 @@ public class UserService implements CrudService<com.example.app.utils.user.UserR
     }
 
     //24/7
-    public List<MyEventResponseEntity> readUserEvents(UUID userId)throws UserNotFoundException {
+    public List<EventResponseEntity> readUserEvents(UUID userId)throws UserNotFoundException {
         var userEvents = userRepo.findById(userId).orElseThrow(UserNotFoundException::new).getUserHasEvents();
-        List<MyEventResponseEntity> responseList = new ArrayList<>();
-        userEvents.forEach((event) -> responseList.add(converter.eventToMyEvent(event)));
+        List<EventResponseEntity> responseList = new ArrayList<>();
+        userEvents.forEach((event) -> responseList.add(toMyEvent.convertToMyEvent(event)));
         return responseList;
     }
 }

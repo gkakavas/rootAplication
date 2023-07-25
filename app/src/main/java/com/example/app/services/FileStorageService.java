@@ -2,12 +2,13 @@ package com.example.app.services;
 
 import com.example.app.entities.File;
 import com.example.app.entities.User;
+import com.example.app.exception.IllegalTypeOfFileException;
+import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.responses.FileStorageProperties;
 import com.example.app.repositories.FileRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.utils.FileMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
@@ -46,9 +47,10 @@ public class FileStorageService {
         }
     }
 
-    public FileStorageProperties upload(MultipartFile file, String token) {
+    public FileStorageProperties upload(MultipartFile file, String token)
+    throws UserNotFoundException,IllegalTypeOfFileException{
             var user = userRepo.findByEmail(jwtService.extractUsername
-                    (token.substring(7))).orElseThrow(()->new RuntimeException("Not found user with this Bearer"));
+                    (token.substring(7))).orElseThrow(UserNotFoundException::new);
             try {
                 if(Objects.equals(file.getContentType(), docx) || Objects.equals(file.getContentType(), txt)){
                     var userPath = Files.createDirectories(evaluation.resolve(user.getUserId().toString()));
@@ -60,10 +62,12 @@ public class FileStorageService {
                     Files.copy(file.getInputStream(),userPath.resolve(Objects.requireNonNull(file.getOriginalFilename())));
                     return saveInDatabase(file,user,userPath);
                 }
+                else{
+                    throw new IllegalTypeOfFileException();
+                }
             } catch (IOException e) {
                     throw new RuntimeException("A file of that name already exists.");
             }
-            return null;
     }
 
     public Resource download(UUID fileId) {

@@ -10,7 +10,7 @@ import java.util.UUID;
 @Data
 @Builder
 @AllArgsConstructor
-public class MyEventResponseEntity {
+public class MyEventResponse implements EventResponseEntity{
     private UUID eventId;
     private String eventDescription;
     private String eventBody;

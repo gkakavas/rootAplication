@@ -10,7 +10,7 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @Builder
-public class OtherUserResponse {
+public class OtherUserResponse implements UserResponseEntity {
     //24/7
     private UUID userId;
     private String firstname;

@@ -2,9 +2,9 @@ package com.example.app.controllers;
 
 import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.UserRequestEntity;
-import com.example.app.models.responses.event.MyEventResponseEntity;
+import com.example.app.models.responses.event.EventResponseEntity;
 import com.example.app.services.UserService;
-import com.example.app.utils.user.UserResponseEntity;
+import com.example.app.models.responses.user.UserResponseEntity;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -60,9 +60,9 @@ public class UserController implements CrudController<UserResponseEntity, UserRe
     //@PatchMapping("/changePassword")
 
     //final
-    @PreAuthorize("#userId == authentication.principal.userId")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_HR','ROLE_MANAGER') or #userId == authentication.principal.userId")
     @GetMapping("/{userId}/events")
-    public ResponseEntity<List<MyEventResponseEntity>> readUserEvents(@PathVariable UUID userId)
+    public ResponseEntity<List<EventResponseEntity>> readUserEvents(@PathVariable UUID userId)
     throws UserNotFoundException{
         return new ResponseEntity<>(service.readUserEvents(userId),HttpStatus.OK);
     }

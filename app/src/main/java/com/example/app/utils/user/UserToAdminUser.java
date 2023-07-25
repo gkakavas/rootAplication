@@ -2,13 +2,14 @@ package com.example.app.utils.user;
 
 import com.example.app.entities.User;
 import com.example.app.models.responses.user.AdminUserResponse;
+import com.example.app.models.responses.user.UserResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 @Component
-public class UserToAdminUser implements UserResponseEntity{
+public class UserToAdminUser {
     //24/7
-    public AdminUserResponse convertToAdminUser(User user) {
+    public UserResponseEntity convertToAdminUser(User user) {
         if (SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().contains("ROLE_ADMIN"))) {
             return new AdminUserResponse(

@@ -1,9 +1,11 @@
 package com.example.app.config;
 
+import com.example.app.advice.ApplicationExceptionHandler;
 import com.example.app.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -24,10 +26,10 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests((authorize)->authorize
-                .requestMatchers("/auth/authenticate").permitAll()
-                .requestMatchers("/auth/register").permitAll()
-                .requestMatchers("/admin/**").hasRole("ADMIN").anyRequest().authenticated())
+        httpSecurity.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests((authorize) -> authorize
+                        .requestMatchers("/auth/authenticate").permitAll()
+                        .requestMatchers("/auth/register").permitAll()
+                        .requestMatchers("/event/**").hasAnyRole("ADMIN", "MANAGER", "HR").anyRequest().authenticated())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider).addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();

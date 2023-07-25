@@ -1,6 +1,8 @@
 package com.example.app.controllers;
 
 import com.example.app.entities.File;
+import com.example.app.exception.IllegalTypeOfFileException;
+import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.responses.FileStorageProperties;
 import com.example.app.repositories.FileRepository;
 import com.example.app.services.FileStorageService;
@@ -24,7 +26,8 @@ public class FileController {
     private final FileRepository fileRepo;
     @PostMapping("/upload")
     public ResponseEntity<FileStorageProperties> upload(@RequestBody MultipartFile file,
-                                                        @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+    @RequestHeader(HttpHeaders.AUTHORIZATION) String token) throws UserNotFoundException,
+            IllegalTypeOfFileException {
             return new ResponseEntity<>(fileStorageService.upload(file,token), HttpStatus.CREATED);
     }
     @GetMapping("/download")

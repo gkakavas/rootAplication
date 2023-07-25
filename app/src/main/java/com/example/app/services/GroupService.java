@@ -3,22 +3,20 @@ package com.example.app.services;
 import com.example.app.entities.Group;
 import com.example.app.entities.User;
 import com.example.app.exception.GroupNotFoundException;
-import com.example.app.exception.LeaveNotFoundException;
 import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.GroupRequestEntity;
-import com.example.app.models.responses.GroupResponseEntity;
+import com.example.app.models.responses.group.GroupResponseEntity;
 import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
-import com.example.app.utils.GroupMapper;
+import com.example.app.utils.group.GroupRequestEntityToGroup;
+import com.example.app.utils.group.GroupToAdminGroup;
+import com.example.app.utils.group.GroupToMngGroup;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.LoggerFactory;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import org.slf4j.Logger;
-import java.util.stream.Collectors;
-
 
 @Service
 @RequiredArgsConstructor
@@ -26,63 +24,75 @@ public class GroupService implements CrudService<GroupResponseEntity, GroupReque
     private final UserRepository userRepo;
     private final GroupRepository groupRepo;
     private final JwtService jwtService;
-    private final GroupMapper groupMapper;
+    private final GroupRequestEntityToGroup toGroup;
+    private final GroupToAdminGroup toAdminGroup;
+    private final GroupToMngGroup toManagerGroup;
+
+
     @Override
     public GroupResponseEntity create(GroupRequestEntity request,String token) throws UserNotFoundException {
             var users = userRepo.findAllById(request.getIdsSet());
             var groupCreator = userRepo.findByEmail(jwtService.extractUsername(token.substring(7)))
                                                             .orElseThrow(UserNotFoundException::new);
-            var group = groupMapper.convertToGroup(request,groupCreator.getUserId());
+            var group = toGroup.convertToGroup(request,groupCreator.getUserId());
             group.getGroupHasUsers().addAll(users);
             var newGroup = groupRepo.save(group);
             for(User user:users){
                 user.setGroup(group);
                 userRepo.save(user);
             }
-            return groupMapper.convertToResponse(newGroup);
+            return toAdminGroup.convertToAdminGroup(newGroup);
     }
 
     @Override
     public GroupResponseEntity read(UUID id) throws GroupNotFoundException{
             var group = groupRepo.findById(id).orElseThrow(GroupNotFoundException::new);
-            return groupMapper.convertToResponse(group);
+            var authority = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
+            if(authority.stream().anyMatch(a->a.getAuthority().equals("ROLE_ADMIN"))){
+                return toAdminGroup.convertToAdminGroup(group);
+            }
+            else if (authority.stream().anyMatch(a->a.getAuthority().equals("ROLE_MANAGER"))) {
+                return toManagerGroup.convertToMngGroup(group);
+            }
+            else
+                throw new AccessDeniedException("You have not authority to access this resource");
     }
     @Override
     public List<GroupResponseEntity> read() {
         List<Group> groups = groupRepo.findAll();
-        return groups.stream()
-                    .map(groupMapper::convertToResponse)
-                    .collect(Collectors.toList());
+
+        if (SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            return toAdminGroup.convertToAdminGroup(groups);
+        } else if (SecurityContextHolder.getContext().getAuthentication().getAuthorities()
+                .stream().anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER"))) {
+            return toManagerGroup.convertToMngGroup(groups);
+        } else {
+            throw new AccessDeniedException("You have not authority to access this resource");
+        }
     }
     @Override
     public GroupResponseEntity update(UUID id, GroupRequestEntity request) throws GroupNotFoundException {
             var group = groupRepo.findById(id).orElseThrow(GroupNotFoundException::new);
-            var users = userRepo.findAllById(request.getIdsSet());
             group.setGroupName(request.getGroupName());
-            group.getGroupHasUsers().addAll(users);
-            var newGroup = groupRepo.save(group);
-            for(User user:users){
-                user.setGroup(group);
-                userRepo.save(user);
+            var updatedGroup = groupRepo.save(group);
+            var authority = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
+            if(authority.stream().anyMatch(a->a.getAuthority().equals("ROLE_ADMIN"))){
+                return toAdminGroup.convertToAdminGroup(updatedGroup);
             }
-            var response = GroupResponseEntity.builder()
-                    .groupId(newGroup.getGroupId())
-                    .groupName(newGroup.getGroupName())
-                    .groupCreator(newGroup.getGroupCreator())
-                    .groupCreationDate(newGroup.getGroupCreationDate())
-                    .build();
-            response.getUserSet().addAll(newGroup.getGroupHasUsers());
-            return response;
+            else if(authority.stream().anyMatch(a->a.getAuthority().equals("ROLE_MANAGER"))){
+                return toManagerGroup.convertToMngGroup(updatedGroup);
+            }
+            else
+                throw new AccessDeniedException("You have not the authority to access this resource");
+
     }
     @Override
     public boolean delete(UUID id) throws GroupNotFoundException{
-        if(id!=null) {
+            var group = groupRepo.findById(id).orElseThrow(GroupNotFoundException::new);
+            group.getGroupHasUsers().clear();
             groupRepo.deleteById(id);
             return true;
-        }
-        else{
-            throw new GroupNotFoundException();
-        }
     }
 
 }
