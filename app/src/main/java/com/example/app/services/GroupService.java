@@ -41,6 +41,7 @@ public class GroupService implements CrudService<GroupResponseEntity, GroupReque
                 user.setGroup(group);
                 userRepo.save(user);
             }
+            //must return only one the users and no the group inside users
             return toAdminGroup.convertToAdminGroup(newGroup);
     }
 

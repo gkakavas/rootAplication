@@ -3,6 +3,7 @@ package com.example.app.controllers;
 import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.event.EventResponseEntity;
+import com.example.app.services.LeaveService;
 import com.example.app.services.UserService;
 import com.example.app.models.responses.user.UserResponseEntity;
 import jakarta.validation.Valid;

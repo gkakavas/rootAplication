@@ -9,6 +9,8 @@ import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.utils.event.EventToMyEvents;
 import com.example.app.utils.user.*;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,13 +39,9 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
             return toAdmin.convertToAdminUser(user);
     }
 
-    /*public UserResponseEntity read(String email) throws UserNotFoundException {
-        var user = userRepo.findByEmail(email).orElseThrow(UserNotFoundException::new);
-        if(user!=null) {
-            return userMapper.convertToResponse(user);
-        }
-        return null;
-    }*/
+    public User read(String email) throws UserNotFoundException {
+        return userRepo.findByEmail(email).orElseThrow(UserNotFoundException::new);
+    }
     @Override
     public UserResponseEntity read(UUID id) throws UserNotFoundException {
         var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);

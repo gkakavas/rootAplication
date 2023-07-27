@@ -1,17 +1,20 @@
-package com.example.app.models.responses;
+package com.example.app.models.responses.leave;
 
 import com.example.app.entities.LeaveType;
 import com.example.app.entities.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.*;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+
 import java.time.LocalDate;
 import java.util.UUID;
 
 @Data
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor
-public class LeaveResponseEntity {
+public class MyLeaveResponse implements LeaveResponseEntity{
     private UUID leaveId;
     private LeaveType leaveType;
     private LocalDate leaveStarts;
@@ -19,5 +22,7 @@ public class LeaveResponseEntity {
     private UUID approvedBy;
     private LocalDate approvedOn;
     private Boolean approved;
-    private User requestedBy;
+    public Boolean isApproved(){
+        return this.approved;
+    }
 }

@@ -16,6 +16,6 @@ public class UserToOtherUser{
                 user.getEmail(),
                 user.getSpecialization(),
                 user.getCurrentProject(),
-                user.getGroup());
+                user.getGroup().getGroupName());
     }
 }

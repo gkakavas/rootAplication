@@ -1,7 +1,6 @@
 package com.example.app.controllers;
 
 import com.example.app.exception.UserNotFoundException;
-import com.example.app.models.requests.GroupRequestEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

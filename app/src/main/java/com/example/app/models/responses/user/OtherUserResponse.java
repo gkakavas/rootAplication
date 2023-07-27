@@ -1,6 +1,7 @@
 package com.example.app.models.responses.user;
 
 import com.example.app.entities.Group;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,5 +19,5 @@ public class OtherUserResponse implements UserResponseEntity {
     private String email;
     private String specialization;
     private String currentProject;
-    private Group group;
+    private String groupName;
 }

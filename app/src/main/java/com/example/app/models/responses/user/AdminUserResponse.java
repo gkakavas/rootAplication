@@ -1,5 +1,7 @@
 package com.example.app.models.responses.user;
 import com.example.app.entities.*;
+import com.example.app.models.responses.group.GroupResponseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -15,6 +17,7 @@ public class AdminUserResponse implements UserResponseEntity {
     private String email;
     private String specialization;
     private String currentProject;
+    @JsonIgnore
     private Group group;
     private UUID createdBy;
     private LocalDateTime registerDate;
