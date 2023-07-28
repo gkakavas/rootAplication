@@ -63,7 +63,7 @@ public class LeaveService implements CrudService<LeaveResponseEntity, LeaveReque
             List<User> userList = userRepo.findAll();
             return userListWithLeavesConverter.userWithLeavesConvert(userList);
         }
-        else if (currentUser.getRole().equals(Role.ROLE_MANAGER)) {
+        else if (currentUser.getRole().equals(Role.ROLE_MANAGER) && currentUser.getGroup()!=null) {
             List<User> userList = userRepo.findAllByGroup(currentUser.getGroup());
             return userListWithLeavesConverter.userWithLeavesConvert(userList);
             }

@@ -3,18 +3,18 @@ package com.example.app.controllers;
 import com.example.app.entities.File;
 import com.example.app.exception.IllegalTypeOfFileException;
 import com.example.app.exception.UserNotFoundException;
-import com.example.app.models.responses.FileStorageProperties;
-import com.example.app.repositories.FileRepository;
+import com.example.app.models.responses.file.FileStorageProperties;
 import com.example.app.services.FileStorageService;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,20 +23,33 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class FileController {
     private final FileStorageService fileStorageService;
-    private final FileRepository fileRepo;
+
+    @PreAuthorize("hasRole('ROLE_USER')")
     @PostMapping("/upload")
     public ResponseEntity<FileStorageProperties> upload(@RequestBody MultipartFile file,
     @RequestHeader(HttpHeaders.AUTHORIZATION) String token) throws UserNotFoundException,
-            IllegalTypeOfFileException {
+            IllegalTypeOfFileException, IOException {
             return new ResponseEntity<>(fileStorageService.upload(file,token), HttpStatus.CREATED);
     }
-    @GetMapping("/download")
-    public ResponseEntity<Resource> download(@RequestParam("fileId") UUID fileId) {
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER','ROLE_USER')")
+    @GetMapping("/download/evaluation/{fileId}")
+    public ResponseEntity<Resource> downloadEvaluation(@PathVariable("fileId") UUID fileId) {
             return new ResponseEntity<>(fileStorageService.download(fileId),HttpStatus.OK);
     }
-    @GetMapping("/")
-    public ResponseEntity<List<File>> readAll(@RequestParam("userId") UUID userId) {
-            return new ResponseEntity<>(fileStorageService.readAll(userId),HttpStatus.OK);
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_HR','ROLE_USER')")
+    @GetMapping("/download/timesheet/{fileId}")
+    public ResponseEntity<Resource> downloadTimesheet(@PathVariable("fileId") UUID fileId) {
+        return new ResponseEntity<>(fileStorageService.download(fileId),HttpStatus.OK);
+    }
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER','ROLE_USER')")
+    @GetMapping("/evaluation/")
+    public ResponseEntity<List<File>> readAllEvaluation(@RequestParam("userId") UUID userId) {
+        return new ResponseEntity<>(fileStorageService.readAll(userId),HttpStatus.OK);
+    }
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_HR','ROLE_USER')")
+    @GetMapping("/timesheet/")
+    public ResponseEntity<List<File>> readAllTimesheet(@RequestParam("userId") UUID userId) {
+        return new ResponseEntity<>(fileStorageService.readAll(userId),HttpStatus.OK);
     }
 
     @DeleteMapping("/delete")

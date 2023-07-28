@@ -39,6 +39,7 @@ public class LeaveController implements CrudController<LeaveResponseEntity, Leav
         return service.read();
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Override
     public ResponseEntity<LeaveResponseEntity> update(UUID id, @Valid LeaveRequestEntity request)
     throws LeaveNotFoundException{

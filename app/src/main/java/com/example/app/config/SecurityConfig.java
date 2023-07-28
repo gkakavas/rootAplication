@@ -1,5 +1,6 @@
 package com.example.app.config;
 
+import com.example.app.security.CustomAccessDeniedHandler;
 import com.example.app.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -12,6 +13,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -28,11 +30,17 @@ public class SecurityConfig {
         httpSecurity.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers("/auth/authenticate").permitAll()
                         .requestMatchers("/auth/register").permitAll()
-                        .requestMatchers("/test/**").permitAll()
+                        .requestMatchers("/file/download/{fileId}").hasAnyRole("'ROLE_ADMIN','ROLE_MANAGER','ROLE_HR")
                         .requestMatchers("/event/**").hasAnyRole("ADMIN", "MANAGER", "HR").anyRequest().authenticated())
+
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider).addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();
+    }
+
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        return new CustomAccessDeniedHandler();
     }
 
 }

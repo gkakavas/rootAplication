@@ -10,11 +10,11 @@
     <file type="web" url="file://$PROJECT_DIR$" />
   </component>
   <component name="NullableNotNullManager">
-    <option name="myDefaultNullable" value="org.jetbrains.annotations.Nullable" />
+    <option name="myDefaultNullable" value="org.springframework.lang.Nullable" />
     <option name="myDefaultNotNull" value="jakarta.validation.constraints.NotNull" />
     <option name="myNullables">
       <value>
-        <list size="16">
+        <list size="17">
           <item index="0" class="java.lang.String" itemvalue="com.android.annotations.Nullable" />
           <item index="1" class="java.lang.String" itemvalue="org.jspecify.nullness.Nullable" />
           <item index="2" class="java.lang.String" itemvalue="io.reactivex.rxjava3.annotations.Nullable" />
@@ -31,6 +31,7 @@
           <item index="13" class="java.lang.String" itemvalue="org.checkerframework.checker.nullness.qual.Nullable" />
           <item index="14" class="java.lang.String" itemvalue="org.checkerframework.checker.nullness.compatqual.NullableType" />
           <item index="15" class="java.lang.String" itemvalue="io.reactivex.annotations.Nullable" />
+          <item index="16" class="java.lang.String" itemvalue="org.springframework.lang.Nullable" />
         </list>
       </value>
     </option>
