@@ -4,6 +4,8 @@ import com.example.app.entities.Group;
 import com.example.app.models.responses.group.GroupResponseEntity;
 import com.example.app.models.responses.group.ManagerGroupResponse;
 import com.example.app.models.responses.user.AdminUserResponse;
+import com.example.app.models.responses.user.OtherUserResponse;
+import com.example.app.utils.user.EntityResponseUserConverter;
 import com.example.app.utils.user.UserToAdminUser;
 import com.example.app.utils.user.UserToOtherUser;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +17,8 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class GroupToMngGroup {
-    private final UserToOtherUser toMngUser;
+    private final EntityResponseUserConverter userConverter;
+
     public ManagerGroupResponse convertToMngGroup(Group group){
             var response = ManagerGroupResponse.builder()
                     .groupId(group.getGroupId())
@@ -23,7 +26,7 @@ public class GroupToMngGroup {
                     .build();
             group.getGroupHasUsers().forEach((user)->
                     response.getUsers()
-                            .add(toMngUser.convertToOtherUser(user)));
+                            .add((OtherUserResponse) userConverter.fromUserToOtherUser(user)));
             return response;
     }
 
