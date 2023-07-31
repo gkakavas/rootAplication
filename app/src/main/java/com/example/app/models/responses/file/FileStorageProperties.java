@@ -22,8 +22,8 @@ public class FileStorageProperties {
     private String fileType;
     private LocalDateTime uploadDate;
     private Boolean approved;
-    private AdminUserResponse approvedBy;
+    private UUID approvedBy;
     private LocalDateTime approvedDate;
-    private AdminUserResponse uploadedBy;
+    private UUID uploadedBy;
     private FileKind fileKind;
 }

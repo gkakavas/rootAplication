@@ -2,6 +2,7 @@ package com.example.app.models.responses.file;
 
 import com.example.app.entities.FileKind;
 import com.example.app.entities.User;
+import com.example.app.models.responses.user.AdminUserResponse;
 import com.example.app.models.responses.user.OtherUserResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,12 +21,9 @@ public class AdminHrManagerFileResponse implements FileResponseEntity {
     private Long fileSize;
     private String fileType;
     private LocalDateTime uploadDate;
-    @Nullable
     private Boolean approved;
-    @Nullable
     private String approvedBy;
-    @Nullable
     private LocalDateTime approvedDate;
     private FileKind fileKind;
-
+    private AdminUserResponse uploadedBy;
 }

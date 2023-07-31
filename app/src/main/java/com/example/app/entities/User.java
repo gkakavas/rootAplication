@@ -47,11 +47,9 @@ public class User implements UserDetails {
     @Builder.Default
     private Set<Event> userHasEvents = new HashSet<>();
 
-    @JsonIgnore
     @ManyToOne
     @JoinColumn(name= "group_id")
     private Group group;
-
 
     @OneToMany(mappedBy = "uploadedBy",fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @Builder.Default

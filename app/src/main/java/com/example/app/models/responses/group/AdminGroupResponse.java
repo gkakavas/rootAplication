@@ -17,7 +17,7 @@ import java.util.UUID;
 public class AdminGroupResponse implements GroupResponseEntity{
     private UUID groupId;
     private String groupName;
-    private UUID groupCreator;
+    private String groupCreator;
     private LocalDateTime groupCreationDate;
     @Builder.Default
     private Set<AdminUserResponse> users = new HashSet<>();

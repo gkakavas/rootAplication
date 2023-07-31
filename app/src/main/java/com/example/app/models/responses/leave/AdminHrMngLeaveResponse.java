@@ -21,10 +21,10 @@ public class AdminHrMngLeaveResponse implements LeaveResponseEntity {
     private LeaveType leaveType;
     private LocalDate leaveStarts;
     private LocalDate leaveEnds;
-    private UUID approvedBy;
+    private String approvedBy;
     private LocalDate approvedOn;
     private Boolean approved;
-    private OtherUserResponse requestedBy;
+    private AdminUserResponse requestedBy;
 
     public Boolean isApproved(){
         return this.approved;

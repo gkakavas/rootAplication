@@ -19,7 +19,7 @@ public class MyLeaveResponse implements LeaveResponseEntity{
     private LeaveType leaveType;
     private LocalDate leaveStarts;
     private LocalDate leaveEnds;
-    private UUID approvedBy;
+    private String approvedBy;
     private LocalDate approvedOn;
     private Boolean approved;
     public Boolean isApproved(){

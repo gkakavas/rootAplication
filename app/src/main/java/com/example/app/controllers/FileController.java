@@ -1,8 +1,12 @@
 package com.example.app.controllers;
 
 import com.example.app.entities.File;
+import com.example.app.entities.FileKind;
+import com.example.app.entities.User;
 import com.example.app.exception.IllegalTypeOfFileException;
 import com.example.app.exception.UserNotFoundException;
+import com.example.app.models.responses.common.UserWithFiles;
+import com.example.app.models.responses.file.FileResponseEntity;
 import com.example.app.models.responses.file.FileStorageProperties;
 import com.example.app.services.FileStorageService;
 import lombok.RequiredArgsConstructor;
@@ -26,34 +30,34 @@ public class FileController {
 
     @PreAuthorize("hasRole('ROLE_USER')")
     @PostMapping("/upload")
-    public ResponseEntity<FileStorageProperties> upload(@RequestBody MultipartFile file,
-    @RequestHeader(HttpHeaders.AUTHORIZATION) String token) throws UserNotFoundException,
+    public ResponseEntity<FileResponseEntity> upload(@RequestBody MultipartFile file,
+                                                     @RequestHeader(HttpHeaders.AUTHORIZATION) String token) throws UserNotFoundException,
             IllegalTypeOfFileException, IOException {
             return new ResponseEntity<>(fileStorageService.upload(file,token), HttpStatus.CREATED);
     }
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER','ROLE_USER')")
     @GetMapping("/download/evaluation/{fileId}")
-    public ResponseEntity<Resource> downloadEvaluation(@PathVariable("fileId") UUID fileId) {
+    public ResponseEntity<Resource> downloadEvaluation(@PathVariable("fileId") UUID fileId) throws UserNotFoundException {
             return new ResponseEntity<>(fileStorageService.download(fileId),HttpStatus.OK);
     }
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_HR','ROLE_USER')")
     @GetMapping("/download/timesheet/{fileId}")
-    public ResponseEntity<Resource> downloadTimesheet(@PathVariable("fileId") UUID fileId) {
+    public ResponseEntity<Resource> downloadTimesheet(@PathVariable("fileId") UUID fileId) throws UserNotFoundException {
         return new ResponseEntity<>(fileStorageService.download(fileId),HttpStatus.OK);
     }
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER','ROLE_USER')")
     @GetMapping("/evaluation/")
-    public ResponseEntity<List<File>> readAllEvaluation(@RequestParam("userId") UUID userId) {
-        return new ResponseEntity<>(fileStorageService.readAll(userId),HttpStatus.OK);
+    public ResponseEntity<List<UserWithFiles>> readAllEvaluation() throws UserNotFoundException {
+        return new ResponseEntity<>(fileStorageService.readAll(FileKind.EVALUATION),HttpStatus.OK);
     }
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_HR','ROLE_USER')")
     @GetMapping("/timesheet/")
-    public ResponseEntity<List<File>> readAllTimesheet(@RequestParam("userId") UUID userId) {
-        return new ResponseEntity<>(fileStorageService.readAll(userId),HttpStatus.OK);
+    public ResponseEntity<List<UserWithFiles>> readAllTimesheet() throws UserNotFoundException {
+        return new ResponseEntity<>(fileStorageService.readAll(FileKind.TIMESHEET),HttpStatus.OK);
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<FileStorageProperties> delete(@RequestParam("fileId") UUID fileId) {
+    public ResponseEntity<FileResponseEntity> delete(@RequestParam("fileId") UUID fileId) {
         fileStorageService.delete(fileId);
         return new ResponseEntity<>(HttpStatus.OK);
     }

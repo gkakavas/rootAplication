@@ -2,17 +2,25 @@ package com.example.app.services;
 
 import com.example.app.entities.File;
 import com.example.app.entities.FileKind;
+import com.example.app.entities.Role;
 import com.example.app.entities.User;
 import com.example.app.exception.FileNotFoundException;
 import com.example.app.exception.IllegalTypeOfFileException;
 import com.example.app.exception.UserNotFoundException;
-import com.example.app.models.responses.file.FileStorageProperties;
+import com.example.app.models.responses.common.UserWithFiles;
+import com.example.app.models.responses.file.FileResponseEntity;
 import com.example.app.repositories.FileRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.utils.FileMapper;
+import com.example.app.utils.common.EntityResponseCommonConverter;
+import com.example.app.utils.file.EntityResponseFileConverter;
+import com.example.app.utils.user.EntityResponseUserConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,9 +28,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.*;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 
 @Service
@@ -32,16 +38,20 @@ public class FileStorageService {
     private final UserRepository userRepo;
     private final FileRepository fileRepo;
     private final FileMapper fileMapper;
-    private final TimesheetFileAuthorityCheckService timesheetAuthCheckService;
+    private final FileDownloadAuthorityService fileDownloadAuthService;
+    private final EntityResponseCommonConverter commonConverter;
+    private final EntityResponseUserConverter userConverter;
+    private final EntityResponseFileConverter fileConverter;
     private final Path root = Paths.get("uploads");
     private final Path timesheet = root.resolve("timesheets");
     private final Path evaluation = root.resolve("evaluations");
+    private FileKind fileKind;
     public static final String
             txt = "text/plain",
             docx = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             xls = "application/vnd.ms-excel",
             xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-    private FileKind fileKind;
+
 
     public void init() {
         try {
@@ -52,7 +62,7 @@ public class FileStorageService {
         }
     }
 
-    public FileStorageProperties upload(MultipartFile file, String token)
+    public FileResponseEntity upload(MultipartFile file, String token)
             throws UserNotFoundException, IllegalTypeOfFileException, IOException {
             var user = userRepo.findByEmail(jwtService.extractUsername
                     (token.substring(7))).orElseThrow(UserNotFoundException::new);
@@ -81,16 +91,16 @@ public class FileStorageService {
                 oldFile.setFileSize(file.getSize());
                 oldFile.setFileType(file.getContentType());
                 oldFile.setUploadDate(LocalDateTime.now());
-                return fileMapper.convertToResponse(fileRepo.save(oldFile));
+                return fileConverter.fromFileToUser(fileRepo.save(oldFile));
             }
             catch (IOException e ) {
                     throw new RuntimeException("Error encountered while store the file");
             }
     }
 
-    public Resource download(UUID fileId) {
+    public Resource download(UUID fileId) throws UserNotFoundException{
             try {
-                var path = timesheetAuthCheckService.checkAuthority(fileId);
+                var path = fileDownloadAuthService.checkAuthority(fileId);
                 Resource resource = new UrlResource(path.toUri());
                 if (resource.exists() || resource.isReadable()) {
                     return resource;
@@ -104,13 +114,35 @@ public class FileStorageService {
     }
 
 
-    public List<File> readAll(UUID userId) {
-        var files = fileRepo.findAllByUploadedBy(userRepo.findById(userId).orElse(null));
-        if(!files.isEmpty()){
-            return files;
+    public List<UserWithFiles> readAll(FileKind fileKind) throws UserNotFoundException {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var user = userRepo.findByEmail(userDetails.getUsername()).orElseThrow(UserNotFoundException::new);
+        if(user.getRole().equals(Role.ROLE_ADMIN)||user.getRole().equals(Role.ROLE_HR)){
+            var files = fileRepo.findAllByFileKind(fileKind);
+            List<User> users = new ArrayList<>();
+            for(File file:files){
+                users.add(file.getUploadedBy());
+            }
+            return commonConverter.usersWithFilesList(users);
         }
-        else
-            throw new RuntimeException("This user has not files");
+        else if(user.getRole().equals(Role.ROLE_MANAGER)){
+            var files = fileRepo.findAllByFileKindAndUploadedBy_Group(FileKind.EVALUATION,user.getGroup());
+            List<User> users = new ArrayList<>();
+            for(File file:files){
+                users.add(file.getUploadedBy());
+            }
+            return commonConverter.usersWithFilesList(users);
+        }
+        else if(user.getRole().equals(Role.ROLE_USER)){
+            Set<File> files =
+                    new HashSet<>(fileRepo.findAllByFileKindAndUploadedBy_Group(fileKind, user.getGroup()));
+            List<UserWithFiles> userFilesList = new ArrayList<>();
+            userFilesList.add(new UserWithFiles(
+                    userConverter.fromUserToOtherUser(user),
+                    fileConverter.fromFileListToUserFileList(files)));
+            return userFilesList;
+        }
+       else throw new AccessDeniedException("You have not authority to access this resource");
     }
 
     public boolean delete(UUID fileId) {
@@ -131,9 +163,9 @@ public class FileStorageService {
         FileSystemUtils.deleteRecursively(root.toFile());
     }
 
-    public FileStorageProperties saveInDatabase(MultipartFile file, User user,Path userPath,FileKind fileKind){
-        var newFile = fileMapper.extractMultipartInfo(file,user,
+    public FileResponseEntity saveInDatabase(MultipartFile file, User user, Path userPath, FileKind fileKind){
+        var newFile = fileConverter.extractMultipartInfo(file,user,
                 userPath.resolve(Objects.requireNonNull(file.getOriginalFilename())).toString(),fileKind);
-        return fileMapper.convertToResponse(fileRepo.save(newFile));
+        return fileConverter.fromFileToUser(fileRepo.save(newFile));
     }
 }

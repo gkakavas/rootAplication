@@ -1,6 +1,7 @@
 package com.example.app.models.responses.event;
 
 import com.example.app.entities.User;
+import com.example.app.models.responses.user.AdminUserResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,9 +18,10 @@ public class AdminHrMngEventResponse implements EventResponseEntity{
     private UUID eventId;
     private String eventDescription;
     private String eventBody;
-    private UUID eventCreator;
+    private String eventCreator;
     private LocalDateTime eventDateTime;
     private LocalDateTime eventExpiration;
+    //must remove
     @Builder.Default
-    private Set<User> users = new HashSet<>();
+    private Set<AdminUserResponse> users = new HashSet<>();
 }

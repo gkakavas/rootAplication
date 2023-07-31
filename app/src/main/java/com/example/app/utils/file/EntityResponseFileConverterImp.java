@@ -1,24 +1,30 @@
 package com.example.app.utils.file;
 
 import com.example.app.entities.File;
+import com.example.app.entities.FileKind;
 import com.example.app.entities.User;
 import com.example.app.models.responses.file.AdminHrManagerFileResponse;
+import com.example.app.models.responses.file.FileResponseEntity;
 import com.example.app.models.responses.file.UserFileResponse;
 import com.example.app.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
-public class EntityResponseFileConverterImp implements EntityResponseFileConverter{
+public class EntityResponseFileConverterImp implements EntityResponseFileConverter {
     private final UserRepository userRepo;
+
     @Override
-    public AdminHrManagerFileResponse fromFileToAdmin(File file) {
-        var response =  AdminHrManagerFileResponse.builder()
+    public FileResponseEntity fromFileToAdmin(File file) {
+        var response = AdminHrManagerFileResponse.builder()
                 .fileId(file.getFileId())
                 .filename(file.getFilename())
                 .fileSize(file.getFileSize())
@@ -29,17 +35,16 @@ public class EntityResponseFileConverterImp implements EntityResponseFileConvert
                 .approvedDate(file.getApprovedDate())
                 .fileKind(file.getFileKind())
                 .build();
-        try{
+        try {
             response.setApprovedBy(userRepo.findById(file.getApprovedBy()).orElseThrow().getEmail());
-        }
-        catch (NoSuchElementException e){
+        } catch (NoSuchElementException e) {
             response.setApprovedBy(null);
         }
         return response;
     }
 
     @Override
-    public UserFileResponse fromFileToUser(File file) {
+    public FileResponseEntity fromFileToUser(File file) {
         var response = UserFileResponse.builder()
                 .fileId(file.getFileId())
                 .filename(file.getFilename())
@@ -49,26 +54,39 @@ public class EntityResponseFileConverterImp implements EntityResponseFileConvert
                 .approvedDate(file.getApprovedDate())
                 .fileKind(file.getFileKind())
                 .build();
-        try{
+        try {
             response.setApprovedBy(userRepo.findById(file.getApprovedBy()).orElseThrow().getEmail());
-        }
-        catch (NoSuchElementException e){
+        } catch (NoSuchElementException e) {
             response.setApprovedBy(null);
         }
         return response;
     }
 
     @Override
-    public List<AdminHrManagerFileResponse> fromFileListToAdminList(List<User> userList) {
-        List<AdminHrManagerFileResponse> responseList = new ArrayList<>();
-        for(User user:userList){
-            responseList.add(user.getUserHasFiles())
-        }
+    public List<FileResponseEntity> fromFileListToAdminList(Set<File> fileList) {
+        List<FileResponseEntity> responseList = new ArrayList<>();
+        fileList.forEach((file)->responseList.add(fromFileToAdmin(file)));
+        return responseList;
     }
-
 
     @Override
-    public List<UserFileResponse> fromFileListToUserList(List<User> userList) {
-        return null;
+    public List<FileResponseEntity> fromFileListToUserFileList(Set<File> fileList) {
+        List<FileResponseEntity> responseList = new ArrayList<>();
+        fileList.forEach((file)->responseList.add(fromFileToUser(file)));
+        return responseList;
+    }
+
+    public File extractMultipartInfo(MultipartFile multipartFile, User fileCreator, String accessUrl, FileKind fileKind){
+        return File.builder()
+                .filename(multipartFile.getOriginalFilename())
+                .fileSize(multipartFile.getSize())
+                .fileType(multipartFile.getContentType())
+                .uploadDate(LocalDateTime.now())
+                .accessUrl(accessUrl)
+                .fileKind(null)
+                .uploadedBy(fileCreator)
+                .build();
     }
 }
+
+

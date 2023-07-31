@@ -8,9 +8,7 @@ import com.example.app.models.responses.user.UserResponseEntity;
 import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.utils.event.EventToMyEvents;
-import com.example.app.utils.user.*;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import com.example.app.utils.user.EntityResponseUserConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,19 +22,16 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     private final UserRepository userRepo;
     private final JwtService jwtService;
     private final GroupRepository groupRepo;
-    private final UserToOtherUser toOther;
-    private final UserToAdminUser toAdmin;
-    private final UserUpdateSetting updateUser;
-    private final UserRequestEntityToUser toUser;
     private final EventToMyEvents toMyEvent;
+    private final EntityResponseUserConverter userConverter;
     @Override
     public UserResponseEntity create(UserRequestEntity request, String token) throws UserNotFoundException {
             var userCreator = userRepo.findByEmail(jwtService.extractUsername(token.substring(7)))
                     .orElseThrow(UserNotFoundException::new);
             var group = groupRepo.findById(request.getGroup()).orElse(null);
-            var user =  userRepo.save(toUser.convertToEntity(
+            var user =  userRepo.save(userConverter.fromRequestToEntity(
                     request,userCreator.getUserId(), group));
-            return toAdmin.convertToAdminUser(user);
+            return userConverter.fromUserToAdminUser(user);
     }
 
     public User read(String email) throws UserNotFoundException {
@@ -47,12 +42,12 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
         var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
         var roles = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
         if(roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_ADMIN"))) {
-            return toAdmin.convertToAdminUser(user);
+            return userConverter.fromUserToAdminUser(user);
         }
         else if(roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_USER"))||
                 roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_HR"))||
                 roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_MANAGER"))){
-            return toOther.convertToOtherUser(user);
+            return userConverter.fromUserToOtherUser(user);
         }
         else
             throw new AccessDeniedException("Unauthorized request");
@@ -60,17 +55,15 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     @Override
     public List<UserResponseEntity> read() {
         List<User> users = userRepo.findAll();
-            List<UserResponseEntity> userList = new ArrayList<>();
         var roles = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
         if(roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_ADMIN"))) {
-            users.forEach(user -> userList.add(toAdmin.convertToAdminUser(user)));
-            return userList;
+            return userConverter.fromUserListToAdminList(users);
         }
         else if(roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_USER"))||
                 roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_HR"))||
                 roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_MANAGER"))){
-            users.forEach(user -> userList.add(toOther.convertToOtherUser(user)));
-            return userList;
+
+            return userConverter.fromUserListToOtherList(users);
         }
         else
             throw new AccessDeniedException("Unauthorized request");
@@ -78,10 +71,10 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     @Override
     public UserResponseEntity update(UUID id, UserRequestEntity request) throws UserNotFoundException {
         var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
-            var updatedUser = updateUser.updateSetting(user,request,
+            var updatedUser = userConverter.updateSetting(user,request,
                     groupRepo.findById(request.getGroup()).orElse(null));
             var response = userRepo.save(updatedUser);
-            return toAdmin.convertToAdminUser(response);
+            return userConverter.fromUserToAdminUser(response);
     }
     @Override
     public boolean delete(UUID id) throws UserNotFoundException {
@@ -109,7 +102,7 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
                     }
             );
             var patcedUser = userRepo.save(user);
-            return toAdmin.convertToAdminUser(patcedUser);
+            return userConverter.fromUserToAdminUser(patcedUser);
         }
         else
             throw new NullPointerException("");

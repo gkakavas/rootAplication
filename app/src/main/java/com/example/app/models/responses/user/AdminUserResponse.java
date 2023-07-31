@@ -17,9 +17,8 @@ public class AdminUserResponse implements UserResponseEntity {
     private String email;
     private String specialization;
     private String currentProject;
-    @JsonIgnore
-    private Group group;
-    private UUID createdBy;
+    private String groupName;
+    private String cratedBy;
     private LocalDateTime registerDate;
     private LocalDateTime lastLogin;
     private Role role;
