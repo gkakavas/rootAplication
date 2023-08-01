@@ -7,7 +7,7 @@ import com.example.app.models.responses.event.EventResponseEntity;
 import com.example.app.models.responses.user.UserResponseEntity;
 import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
-import com.example.app.utils.event.EventToMyEvents;
+import com.example.app.utils.event.EntityResponseEventConverter;
 import com.example.app.utils.user.EntityResponseUserConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -22,8 +22,8 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     private final UserRepository userRepo;
     private final JwtService jwtService;
     private final GroupRepository groupRepo;
-    private final EventToMyEvents toMyEvent;
     private final EntityResponseUserConverter userConverter;
+    private final EntityResponseEventConverter eventConverter;
     @Override
     public UserResponseEntity create(UserRequestEntity request, String token) throws UserNotFoundException {
             var userCreator = userRepo.findByEmail(jwtService.extractUsername(token.substring(7)))
@@ -54,16 +54,16 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     }
     @Override
     public List<UserResponseEntity> read() {
-        List<User> users = userRepo.findAll();
+        Set<User> users = Set.copyOf(userRepo.findAll());
         var roles = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
         if(roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_ADMIN"))) {
-            return userConverter.fromUserListToAdminList(users);
+            return List.copyOf(userConverter.fromUserListToAdminList(users));
         }
         else if(roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_USER"))||
                 roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_HR"))||
                 roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_MANAGER"))){
 
-            return userConverter.fromUserListToOtherList(users);
+            return List.copyOf(userConverter.fromUserListToOtherList(users));
         }
         else
             throw new AccessDeniedException("Unauthorized request");
@@ -95,7 +95,7 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
         if (!userFields.isEmpty()) {
             var user = userRepo.findById(userId).orElseThrow(UserNotFoundException::new);
             userFields.forEach((key, value) -> {
-                        Field field = ReflectionUtils.findField(UserRequestEntity.class, key);
+                        Field field = ReflectionUtils.findField(User.class, key);
                         assert field != null;
                         field.setAccessible(true);
                         ReflectionUtils.setField(field, user, value);
@@ -110,10 +110,8 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     }
 
     //24/7
-    public List<EventResponseEntity> readUserEvents(UUID userId)throws UserNotFoundException {
-        var userEvents = userRepo.findById(userId).orElseThrow(UserNotFoundException::new).getUserHasEvents();
-        List<EventResponseEntity> responseList = new ArrayList<>();
-        userEvents.forEach((event) -> responseList.add(toMyEvent.convertToMyEvent(event)));
-        return responseList;
+    public Set<EventResponseEntity> readUserEvents(UUID userId)throws UserNotFoundException {
+        var user = userRepo.findById(userId).orElseThrow(UserNotFoundException::new);
+        return eventConverter.fromEventListToMyList(user.getUserHasEvents());
     }
 }

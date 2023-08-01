@@ -5,17 +5,14 @@ import com.example.app.entities.User;
 import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.user.AdminUserResponse;
 import com.example.app.models.responses.user.OtherUserResponse;
-import com.example.app.models.responses.user.UserResponseEntity;
+import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.UUID;
+import java.util.*;
 
 @Component
 @RequiredArgsConstructor
@@ -24,7 +21,7 @@ public class EntityResponseUserConverterImpl implements EntityResponseUserConver
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public UserResponseEntity fromUserToAdminUser(User user) {
+    public AdminUserResponse fromUserToAdminUser(User user) {
             var response =  AdminUserResponse.builder()
             .userId(user.getUserId())
             .firstname(user.getFirstname())
@@ -32,46 +29,50 @@ public class EntityResponseUserConverterImpl implements EntityResponseUserConver
             .email(user.getEmail())
             .specialization(user.getSpecialization())
             .currentProject(user.getCurrentProject())
-            .groupName(user.getGroup().getGroupName())
+            .groupName(null)
             .registerDate(user.getRegisterDate())
+            .createdBy(null)
             .lastLogin(user.getLastLogin())
             .role(user.getRole())
                     .build();
-            try {
-                var createdBy = userRepo.findById(user.getCreatedBy()).orElseThrow().getEmail();
-                response.setCratedBy(createdBy);
-            }catch(NoSuchElementException e){
-                response.setCratedBy(null);
-                e.printStackTrace();
+            if(user.getGroup()!=null){
+                response.setGroupName(user.getGroup().getGroupName());
+            }
+            if(user.getCreatedBy()!=null) {
+                userRepo.findById(user.getCreatedBy()).ifPresent(
+                        value -> response.setCreatedBy(value.getEmail()));
             }
             return response;
     }
 
     @Override
-    public UserResponseEntity fromUserToOtherUser(User user) {
-        return OtherUserResponse.builder()
+    public OtherUserResponse fromUserToOtherUser(User user) {
+        var response=  OtherUserResponse.builder()
                 .userId(user.getUserId())
                 .firstname(user.getFirstname())
                 .lastname(user.getLastname())
                 .email(user.getEmail())
                 .specialization(user.getSpecialization())
                 .currentProject(user.getCurrentProject())
-                .groupName(user.getGroup().getGroupName())
+                .groupName(null)
                 .build();
-
+        if(user.getGroup()!=null){
+            response.setGroupName(user.getGroup().getGroupName());
+        }
+       return response;
     }
 
     @Override
-    public List<UserResponseEntity> fromUserListToAdminList(List<User> users) {
-            List<UserResponseEntity> responseList = new ArrayList<>();
+    public Set<AdminUserResponse> fromUserListToAdminList(Set<User> users) {
+            Set<AdminUserResponse> responseList = new HashSet<>();
             users.forEach((user) -> responseList.add(
                         fromUserToAdminUser(user)));
             return responseList;
     }
 
     @Override
-    public List<UserResponseEntity> fromUserListToOtherList(List<User> users) {
-        List<UserResponseEntity> responseList = new ArrayList<>();
+    public Set<OtherUserResponse> fromUserListToOtherList(Set<User> users) {
+        Set<OtherUserResponse> responseList = new HashSet<>();
         users.forEach((user)->responseList.add(
                 fromUserToOtherUser(user)));
         return responseList;
@@ -95,6 +96,7 @@ public class EntityResponseUserConverterImpl implements EntityResponseUserConver
                 .build();
     }
 
+    @Override
     public User updateSetting(User user, UserRequestEntity request, Group group){
         user.setPassword(request.getPassword());
         user.setFirstname(request.getFirstname());

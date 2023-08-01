@@ -4,6 +4,7 @@ import com.example.app.exception.EventNotFoundException;
 import com.example.app.exception.GroupNotFoundException;
 import com.example.app.exception.LeaveNotFoundException;
 import com.example.app.exception.UserNotFoundException;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
@@ -65,5 +66,12 @@ public class ApplicationExceptionHandler {
         return errorMap;
     }
 //    exception when the id is not UUID type
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(ConstraintViolationException.class)
+    public Map<String, String>handleConstraintViolation(ConstraintViolationException ex){
+        Map<String,String> errorMap =  new HashMap<>();
+        errorMap.put("You have performed illegal action", ex.getMessage());
+        return errorMap;
+    }
 
 }

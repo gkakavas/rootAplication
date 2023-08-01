@@ -8,9 +8,7 @@ import com.example.app.models.requests.GroupRequestEntity;
 import com.example.app.models.responses.group.GroupResponseEntity;
 import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
-import com.example.app.utils.group.GroupRequestEntityToGroup;
-import com.example.app.utils.group.GroupToAdminGroup;
-import com.example.app.utils.group.GroupToMngGroup;
+import com.example.app.utils.group.EntityResponseGroupConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,9 +22,7 @@ public class GroupService implements CrudService<GroupResponseEntity, GroupReque
     private final UserRepository userRepo;
     private final GroupRepository groupRepo;
     private final JwtService jwtService;
-    private final GroupRequestEntityToGroup toGroup;
-    private final GroupToAdminGroup toAdminGroup;
-    private final GroupToMngGroup toManagerGroup;
+    private final EntityResponseGroupConverter groupConverter;
 
 
     @Override
@@ -34,7 +30,7 @@ public class GroupService implements CrudService<GroupResponseEntity, GroupReque
             var users = userRepo.findAllById(request.getIdsSet());
             var groupCreator = userRepo.findByEmail(jwtService.extractUsername(token.substring(7)))
                                                             .orElseThrow(UserNotFoundException::new);
-            var group = toGroup.convertToGroup(request,groupCreator.getUserId());
+            var group = groupConverter.fromRequestToGroup(request,groupCreator.getUserId());
             group.getGroupHasUsers().addAll(users);
             var newGroup = groupRepo.save(group);
             for(User user:users){
@@ -42,7 +38,7 @@ public class GroupService implements CrudService<GroupResponseEntity, GroupReque
                 userRepo.save(user);
             }
             //must return only one the users and no the group inside users
-            return toAdminGroup.convertToAdminGroup(newGroup);
+            return groupConverter.fromGroupToAdminGroup(newGroup);
     }
 
     @Override
@@ -50,10 +46,10 @@ public class GroupService implements CrudService<GroupResponseEntity, GroupReque
             var group = groupRepo.findById(id).orElseThrow(GroupNotFoundException::new);
             var authority = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
             if(authority.stream().anyMatch(a->a.getAuthority().equals("ROLE_ADMIN"))){
-                return toAdminGroup.convertToAdminGroup(group);
+                return groupConverter.fromGroupToAdminGroup(group);
             }
             else if (authority.stream().anyMatch(a->a.getAuthority().equals("ROLE_MANAGER"))) {
-                return toManagerGroup.convertToMngGroup(group);
+                return groupConverter.fromGroupToMngGroup(group);
             }
             else
                 throw new AccessDeniedException("You have not authority to access this resource");
@@ -64,10 +60,10 @@ public class GroupService implements CrudService<GroupResponseEntity, GroupReque
 
         if (SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
-            return toAdminGroup.convertToAdminGroup(groups);
+            return groupConverter.fromGroupListToAdminGroupList(groups);
         } else if (SecurityContextHolder.getContext().getAuthentication().getAuthorities()
                 .stream().anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER"))) {
-            return toManagerGroup.convertToMngGroup(groups);
+            return groupConverter.fromGroupListToMngGroupList(groups);
         } else {
             throw new AccessDeniedException("You have not authority to access this resource");
         }
@@ -79,10 +75,10 @@ public class GroupService implements CrudService<GroupResponseEntity, GroupReque
             var updatedGroup = groupRepo.save(group);
             var authority = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
             if(authority.stream().anyMatch(a->a.getAuthority().equals("ROLE_ADMIN"))){
-                return toAdminGroup.convertToAdminGroup(updatedGroup);
+                return groupConverter.fromGroupToAdminGroup(updatedGroup);
             }
             else if(authority.stream().anyMatch(a->a.getAuthority().equals("ROLE_MANAGER"))){
-                return toManagerGroup.convertToMngGroup(updatedGroup);
+                return groupConverter.fromGroupToMngGroup(updatedGroup);
             }
             else
                 throw new AccessDeniedException("You have not the authority to access this resource");

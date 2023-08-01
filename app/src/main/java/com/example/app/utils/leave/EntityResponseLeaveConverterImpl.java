@@ -1,4 +1,4 @@
-package com.example.app.utils.leavenew;
+package com.example.app.utils.leave;
 
 import com.example.app.entities.Leave;
 import com.example.app.entities.User;
@@ -7,7 +7,6 @@ import com.example.app.models.responses.leave.AdminHrMngLeaveResponse;
 import com.example.app.models.responses.leave.LeaveResponseEntity;
 import com.example.app.models.responses.leave.MyLeaveResponse;
 import com.example.app.models.responses.user.AdminUserResponse;
-import com.example.app.models.responses.user.OtherUserResponse;
 import com.example.app.repositories.UserRepository;
 import com.example.app.utils.user.EntityResponseUserConverter;
 import lombok.RequiredArgsConstructor;
@@ -76,7 +75,7 @@ public class EntityResponseLeaveConverterImpl implements EntityResponseLeaveConv
     }
 
     @Override
-    public Leave fromRequestToEntity(LeaveRequestEntity request, User requestedBy) {
+        public Leave fromRequestToEntity(LeaveRequestEntity request, User requestedBy) {
         return Leave.builder()
                 .leaveType(request.getLeaveType())
                 .leaveStarts(request.getLeaveStarts())
@@ -86,5 +85,13 @@ public class EntityResponseLeaveConverterImpl implements EntityResponseLeaveConv
                 .approved(false)
                 .requestedBy(requestedBy)
                 .build();
+    }
+
+    @Override
+    public Leave fromRequestToEntity(LeaveRequestEntity request, Leave leave) {
+        leave.setLeaveType(request.getLeaveType());
+        leave.setLeaveStarts(request.getLeaveStarts());
+        leave.setLeaveEnds(request.getLeaveEnds());
+        return leave;
     }
 }

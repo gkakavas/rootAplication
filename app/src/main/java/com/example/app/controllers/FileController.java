@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -47,12 +48,12 @@ public class FileController {
     }
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER','ROLE_USER')")
     @GetMapping("/evaluation/")
-    public ResponseEntity<List<UserWithFiles>> readAllEvaluation() throws UserNotFoundException {
+    public ResponseEntity<Set<UserWithFiles>> readAllEvaluation() throws UserNotFoundException {
         return new ResponseEntity<>(fileStorageService.readAll(FileKind.EVALUATION),HttpStatus.OK);
     }
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_HR','ROLE_USER')")
     @GetMapping("/timesheet/")
-    public ResponseEntity<List<UserWithFiles>> readAllTimesheet() throws UserNotFoundException {
+    public ResponseEntity<Set<UserWithFiles>> readAllTimesheet() throws UserNotFoundException {
         return new ResponseEntity<>(fileStorageService.readAll(FileKind.TIMESHEET),HttpStatus.OK);
     }
 

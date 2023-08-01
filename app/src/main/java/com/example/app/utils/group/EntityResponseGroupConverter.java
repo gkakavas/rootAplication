@@ -1,4 +1,4 @@
-package com.example.app.utils.groupnew;
+package com.example.app.utils.group;
 
 import com.example.app.entities.Group;
 import com.example.app.models.requests.GroupRequestEntity;
@@ -11,11 +11,11 @@ import java.util.UUID;
 public interface EntityResponseGroupConverter {
     ManagerGroupResponse fromGroupToMngGroup(Group group);
 
-    List<ManagerGroupResponse> fromGroupListToMngGroupList(List<Group> groups);
+    List<GroupResponseEntity> fromGroupListToMngGroupList(List<Group> groups);
 
     GroupResponseEntity fromGroupToAdminGroup(Group group);
 
     List<GroupResponseEntity> fromGroupListToAdminGroupList(List<Group> groups);
 
-    Group convertToGroup(GroupRequestEntity request, UUID createdBy);
+    Group fromRequestToGroup(GroupRequestEntity request, UUID createdBy);
 }

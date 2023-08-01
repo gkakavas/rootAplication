@@ -1,4 +1,4 @@
-package com.example.app.utils.groupnew;
+package com.example.app.utils.group;
 
 import com.example.app.entities.Group;
 import com.example.app.models.requests.GroupRequestEntity;
@@ -35,8 +35,8 @@ public class EntityResponseGroupConverterImpl implements EntityResponseGroupConv
         return response;
     }
     @Override
-    public List<ManagerGroupResponse> fromGroupListToMngGroupList(List<Group> groups){
-        List<ManagerGroupResponse> managerGroupResponseList = new ArrayList<>();
+    public List<GroupResponseEntity> fromGroupListToMngGroupList(List<Group> groups){
+        List<GroupResponseEntity> managerGroupResponseList = new ArrayList<>();
         groups.forEach(group->managerGroupResponseList.add(fromGroupToMngGroup(group)));
         return managerGroupResponseList;
     }
@@ -68,7 +68,7 @@ public class EntityResponseGroupConverterImpl implements EntityResponseGroupConv
     }
 
     @Override
-    public Group convertToGroup(GroupRequestEntity request, UUID createdBy) {
+    public Group fromRequestToGroup(GroupRequestEntity request, UUID createdBy) {
         return Group.builder()
                 .groupName(request.getGroupName())
                 .groupCreator(createdBy)

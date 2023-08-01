@@ -5,8 +5,8 @@ Spring:
     password: 4y7sV96vA9wv46VR
     driver-class-name: org.postgresql.Driver
   jpa:
-    hibernate:
-      ddl-auto: create-drop
+    #hibernate:
+     # ddl-auto: create-drop
     show-sql: true
     properties:
       hibernate:

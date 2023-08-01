@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.validation.beanvalidation.MethodValidationPostProcessor;
 
 import java.security.Principal;
 
@@ -44,5 +45,10 @@ public class ApplicationConfig {
     @Bean
     public PasswordEncoder passwordEncoder(){
        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public MethodValidationPostProcessor methodValidationPostProcessor() {
+        return new MethodValidationPostProcessor();
     }
 }

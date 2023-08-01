@@ -1,6 +1,5 @@
-package com.example.app.utils.leavenew;
+package com.example.app.utils.leave;
 
-import com.example.app.entities.File;
 import com.example.app.entities.Leave;
 import com.example.app.entities.User;
 import com.example.app.models.requests.LeaveRequestEntity;
@@ -15,5 +14,5 @@ public interface EntityResponseLeaveConverter {
     List<LeaveResponseEntity> fromLeaveListToAdminHrMngLeaveList(Set<Leave> leaveList);
     List<LeaveResponseEntity> fromLeaveListToMyLeaveList(Set<Leave> leaveList);
     Leave fromRequestToEntity(LeaveRequestEntity request, User requestedBy);
-
+    Leave fromRequestToEntity(LeaveRequestEntity request, Leave leave);
 }

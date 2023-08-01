@@ -23,5 +23,5 @@ public class AdminHrMngEventResponse implements EventResponseEntity{
     private LocalDateTime eventExpiration;
     //must remove
     @Builder.Default
-    private Set<AdminUserResponse> users = new HashSet<>();
+    private Set<String> users = new HashSet<>();
 }

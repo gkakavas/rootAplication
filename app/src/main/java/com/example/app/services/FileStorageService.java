@@ -11,7 +11,6 @@ import com.example.app.models.responses.common.UserWithFiles;
 import com.example.app.models.responses.file.FileResponseEntity;
 import com.example.app.repositories.FileRepository;
 import com.example.app.repositories.UserRepository;
-import com.example.app.utils.FileMapper;
 import com.example.app.utils.common.EntityResponseCommonConverter;
 import com.example.app.utils.file.EntityResponseFileConverter;
 import com.example.app.utils.user.EntityResponseUserConverter;
@@ -37,7 +36,6 @@ public class FileStorageService {
     private final JwtService jwtService;
     private final UserRepository userRepo;
     private final FileRepository fileRepo;
-    private final FileMapper fileMapper;
     private final FileDownloadAuthorityService fileDownloadAuthService;
     private final EntityResponseCommonConverter commonConverter;
     private final EntityResponseUserConverter userConverter;
@@ -114,12 +112,12 @@ public class FileStorageService {
     }
 
 
-    public List<UserWithFiles> readAll(FileKind fileKind) throws UserNotFoundException {
+    public Set<UserWithFiles> readAll(FileKind fileKind) throws UserNotFoundException {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         var user = userRepo.findByEmail(userDetails.getUsername()).orElseThrow(UserNotFoundException::new);
         if(user.getRole().equals(Role.ROLE_ADMIN)||user.getRole().equals(Role.ROLE_HR)){
             var files = fileRepo.findAllByFileKind(fileKind);
-            List<User> users = new ArrayList<>();
+            Set<User> users = new HashSet<>();
             for(File file:files){
                 users.add(file.getUploadedBy());
             }
@@ -127,7 +125,7 @@ public class FileStorageService {
         }
         else if(user.getRole().equals(Role.ROLE_MANAGER)){
             var files = fileRepo.findAllByFileKindAndUploadedBy_Group(FileKind.EVALUATION,user.getGroup());
-            List<User> users = new ArrayList<>();
+            Set<User> users = new HashSet<>();
             for(File file:files){
                 users.add(file.getUploadedBy());
             }
@@ -136,7 +134,7 @@ public class FileStorageService {
         else if(user.getRole().equals(Role.ROLE_USER)){
             Set<File> files =
                     new HashSet<>(fileRepo.findAllByFileKindAndUploadedBy_Group(fileKind, user.getGroup()));
-            List<UserWithFiles> userFilesList = new ArrayList<>();
+            Set<UserWithFiles> userFilesList = new HashSet<>();
             userFilesList.add(new UserWithFiles(
                     userConverter.fromUserToOtherUser(user),
                     fileConverter.fromFileListToUserFileList(files)));

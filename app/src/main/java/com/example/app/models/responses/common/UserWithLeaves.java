@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 @Builder
 @AllArgsConstructor
-public class UserWithLeaves {
+public class UserWithLeaves implements LeaveResponseEntity{
     private UserResponseEntity user;
     private List<LeaveResponseEntity> leaves;
 }

@@ -1,5 +1,6 @@
 package com.example.app.models.responses.common;
 
+import com.example.app.entities.File;
 import com.example.app.models.responses.file.FileResponseEntity;
 import com.example.app.models.responses.user.UserResponseEntity;
 import lombok.AllArgsConstructor;
@@ -11,7 +12,7 @@ import java.util.List;
 @Data
 @Builder
 @AllArgsConstructor
-public class UserWithFiles {
+public class UserWithFiles implements FileResponseEntity {
     private UserResponseEntity user;
     private List<FileResponseEntity> files;
 }

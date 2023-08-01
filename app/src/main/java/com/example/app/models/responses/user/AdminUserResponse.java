@@ -1,7 +1,5 @@
 package com.example.app.models.responses.user;
 import com.example.app.entities.*;
-import com.example.app.models.responses.group.GroupResponseEntity;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -10,7 +8,6 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 public class AdminUserResponse implements UserResponseEntity {
-   //24/7
     private UUID userId;
     private String firstname;
     private String lastname;
@@ -18,8 +15,9 @@ public class AdminUserResponse implements UserResponseEntity {
     private String specialization;
     private String currentProject;
     private String groupName;
-    private String cratedBy;
+    private String createdBy;
     private LocalDateTime registerDate;
+    //last login must be removed
     private LocalDateTime lastLogin;
     private Role role;
 

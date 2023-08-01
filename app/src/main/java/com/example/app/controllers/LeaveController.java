@@ -39,19 +39,22 @@ public class LeaveController implements CrudController<LeaveResponseEntity, Leav
         return service.read();
     }
 
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Override
     public ResponseEntity<LeaveResponseEntity> update(UUID id, @Valid LeaveRequestEntity request)
     throws LeaveNotFoundException{
         return new ResponseEntity<>(service.update(id,request), HttpStatus.OK);
     }
 
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_USER')")
     @Override
     public ResponseEntity<LeaveResponseEntity> delete(UUID id)
     throws LeaveNotFoundException{
         service.delete(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+    @PreAuthorize("hasRole('ROLE_MANAGER')")
     @PatchMapping("/approval/{id}")
     public ResponseEntity<LeaveResponseEntity> approveLeave(
             @PathVariable UUID id,

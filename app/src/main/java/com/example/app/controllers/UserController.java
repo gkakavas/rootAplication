@@ -1,31 +1,39 @@
 package com.example.app.controllers;
 
+import com.example.app.entities.User;
 import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.event.EventResponseEntity;
 import com.example.app.services.LeaveService;
 import com.example.app.services.UserService;
 import com.example.app.models.responses.user.UserResponseEntity;
+import com.example.app.utils.validation.UserAllowFields;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.ReflectionUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/user")
 @RequiredArgsConstructor
+@Validated
 public class UserController implements CrudController<UserResponseEntity, UserRequestEntity, UserNotFoundException>{
     private final UserService service;
 
     @PreAuthorize("hasAnyRole('ADMIN')")
     @Override
     public ResponseEntity<UserResponseEntity> create
-            (@Valid UserRequestEntity request, String token) throws UserNotFoundException{
+            (UserRequestEntity request, String token) throws UserNotFoundException{
         return new ResponseEntity<>(service.create(request,token), HttpStatus.CREATED);
     }
     @Override
@@ -39,7 +47,7 @@ public class UserController implements CrudController<UserResponseEntity, UserRe
 
     @PreAuthorize("hasRole('ADMIN')")
     @Override
-    public ResponseEntity<UserResponseEntity> update(UUID id,@Valid UserRequestEntity request) throws UserNotFoundException{
+    public ResponseEntity<UserResponseEntity> update(UUID id, UserRequestEntity request) throws UserNotFoundException{
         return new ResponseEntity<>(service.update(id,request), HttpStatus.OK);
     }
 
@@ -53,7 +61,7 @@ public class UserController implements CrudController<UserResponseEntity, UserRe
     @PreAuthorize("hasAnyRole('ADMIN')")
     @PatchMapping("/patch/{userId}")
     public ResponseEntity<UserResponseEntity> patch
-            (@PathVariable UUID userId, @RequestParam Map<String,String> userField)
+            (@PathVariable UUID userId, @RequestBody Map<@UserAllowFields String,String> userField)
             throws UserNotFoundException{
         return new ResponseEntity<>(service.patch(userId,userField),HttpStatus.OK);
     }
@@ -61,9 +69,9 @@ public class UserController implements CrudController<UserResponseEntity, UserRe
     //@PatchMapping("/changePassword")
 
     //final
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_HR','ROLE_MANAGER') or #userId == authentication.principal.userId")
+    @PreAuthorize("#userId == authentication.principal.userId")
     @GetMapping("/{userId}/events")
-    public ResponseEntity<List<EventResponseEntity>> readUserEvents(@PathVariable UUID userId)
+    public ResponseEntity<Set<EventResponseEntity>> readUserEvents(@PathVariable UUID userId)
     throws UserNotFoundException{
         return new ResponseEntity<>(service.readUserEvents(userId),HttpStatus.OK);
     }
