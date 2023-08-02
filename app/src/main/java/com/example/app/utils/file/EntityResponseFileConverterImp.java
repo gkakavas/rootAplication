@@ -7,6 +7,7 @@ import com.example.app.models.responses.file.AdminHrManagerFileResponse;
 import com.example.app.models.responses.file.FileResponseEntity;
 import com.example.app.models.responses.file.UserFileResponse;
 import com.example.app.repositories.UserRepository;
+import com.example.app.utils.FileSizeConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,7 +28,7 @@ public class EntityResponseFileConverterImp implements EntityResponseFileConvert
         var response = AdminHrManagerFileResponse.builder()
                 .fileId(file.getFileId())
                 .filename(file.getFilename())
-                .fileSize(file.getFileSize())
+                .fileSize(FileSizeConverter.converter(file.getFileSize()))
                 .fileType(file.getFileType())
                 .uploadDate(file.getUploadDate())
                 .approved(file.getApproved())
@@ -35,10 +36,9 @@ public class EntityResponseFileConverterImp implements EntityResponseFileConvert
                 .approvedDate(file.getApprovedDate())
                 .fileKind(file.getFileKind())
                 .build();
-        try {
-            response.setApprovedBy(userRepo.findById(file.getApprovedBy()).orElseThrow().getEmail());
-        } catch (NoSuchElementException e) {
-            response.setApprovedBy(null);
+        if(file.getApprovedBy()!=null) {
+            userRepo.findById(file.getApprovedBy()).ifPresent(
+                    value -> response.setApprovedBy(value.getEmail()));
         }
         return response;
     }
@@ -48,16 +48,15 @@ public class EntityResponseFileConverterImp implements EntityResponseFileConvert
         var response = UserFileResponse.builder()
                 .fileId(file.getFileId())
                 .filename(file.getFilename())
-                .fileSize(file.getFileSize())
+                .fileSize(FileSizeConverter.converter(file.getFileSize()))
                 .approved(file.getApproved())
                 .approvedBy(null)
                 .approvedDate(file.getApprovedDate())
                 .fileKind(file.getFileKind())
                 .build();
-        try {
-            response.setApprovedBy(userRepo.findById(file.getApprovedBy()).orElseThrow().getEmail());
-        } catch (NoSuchElementException e) {
-            response.setApprovedBy(null);
+        if(file.getApprovedBy()!=null) {
+            userRepo.findById(file.getApprovedBy()).ifPresent(
+                    value -> response.setApprovedBy(value.getEmail()));
         }
         return response;
     }
@@ -83,7 +82,7 @@ public class EntityResponseFileConverterImp implements EntityResponseFileConvert
                 .fileType(multipartFile.getContentType())
                 .uploadDate(LocalDateTime.now())
                 .accessUrl(accessUrl)
-                .fileKind(null)
+                .fileKind(fileKind)
                 .uploadedBy(fileCreator)
                 .build();
     }

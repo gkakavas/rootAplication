@@ -13,7 +13,7 @@ import java.util.UUID;
 public class UserFileResponse implements FileResponseEntity{
     private UUID fileId;
     private String filename;
-    private Long fileSize;
+    private String fileSize;
     private Boolean approved;
     private String approvedBy;
     private LocalDateTime approvedDate;

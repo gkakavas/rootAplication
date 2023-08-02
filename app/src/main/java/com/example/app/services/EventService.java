@@ -13,13 +13,17 @@ import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.utils.event.EntityResponseEventConverter;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
 import java.lang.reflect.Field;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EventService implements CrudService<EventResponseEntity, EventRequestEntity, EventNotFoundException> {
@@ -28,6 +32,8 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
     private final UserRepository userRepo;
     private final JwtService jwtService;
     private final EntityResponseEventConverter eventConverter;
+    private Object key;
+
     @Override
     public EventResponseEntity create(EventRequestEntity request, String token)
     throws UserNotFoundException{
@@ -36,11 +42,10 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
             var newEvent = eventConverter.fromRequestToEvent(request,eventCreator.getUserId());
             var users = userRepo.findAllById(request.getIdsSet());
             newEvent.getUsersJoinInEvent().addAll(users);
-            var responseEvent = eventRepo.save(newEvent);
             for(User user:users){
-                user.getUserHasEvents().add(responseEvent);
-                userRepo.save(user);
+                user.getUserHasEvents().add(newEvent);
             }
+            var responseEvent = eventRepo.save(newEvent);
             return eventConverter.fromEventToAdminHrMngEvent(responseEvent);
     }
     @Override
@@ -118,6 +123,9 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
         var event = eventRepo.findById(eventId).orElseThrow(EventNotFoundException::new);
         var users = userRepo.findAllById(idsSet);
         users.forEach((user)-> event.getUsersJoinInEvent().add(user));
+        for(User user:users){
+            user.getUserHasEvents().add(event);
+        }
         var updatedEvent =  eventRepo.save(event);
         return eventConverter.fromEventToAdminHrMngEvent(updatedEvent);
     }
@@ -126,19 +134,28 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
         var event = eventRepo.findById(eventId).orElseThrow(EventNotFoundException::new);
         var users = userRepo.findAllById(idsSet);
         users.forEach((user)-> event.getUsersJoinInEvent().remove(user));
+        for(User user:users){
+            user.getUserHasEvents().remove(event);
+        }
         var updatedEvent = eventRepo.save(event);
         return eventConverter.fromEventToAdminHrMngEvent(updatedEvent);
     }
-     public EventResponseEntity patch(UUID eventId, Map<String,Object> eventFields)
+     public EventResponseEntity patchEventDetails(UUID eventId, Map<String,String> eventFields)
      throws EventNotFoundException {
          if (!eventFields.isEmpty()) {
              var event = eventRepo.findById(eventId).orElseThrow(EventNotFoundException::new);
              eventFields.forEach((key, value) -> {
-                         Field field = ReflectionUtils.findField(EventRequestEntity.class, key);
-                         assert field != null;
-                         field.setAccessible(true);
-                         ReflectionUtils.setField(field, event, value);
-                     }
+                 Field field = ReflectionUtils.findField(Event.class, key);
+                 assert field != null;
+                 field.setAccessible(true);
+                 if(field.getType().equals(LocalDateTime.class)){
+                   var parsedValue =  LocalDateTime.parse(value);
+                   ReflectionUtils.setField(field, event, parsedValue);
+                 }
+                 else if (field.getType().equals(String.class)) {
+                     ReflectionUtils.setField(field, event, value);
+                 }
+             }
              );
              var patcedEvent = eventRepo.save(event);
              return eventConverter.fromEventToAdminHrMngEvent(patcedEvent);

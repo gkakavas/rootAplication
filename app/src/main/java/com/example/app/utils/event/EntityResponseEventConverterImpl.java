@@ -35,7 +35,6 @@ private final UserRepository userRepo;
                 .eventCreator(null)
                 .eventDateTime(event.getEventDateTime())
                 .eventExpiration(event.getEventExpiration())
-                .users(null)
                 .build();
         event.getUsersJoinInEvent().forEach((user)->response.getUsers().add(user.getEmail()));
         try {

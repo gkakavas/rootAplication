@@ -1,9 +1,6 @@
 package com.example.app.advice;
 
-import com.example.app.exception.EventNotFoundException;
-import com.example.app.exception.GroupNotFoundException;
-import com.example.app.exception.LeaveNotFoundException;
-import com.example.app.exception.UserNotFoundException;
+import com.example.app.exception.*;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.HttpStatus;
@@ -53,6 +50,14 @@ public class ApplicationExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(LeaveNotFoundException.class)
     public Map<String, String> handleUserException(LeaveNotFoundException ex){
+        Map<String, String> errorMap = new HashMap<>();
+        errorMap.put("errorMessage",ex.getMessage());
+        return errorMap;
+    }
+
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(FileNotFoundException.class)
+    public Map<String, String> handleFileException(FileNotFoundException ex){
         Map<String, String> errorMap = new HashMap<>();
         errorMap.put("errorMessage",ex.getMessage());
         return errorMap;

@@ -96,21 +96,22 @@ public class FileStorageService {
             }
     }
 
-    public Resource download(UUID fileId) throws UserNotFoundException{
+    public Resource download(UUID fileId,FileKind fileKind) throws UserNotFoundException, FileNotFoundException {
+        if (fileRepo.existsByFileIdAndFileKind(fileId, fileKind)) {
             try {
                 var path = fileDownloadAuthService.checkAuthority(fileId);
                 Resource resource = new UrlResource(path.toUri());
                 if (resource.exists() || resource.isReadable()) {
                     return resource;
-                }
-                else {
+                } else {
                     throw new RuntimeException("Could not read the file!");
                 }
             } catch (MalformedURLException | FileNotFoundException e) {
                 throw new RuntimeException("Error: " + e.getMessage());
             }
+        }
+        else throw new FileNotFoundException();
     }
-
 
     public Set<UserWithFiles> readAll(FileKind fileKind) throws UserNotFoundException {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -143,9 +144,8 @@ public class FileStorageService {
        else throw new AccessDeniedException("You have not authority to access this resource");
     }
 
-    public boolean delete(UUID fileId) {
-        var file = fileRepo.findById(fileId).orElseThrow(()
-                ->new IllegalArgumentException("Not found file with this id"));
+    public boolean delete(UUID fileId) throws FileNotFoundException {
+        var file = fileRepo.findById(fileId).orElseThrow(FileNotFoundException::new);
         Path pathOfFile = Path.of(file.getAccessUrl());
         try {
             Files.delete(pathOfFile);
@@ -158,6 +158,7 @@ public class FileStorageService {
     }
 
     public void deleteAll() {
+        fileRepo.deleteAll();
         FileSystemUtils.deleteRecursively(root.toFile());
     }
 

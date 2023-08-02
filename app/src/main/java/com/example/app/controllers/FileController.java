@@ -3,6 +3,7 @@ package com.example.app.controllers;
 import com.example.app.entities.File;
 import com.example.app.entities.FileKind;
 import com.example.app.entities.User;
+import com.example.app.exception.FileNotFoundException;
 import com.example.app.exception.IllegalTypeOfFileException;
 import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.responses.common.UserWithFiles;
@@ -38,13 +39,13 @@ public class FileController {
     }
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER','ROLE_USER')")
     @GetMapping("/download/evaluation/{fileId}")
-    public ResponseEntity<Resource> downloadEvaluation(@PathVariable("fileId") UUID fileId) throws UserNotFoundException {
-            return new ResponseEntity<>(fileStorageService.download(fileId),HttpStatus.OK);
+    public ResponseEntity<Resource> downloadEvaluation(@PathVariable("fileId") UUID fileId) throws UserNotFoundException, FileNotFoundException {
+            return new ResponseEntity<>(fileStorageService.download(fileId,FileKind.EVALUATION),HttpStatus.OK);
     }
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_HR','ROLE_USER')")
     @GetMapping("/download/timesheet/{fileId}")
-    public ResponseEntity<Resource> downloadTimesheet(@PathVariable("fileId") UUID fileId) throws UserNotFoundException {
-        return new ResponseEntity<>(fileStorageService.download(fileId),HttpStatus.OK);
+    public ResponseEntity<Resource> downloadTimesheet(@PathVariable("fileId") UUID fileId) throws UserNotFoundException, FileNotFoundException {
+        return new ResponseEntity<>(fileStorageService.download(fileId,FileKind.TIMESHEET),HttpStatus.OK);
     }
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER','ROLE_USER')")
     @GetMapping("/evaluation/")
@@ -57,6 +58,7 @@ public class FileController {
         return new ResponseEntity<>(fileStorageService.readAll(FileKind.TIMESHEET),HttpStatus.OK);
     }
 
+    @PreAuthorize("hasRole('User')")
     @DeleteMapping("/delete")
     public ResponseEntity<FileResponseEntity> delete(@RequestParam("fileId") UUID fileId) {
         fileStorageService.delete(fileId);

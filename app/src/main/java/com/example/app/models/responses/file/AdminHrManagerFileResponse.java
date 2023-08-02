@@ -18,7 +18,7 @@ import java.util.UUID;
 public class AdminHrManagerFileResponse implements FileResponseEntity {
     private UUID fileId;
     private String filename;
-    private Long fileSize;
+    private String fileSize;
     private String fileType;
     private LocalDateTime uploadDate;
     private Boolean approved;

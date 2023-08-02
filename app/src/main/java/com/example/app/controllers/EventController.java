@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,25 +65,24 @@ public class EventController implements CrudController<EventResponseEntity, Even
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @PatchMapping("/{eventId}/addUsers")
+    @PatchMapping("/addUsers/{eventId}")
     public ResponseEntity<EventResponseEntity> addUsersToEvent(
             @PathVariable UUID eventId,@RequestBody Set<UUID> idsSet)
     throws EventNotFoundException{
         return new ResponseEntity<>(service.addUserToEvent(idsSet,eventId),HttpStatus.OK);
     }
 
-    @PatchMapping("/{eventId}/removeUsers")
+    @PatchMapping("/removeUsers/{eventId}")
     public ResponseEntity<EventResponseEntity> removeUsersFromEvent(
             @PathVariable UUID eventId,@RequestBody Set<UUID> idsSet)
     throws EventNotFoundException{
         return new ResponseEntity<>(service.removeUserFromEvent(idsSet,eventId),HttpStatus.OK);
     }
 
-    @PatchMapping("/patch/{eventId}")
-        public ResponseEntity<EventResponseEntity> patch(
-            @PathVariable UUID eventId, @RequestBody Map<String,Object> request)
+    @PatchMapping("/patchEventDetails/{eventId}")
+        public ResponseEntity<EventResponseEntity> patchEventDetails(
+            @PathVariable UUID eventId, @RequestBody Map<String,String> request)
         throws EventNotFoundException{
-            return new ResponseEntity<>(service.patch(eventId,request),HttpStatus.OK);
+            return new ResponseEntity<>(service.patchEventDetails(eventId,request),HttpStatus.OK);
         }
-    //ALL RESPONSE MUST IN FORM OF UUID NOT ON FORM OF OBJECTS
 }
