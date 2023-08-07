@@ -32,7 +32,6 @@ public class SecurityConfig {
                         .requestMatchers("/auth/register").permitAll()
                         .requestMatchers("/file/download/{fileId}").hasAnyRole("'ROLE_ADMIN','ROLE_MANAGER','ROLE_HR")
                         .requestMatchers("/event/**").hasAnyRole("ADMIN", "MANAGER", "HR").anyRequest().authenticated())
-
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider).addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();

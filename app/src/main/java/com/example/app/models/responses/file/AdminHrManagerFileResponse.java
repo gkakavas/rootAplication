@@ -25,5 +25,5 @@ public class AdminHrManagerFileResponse implements FileResponseEntity {
     private String approvedBy;
     private LocalDateTime approvedDate;
     private FileKind fileKind;
-    private AdminUserResponse uploadedBy;
+    private String uploadedBy;
 }

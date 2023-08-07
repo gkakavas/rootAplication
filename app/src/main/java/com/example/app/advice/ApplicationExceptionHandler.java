@@ -71,12 +71,26 @@ public class ApplicationExceptionHandler {
         return errorMap;
     }
 //    exception when the id is not UUID type
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(ConstraintViolationException.class)
     public Map<String, String>handleConstraintViolation(ConstraintViolationException ex){
         Map<String,String> errorMap =  new HashMap<>();
-        errorMap.put("You have performed illegal action", ex.getMessage());
+        errorMap.put("errorMessage", ex.getMessage());
+        return errorMap;
+    }
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(InvalidRoleException.class)
+    public Map<String, String>handleInvalidRole(InvalidRoleException ex){
+        Map<String,String> errorMap =  new HashMap<>();
+        errorMap.put("role", ex.getMessage());
         return errorMap;
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(NullRoleException.class)
+    public Map<String, String>handleNullRole(NullRoleException ex){
+        Map<String,String> errorMap =  new HashMap<>();
+        errorMap.put("role", ex.getMessage());
+        return errorMap;
+    }
 }

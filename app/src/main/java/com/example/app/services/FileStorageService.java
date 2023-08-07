@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.*;
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -146,20 +147,34 @@ public class FileStorageService {
 
     public boolean delete(UUID fileId) throws FileNotFoundException {
         var file = fileRepo.findById(fileId).orElseThrow(FileNotFoundException::new);
-        Path pathOfFile = Path.of(file.getAccessUrl());
-        try {
-            Files.delete(pathOfFile);
-            fileRepo.deleteById(fileId);
-            return true;
-        }catch(IOException|IllegalArgumentException e){
-            e.printStackTrace();
-            return false;
+        var currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (file.getUploadedBy().getEmail().equals(currentUsername)) {
+            Path pathOfFile = Path.of(file.getAccessUrl());
+            try {
+                Files.delete(pathOfFile);
+                fileRepo.deleteById(fileId);
+                return true;
+            } catch (IOException | IllegalArgumentException e) {
+                e.printStackTrace();
+                return false;
+            }
         }
+        else throw new AccessDeniedException("You have not authority to execute this operation");
     }
 
     public void deleteAll() {
         fileRepo.deleteAll();
         FileSystemUtils.deleteRecursively(root.toFile());
+    }
+
+    public FileResponseEntity approveEvaluation(UUID fileId, Principal principal) throws UserNotFoundException, FileNotFoundException {
+        var currentUser = userRepo.findByEmail(principal.getName()).orElseThrow(UserNotFoundException::new);
+        var file = fileRepo.findById(fileId).orElseThrow(FileNotFoundException::new);
+        if(currentUser.getGroup().equals(file.getUploadedBy().getGroup())&&file.getFileKind().equals(FileKind.EVALUATION)){
+            var approveFile = fileConverter.approveFile(file,currentUser);
+            return fileConverter.fromFileToAdmin(fileRepo.save(approveFile));
+        }
+        else throw new AccessDeniedException("You have not authority to approve this evaluation");
     }
 
     public FileResponseEntity saveInDatabase(MultipartFile file, User user, Path userPath, FileKind fileKind){

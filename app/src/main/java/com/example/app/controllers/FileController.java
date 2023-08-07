@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.security.Principal;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -58,10 +59,18 @@ public class FileController {
         return new ResponseEntity<>(fileStorageService.readAll(FileKind.TIMESHEET),HttpStatus.OK);
     }
 
-    @PreAuthorize("hasRole('User')")
-    @DeleteMapping("/delete")
-    public ResponseEntity<FileResponseEntity> delete(@RequestParam("fileId") UUID fileId) {
+    @PreAuthorize("hasRole('ROLE_USER')")
+    @DeleteMapping("/delete/{fileId}")
+    public ResponseEntity<FileResponseEntity> delete(@PathVariable("fileId") UUID fileId)
+            throws FileNotFoundException {
         fileStorageService.delete(fileId);
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('ROLE_MANAGER')")
+    @PatchMapping("/approveEvaluation/{fileId}")
+    public ResponseEntity<FileResponseEntity> approveEvaluation(
+            @PathVariable("fileId") UUID fileId , Principal principal) throws FileNotFoundException, UserNotFoundException {
+        return new ResponseEntity<>(fileStorageService.approveEvaluation(fileId,principal),HttpStatus.ACCEPTED);
     }
 }

@@ -36,7 +36,6 @@ public class File {
     private LocalDateTime approvedDate;
     @Enumerated(value = EnumType.STRING)
     private FileKind fileKind;
-    @JsonIgnore
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @JoinColumn(name= "user_id")
     private User uploadedBy;

@@ -1,4 +1,4 @@
-package com.example.app.utils.validation;
+package com.example.app.utils.user.validation.patch;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;

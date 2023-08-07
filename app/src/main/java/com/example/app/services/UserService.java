@@ -109,7 +109,6 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
 
     }
 
-    //24/7
     public Set<EventResponseEntity> readUserEvents(UUID userId)throws UserNotFoundException {
         var user = userRepo.findById(userId).orElseThrow(UserNotFoundException::new);
         return eventConverter.fromEventListToMyList(user.getUserHasEvents());

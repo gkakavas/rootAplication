@@ -17,4 +17,6 @@ public interface EntityResponseFileConverter {
      List<FileResponseEntity> fromFileListToAdminList(Set<File> fileList);
      List<FileResponseEntity> fromFileListToUserFileList(Set<File> fileList);
      File extractMultipartInfo(MultipartFile multipartFile, User fileCreator, String accessUrl, FileKind fileKind);
+
+     File approveFile(File file, User user);
 }

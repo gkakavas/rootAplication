@@ -15,7 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Set;
 
 @Component
@@ -32,13 +31,15 @@ public class EntityResponseFileConverterImp implements EntityResponseFileConvert
                 .fileType(file.getFileType())
                 .uploadDate(file.getUploadDate())
                 .approved(file.getApproved())
-                .approvedBy(null)
                 .approvedDate(file.getApprovedDate())
                 .fileKind(file.getFileKind())
                 .build();
         if(file.getApprovedBy()!=null) {
             userRepo.findById(file.getApprovedBy()).ifPresent(
                     value -> response.setApprovedBy(value.getEmail()));
+        }
+        if(file.getUploadedBy()!=null){
+            response.setUploadedBy(file.getUploadedBy().getEmail());
         }
         return response;
     }
@@ -85,6 +86,14 @@ public class EntityResponseFileConverterImp implements EntityResponseFileConvert
                 .fileKind(fileKind)
                 .uploadedBy(fileCreator)
                 .build();
+    }
+
+    @Override
+    public File approveFile(File file, User user){
+        file.setApproved(true);
+        file.setApprovedBy(user.getUserId());
+        file.setApprovedDate(LocalDateTime.now());
+        return file;
     }
 }
 

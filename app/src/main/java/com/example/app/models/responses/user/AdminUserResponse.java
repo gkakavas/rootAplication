@@ -20,5 +20,4 @@ public class AdminUserResponse implements UserResponseEntity {
     //last login must be removed
     private LocalDateTime lastLogin;
     private Role role;
-
 }

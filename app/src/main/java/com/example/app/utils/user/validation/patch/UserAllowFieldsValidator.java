@@ -1,5 +1,7 @@
-package com.example.app.utils.validation;
+package com.example.app.utils.user.validation.patch;
 
+import com.example.app.utils.user.validation.patch.AllowUserFields;
+import com.example.app.utils.user.validation.patch.UserAllowFields;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import jakarta.validation.ConstraintViolationException;
