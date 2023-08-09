@@ -19,7 +19,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
 import java.lang.reflect.Field;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -60,11 +59,11 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
     public List<EventResponseEntity> read() {
         var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow(()
                 -> new AccessDeniedException("You have not authority to access this resource"));
-            if(currentUser.getRole().equals(Role.ROLE_ADMIN)||currentUser.getRole().equals(Role.ROLE_MANAGER)
-                    ||currentUser.getRole().equals(Role.ROLE_HR)){
+            if(currentUser.getRole().equals(Role.ADMIN)||currentUser.getRole().equals(Role.MANAGER)
+                    ||currentUser.getRole().equals(Role.HR)){
                 var events = Set.copyOf(eventRepo.findAll());
                 return List.copyOf(eventConverter.fromEventListToAdminHrMngList(events));
-            } else if (currentUser.getRole().equals(Role.ROLE_USER)) {
+            } else if (currentUser.getRole().equals(Role.USER)) {
                 return List.copyOf(eventConverter.fromEventListToMyList(currentUser.getUserHasEvents()));
             }
             else throw new AccessDeniedException("You have not authority to access this resource");
@@ -99,7 +98,7 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
         var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow(()
                 -> new AccessDeniedException("You have not authority to access this resource"));
 
-        if(currentUser.getRole().equals(Role.ROLE_ADMIN)||currentUser.getRole().equals(Role.ROLE_HR)){
+        if(currentUser.getRole().equals(Role.ADMIN)||currentUser.getRole().equals(Role.HR)){
             var eventCreator = userRepo.findByEmail(jwtService.extractUsername(token.substring(7)))
                     .orElseThrow(UserNotFoundException::new);
             var group = groupRepo.findById(groupId).orElseThrow(GroupNotFoundException::new);
@@ -108,7 +107,7 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
             var newEvent = eventRepo.save(event);
             return eventConverter.fromEventToAdminHrMngEvent(newEvent);
         }
-        else if (currentUser.getRole().equals(Role.ROLE_MANAGER)) {
+        else if (currentUser.getRole().equals(Role.MANAGER)) {
             var eventCreator = userRepo.findByEmail(jwtService.extractUsername(token.substring(7)))
                     .orElseThrow(UserNotFoundException::new);
             var event = eventConverter.fromRequestToEvent(request,eventCreator.getUserId());

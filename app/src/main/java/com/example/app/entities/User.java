@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -18,8 +19,9 @@ import java.util.*;
 @NoArgsConstructor
 @Entity(name="User")
 @Table(name="_user")
-
+@Slf4j
 public class User implements UserDetails {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @NotNull
@@ -36,8 +38,23 @@ public class User implements UserDetails {
     private LocalDateTime registerDate;
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime lastLogin;
-    @Enumerated(EnumType.STRING)
+    private String roleValue;
+    @Transient
     private Role role;
+    @PostLoad
+    void fillRole() {
+        if(this.roleValue!=null) {
+            this.role = Role.valueOf(roleValue);
+            log.debug(role.toString());
+        }
+    }
+    @PrePersist
+    void fillPersistent() {
+        if(this.role!=null) {
+            this.roleValue = role.name();
+            log.debug(roleValue);
+        }
+    }
 
     @ManyToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE}, fetch = FetchType.EAGER)
     @JoinTable(name = "user_event",
@@ -61,7 +78,7 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role.toString()));
+        return role.getAuthorities();
     }
 
     @Override

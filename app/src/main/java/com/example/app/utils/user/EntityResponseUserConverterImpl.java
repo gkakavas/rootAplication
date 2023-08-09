@@ -89,7 +89,7 @@ public class EntityResponseUserConverterImpl implements EntityResponseUserConver
                 .createdBy(userCreator)
                 .registerDate(LocalDateTime.now())
                 .lastLogin(null)
-                .role(request.getRole())
+                .roleValue(request.getRole())
                 .group(userGroup)
                 .userHasEvents(null)
                 .userHasFiles(null)
@@ -104,7 +104,7 @@ public class EntityResponseUserConverterImpl implements EntityResponseUserConver
         user.setEmail(request.getEmail());
         user.setSpecialization(request.getSpecialization());
         user.setCurrentProject(request.getCurrentProject());
-        user.setRole(request.getRole());
+        user.setRoleValue(request.getRole());
         user.setGroup(group);
         return user;
     }

@@ -117,7 +117,7 @@ public class FileStorageService {
     public Set<UserWithFiles> readAll(FileKind fileKind) throws UserNotFoundException {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         var user = userRepo.findByEmail(userDetails.getUsername()).orElseThrow(UserNotFoundException::new);
-        if(user.getRole().equals(Role.ROLE_ADMIN)||user.getRole().equals(Role.ROLE_HR)){
+        if(user.getRole().equals(Role.ADMIN)||user.getRole().equals(Role.HR)){
             var files = fileRepo.findAllByFileKind(fileKind);
             Set<User> users = new HashSet<>();
             for(File file:files){
@@ -125,7 +125,7 @@ public class FileStorageService {
             }
             return commonConverter.usersWithFilesList(users);
         }
-        else if(user.getRole().equals(Role.ROLE_MANAGER)){
+        else if(user.getRole().equals(Role.MANAGER)){
             var files = fileRepo.findAllByFileKindAndUploadedBy_Group(FileKind.EVALUATION,user.getGroup());
             Set<User> users = new HashSet<>();
             for(File file:files){
@@ -133,7 +133,7 @@ public class FileStorageService {
             }
             return commonConverter.usersWithFilesList(users);
         }
-        else if(user.getRole().equals(Role.ROLE_USER)){
+        else if(user.getRole().equals(Role.USER)){
             Set<File> files =
                     new HashSet<>(fileRepo.findAllByFileKindAndUploadedBy_Group(fileKind, user.getGroup()));
             Set<UserWithFiles> userFilesList = new HashSet<>();

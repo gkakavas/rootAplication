@@ -1,4 +1,4 @@
-package com.example.app.utils.user.validation.patch;
+package com.example.app.utils.validator;
 
 public enum AllowUserFields {
     firstname,

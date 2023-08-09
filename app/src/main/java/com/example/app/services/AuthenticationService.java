@@ -25,7 +25,7 @@ public class AuthenticationService {
                 .lastname(request.getLastname())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(request.getRole())
+                .roleValue(request.getRole())
                 .specialization(request.getSpecialization())
                 .registerDate(LocalDateTime.now())
                 .build();

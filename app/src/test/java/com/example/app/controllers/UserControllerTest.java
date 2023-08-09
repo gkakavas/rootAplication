@@ -8,7 +8,6 @@ import com.example.app.models.responses.event.EventResponseEntity;
 import com.example.app.models.responses.event.MyEventResponse;
 import com.example.app.models.responses.user.AdminUserResponse;
 import com.example.app.models.responses.user.UserResponseEntity;
-import com.example.app.services.JwtService;
 import com.example.app.services.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -50,8 +49,8 @@ public class UserControllerTest {
     private static final String TEST_PASSWORD="Password1234";
     private static final String TEST_CURRENT_PROJECT="currentProject";
     private static final String TEST_SPECIALIZATION="specialization";
-    private static final Role TEST_ROLE = Role.ROLE_HR;
-    private static final Role MODIFIED_TEST_ROLE = Role.ROLE_USER;
+    private static final String TEST_ROLE = "ADMIN";
+    private static final Role MODIFIED_TEST_ROLE = Role.USER;
     private static final UUID TEST_GROUP_ID = UUID.randomUUID();
     private static final UUID TEST_USER_ID = UUID.randomUUID();
     private static final String TEST_GROUP_NAME = "The group name with this id " + TEST_GROUP_ID;
@@ -91,7 +90,7 @@ public class UserControllerTest {
             .createdBy(TEST_CREATED_BY)
             .registerDate(TEST_REGISTER_DATE)
             .lastLogin(null)
-            .role(request.getRole())
+            .role(Role.valueOf(request.getRole()))
             .build();
 
     @Test
@@ -224,17 +223,18 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.size()", equalTo(set.size())));
     }
     @Test
-    @DisplayName("Should return validation exception with message")
+    @DisplayName("Should return validation error messages")
     void shouldReturnValidationErrorMessages() throws Exception{
         final String INVALID_MIN_SIZE_TEST_FIRSTNAME = "foo";
         final String INVALID_MAX_SIZE_TEST_LASTNAME="barbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbar";
         final String INVALID_FORM_TEST_EMAIL="invalid email";
         final String INVALID_TEST_PASSWORD="1234";
+        final String INVALID_TEST_ROLE = "anything_other";
         final String INVALID_FIRSTNAME_MESSAGE = "Firstname must be between 4 and 50 characters";
         final String INVALID_LASTNAME_MESSAGE = "Lastname must be between 4 and 50 characters";
         final String INVALID_EMAIL_MESSAGE ="Email must be in a normal email form";
         final String INVALID_PASSWORD_MESSAGE="Password must be at least 8 characters long and it contains at least one letter and one digit";
-
+        final String INVALID_ROLE_MESSAGE = "Value is not well-formed";
         UserRequestEntity invalidRequest = UserRequestEntity.builder()
                 .firstname(INVALID_MIN_SIZE_TEST_FIRSTNAME)
                 .lastname(INVALID_MAX_SIZE_TEST_LASTNAME)
@@ -242,7 +242,7 @@ public class UserControllerTest {
                 .password(INVALID_TEST_PASSWORD)
                 .currentProject(TEST_CURRENT_PROJECT)
                 .specialization(TEST_SPECIALIZATION)
-                .role(TEST_ROLE)
+                .role(INVALID_TEST_ROLE)
                 .group(TEST_GROUP_ID)
                 .build();
 
@@ -254,33 +254,31 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.firstname",equalTo(INVALID_FIRSTNAME_MESSAGE)))
                 .andExpect(jsonPath("$.lastname",equalTo(INVALID_LASTNAME_MESSAGE)))
                 .andExpect(jsonPath("$.email",equalTo(INVALID_EMAIL_MESSAGE)))
-                .andExpect(jsonPath("$.password",equalTo(INVALID_PASSWORD_MESSAGE)));
+                .andExpect(jsonPath("$.password",equalTo(INVALID_PASSWORD_MESSAGE)))
+                .andExpect(jsonPath("$.role",equalTo(INVALID_ROLE_MESSAGE)));
     }
     @Test
-    @DisplayName("Should return null role error message")
+    @DisplayName("Should return null error messages")
     void shouldReturnNullRoleErrorMessage() throws Exception{
-        final String NULL_ROLE_MESSAGE = "Role is required";
-        final Role NULL_TEST_ROLE = null;
-        request.setRole(NULL_TEST_ROLE);
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/user/create")
-                        .header("Authorization",TEST_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.firstname",equalTo(NULL_ROLE_MESSAGE)));
 
-    }
-    @Test
-    @DisplayName("Should return invalid role error message")
-    void shouldReturnInvalidRoleErrorMessage() throws Exception{
-        final String INVALID_ROLE_MESSAGE = "the provided role is not in the correct form";
-        final String INVALID_TEST_ROLE = "role_user";
-        request.setRole(Role.valueOf(INVALID_TEST_ROLE));
+        UserRequestEntity nullRequest = UserRequestEntity.builder()
+                .build();
+        final String NULL_FIRSTNAME_MESSAGE = "Firstname is required";
+        final String NULL_LASTNAME_MESSAGE = "Lastname is required";
+        final String NULL_EMAIL_MESSAGE ="Email is required";
+        final String NULL_PASSWORD_MESSAGE="Password is required";
+        final String NULL_ROLE_MESSAGE = "Role is required";
         this.mockMvc.perform(MockMvcRequestBuilders.post("/user/create")
                         .header("Authorization",TEST_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(nullRequest)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.firstname",equalTo(INVALID_ROLE_MESSAGE)));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.firstname",equalTo(NULL_FIRSTNAME_MESSAGE)))
+                .andExpect(jsonPath("$.lastname",equalTo(NULL_LASTNAME_MESSAGE)))
+                .andExpect(jsonPath("$.email",equalTo(NULL_EMAIL_MESSAGE)))
+                .andExpect(jsonPath("$.password",equalTo(NULL_PASSWORD_MESSAGE)))
+                .andExpect(jsonPath("$.role",equalTo(NULL_ROLE_MESSAGE)));
+
     }
 }

@@ -1,22 +1,24 @@
-package com.example.app.utils.user.validation.patch;
+package com.example.app.utils.validator;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
 import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import static java.lang.annotation.ElementType.*;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
-@Target({ElementType.TYPE_USE, ElementType.TYPE})
+
+@Target({METHOD, FIELD, ANNOTATION_TYPE, CONSTRUCTOR, PARAMETER, TYPE_USE})
 @Retention(RUNTIME)
-@Constraint(validatedBy = UserAllowFieldsValidator.class)
 @Documented
-public @interface UserAllowFields {
-    String message() default "You have perform illegal action";
-
+@Constraint(validatedBy = ValueOfEnumValidator.class)
+public @interface ValueOfEnum {
+    Class<? extends Enum<?>> enumClass();
+    String message() default "Value is not well-formed";
     Class<?>[] groups() default {};
-
     Class<? extends Payload>[] payload() default {};
 }
+
+

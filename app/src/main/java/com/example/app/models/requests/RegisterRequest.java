@@ -1,15 +1,11 @@
 package com.example.app.models.requests;
 
 import com.example.app.entities.Role;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import com.example.app.utils.validator.ValueOfEnum;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-
-import java.lang.reflect.Type;
 
 @Data
 @Builder
@@ -25,8 +21,8 @@ public class RegisterRequest {
     private String email;
     @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$", message = "Password must be at least 8 characters long and it contains at least one letter and one digit")
     private String password;
-    @Enumerated(EnumType.STRING)
-    private Role role;
+    @ValueOfEnum(enumClass = Role.class)
+    private String role;
     private String specialization;
     private String currentProject;
 }

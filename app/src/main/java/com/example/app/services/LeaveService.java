@@ -39,13 +39,13 @@ public class LeaveService implements CrudService<LeaveResponseEntity, LeaveReque
         User currentUser =userRepo.findByEmail(userDetails.getUsername()).orElseThrow(()
                 -> new AccessDeniedException("You have not authority to access this resource"));
         Leave leave = leaveRepo.findById(id).orElseThrow(LeaveNotFoundException::new);
-        if(currentUser.getRole().equals(Role.ROLE_ADMIN)||currentUser.getRole().equals(Role.ROLE_HR)){
+        if(currentUser.getRole().equals(Role.ADMIN)||currentUser.getRole().equals(Role.HR)){
             return leaveConverter.fromLeaveToAdminHrMngLeave(leave);
         }
-        else if(currentUser.getRole().equals(Role.ROLE_MANAGER)&&currentUser.getGroup().equals(leave.getRequestedBy().getGroup())){
+        else if(currentUser.getRole().equals(Role.MANAGER)&&currentUser.getGroup().equals(leave.getRequestedBy().getGroup())){
             return leaveConverter.fromLeaveToAdminHrMngLeave(leave);
         }
-        else if(currentUser.getRole().equals(Role.ROLE_USER)&&leave.getRequestedBy().equals(currentUser)){
+        else if(currentUser.getRole().equals(Role.USER)&&leave.getRequestedBy().equals(currentUser)){
             return leaveConverter.fromLeaveToMyLeave(leave);
         }
         else throw new AccessDeniedException("You have not authority to access this resource");
@@ -56,15 +56,15 @@ public class LeaveService implements CrudService<LeaveResponseEntity, LeaveReque
         var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow(()
                 -> new AccessDeniedException("You have not authority to access this resource"));
 
-        if (currentUser.getRole().equals(Role.ROLE_HR)||currentUser.getRole().equals(Role.ROLE_ADMIN)) {
+        if (currentUser.getRole().equals(Role.HR)||currentUser.getRole().equals(Role.ADMIN)) {
             var users = Set.copyOf(userRepo.findAll());
             return List.copyOf(commonConverter.usersWithLeaves((users)));
         }
-        else if (currentUser.getRole().equals(Role.ROLE_MANAGER) && currentUser.getGroup()!=null) {
+        else if (currentUser.getRole().equals(Role.MANAGER) && currentUser.getGroup()!=null) {
             var users = Set.copyOf(userRepo.findAllByGroup(currentUser.getGroup()));
             return List.copyOf(commonConverter.usersWithLeaves(users));
         }
-        else if(currentUser.getRole().equals(Role.ROLE_USER)) {
+        else if(currentUser.getRole().equals(Role.USER)) {
             return leaveConverter.fromLeaveListToMyLeaveList(currentUser.getUserRequestedLeaves());
         }
         else throw new AccessDeniedException("You have not authority to access this resource");
@@ -74,7 +74,7 @@ public class LeaveService implements CrudService<LeaveResponseEntity, LeaveReque
     public LeaveResponseEntity update(UUID id, LeaveRequestEntity request) throws LeaveNotFoundException {
         var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow(()
                 -> new AccessDeniedException("You have not authority to access this resource"));
-        if(currentUser.getRole().equals(Role.ROLE_USER)){
+        if(currentUser.getRole().equals(Role.USER)){
             var leave = leaveRepo.findById(id).orElseThrow(LeaveNotFoundException::new);
             var updatedLeave = leaveConverter.fromRequestToEntity(request,leave);
             var newLeave = leaveRepo.save(updatedLeave);

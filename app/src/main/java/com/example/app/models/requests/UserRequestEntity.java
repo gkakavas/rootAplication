@@ -1,14 +1,12 @@
 package com.example.app.models.requests;
 
 import com.example.app.entities.Role;
-import com.example.app.utils.user.validation.create.RoleDeserializer;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.example.app.utils.validator.ValueOfEnum;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.util.UUID;
 
 @Data
@@ -34,9 +32,9 @@ public class UserRequestEntity {
     private UUID group;
     private String currentProject;
     //must be validated for its type compatibility that gives the user
-    @JsonDeserialize(using = RoleDeserializer.class)
+    @ValueOfEnum(enumClass = Role.class)
     @NotNull(message = "Role is required")
-    private Role role;
+    private String role;
 
 }
 
