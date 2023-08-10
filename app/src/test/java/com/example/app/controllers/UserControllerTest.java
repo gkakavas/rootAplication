@@ -33,7 +33,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest
 @ContextConfiguration(classes = {TestSecurityConfig.class,UserController.class, ApplicationExceptionHandler.class})
-
 public class UserControllerTest {
     @MockBean
     private UserService userService;
@@ -130,7 +129,7 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.createdBy",equalTo(response.getCreatedBy())))
                 .andExpect(jsonPath("$.registerDate",equalTo(response.getRegisterDate().toString())))
                 .andExpect(jsonPath("$.lastLogin",equalTo(response.getLastLogin())))
-                .andExpect(jsonPath("$.role",equalTo(response.getRole().toString())));
+                .andExpect(jsonPath("$.role",equalTo(response.getRole().name())));
     }
 
     @Test

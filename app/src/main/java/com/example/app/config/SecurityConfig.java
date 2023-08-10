@@ -11,10 +11,12 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import static org.springframework.http.HttpMethod.*;
+
 
 @Configuration
 @EnableWebSecurity
@@ -24,22 +26,30 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
-
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        return new CustomAccessDeniedHandler();
+    }
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers("/auth/authenticate").permitAll()
                         .requestMatchers("/auth/register").permitAll()
-                        .requestMatchers("/file/download/{fileId}").hasAnyRole("'ROLE_ADMIN','ROLE_MANAGER','ROLE_HR")
-                        .requestMatchers("/event/**").hasAnyRole("ADMIN", "MANAGER", "HR").anyRequest().authenticated())
+
+                        .requestMatchers(POST,"/user/create").hasAuthority("user::create")
+                        .requestMatchers(GET,"/user/").hasAuthority("user::readAll")
+                        .requestMatchers(GET,"/user/{id}").hasAuthority("user::readOne")
+                        .requestMatchers(PUT,"/user/update/{id}").hasAuthority("user::update")
+                        .requestMatchers(DELETE,"/user/delete/{id}").hasAuthority("user::delete")
+                        .requestMatchers(PATCH,"/user/patch/{id}").hasAuthority("user::patch")
+                        .requestMatchers(GET,"/user/{id}/events").hasAuthority("user::readUserEvents")
+                )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(authenticationProvider).addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .authenticationProvider(authenticationProvider).addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling((accessDeniedHandler)->accessDeniedHandler());
         return httpSecurity.build();
     }
 
-    @Bean
-    public AccessDeniedHandler accessDeniedHandler() {
-        return new CustomAccessDeniedHandler();
-    }
+
 
 }
