@@ -12,6 +12,7 @@ import com.example.app.utils.user.EntityResponseUserConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
 import java.lang.reflect.Field;
@@ -40,13 +41,13 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     @Override
     public UserResponseEntity read(UUID id) throws UserNotFoundException {
         var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
-        var roles = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
-        if(roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_ADMIN"))) {
+        var currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepo.findByEmail(currentUserEmail).orElseThrow(UserNotFoundException::new);
+        if(currentUser.getRole().name().equals("ADMIN")) {
             return userConverter.fromUserToAdminUser(user);
         }
-        else if(roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_USER"))||
-                roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_HR"))||
-                roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_MANAGER"))){
+        else if(currentUser.getRoleValue().equals("ROLE_USER")|| currentUser.getRoleValue().equals("ROLE_HR")
+                ||currentUser.getRoleValue().equals("ROLE_MANAGER")){
             return userConverter.fromUserToOtherUser(user);
         }
         else
@@ -55,18 +56,20 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     @Override
     public List<UserResponseEntity> read() {
         Set<User> users = Set.copyOf(userRepo.findAll());
-        var roles = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
-        if(roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_ADMIN"))) {
-            return List.copyOf(userConverter.fromUserListToAdminList(users));
-        }
-        else if(roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_USER"))||
-                roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_HR"))||
-                roles.stream().anyMatch(a->a.getAuthority().contains("ROLE_MANAGER"))){
-
-            return List.copyOf(userConverter.fromUserListToOtherList(users));
-        }
-        else
+        var currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            User currentUser = userRepo.findByEmail(currentUserEmail).orElseThrow(UserNotFoundException::new);
+            if (currentUser.getRole().name().equals("ADMIN")) {
+                return List.copyOf(userConverter.fromUserListToAdminList(users));
+            }
+            else if (currentUser.getRole().name().equals("USER")||currentUser.getRole().name().equals("HR")
+                    ||currentUser.getRole().name().equals("MANAGER")) {
+                return List.copyOf(userConverter.fromUserListToOtherList(users));
+            } else
+                throw new AccessDeniedException("Unauthorized request");
+        }catch (UserNotFoundException e){
             throw new AccessDeniedException("Unauthorized request");
+        }
     }
     @Override
     public UserResponseEntity update(UUID id, UserRequestEntity request) throws UserNotFoundException {
@@ -95,18 +98,20 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
         if (!userFields.isEmpty()) {
             var user = userRepo.findById(userId).orElseThrow(UserNotFoundException::new);
             userFields.forEach((key, value) -> {
-                        Field field = ReflectionUtils.findField(User.class, key);
-                        assert field != null;
-                        field.setAccessible(true);
-                        ReflectionUtils.setField(field, user, value);
-                    }
+                Field field = ReflectionUtils.findField(User.class, key);
+                assert field != null;
+                field.setAccessible(true);
+                if(key.equals("role")){
+                    ReflectionUtils.setField(field, user, Role.valueOf(value));
+                }
+                else ReflectionUtils.setField(field, user, value);
+            }
             );
             var patcedUser = userRepo.save(user);
             return userConverter.fromUserToAdminUser(patcedUser);
         }
         else
             throw new NullPointerException("");
-
     }
 
     public Set<EventResponseEntity> readUserEvents(UUID userId)throws UserNotFoundException {

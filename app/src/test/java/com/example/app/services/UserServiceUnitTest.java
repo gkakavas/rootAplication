@@ -11,17 +11,21 @@ import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.utils.event.EntityResponseEventConverterImpl;
 import com.example.app.utils.user.EntityResponseUserConverterImpl;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -29,6 +33,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 public class UserServiceUnitTest {
+
+
     @InjectMocks
     private UserService userService;
     @Mock
@@ -41,10 +47,17 @@ public class UserServiceUnitTest {
     private EntityResponseEventConverterImpl eventConverter;
     @Mock
     private EntityResponseUserConverterImpl userConverter;
+    private final SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
     @BeforeEach
     void setUp(){
         MockitoAnnotations.openMocks(this);
         userService = new UserService(userRepository, jwtService, groupRepository, userConverter, eventConverter);
+        this.securityContext.setAuthentication(new UsernamePasswordAuthenticationToken("username", "password", List.of()));
+        SecurityContextHolder.setContext(securityContext);
+    }
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
     private static final String TEST_TOKEN = "test token";
     private static final String TEST_EXTRACTED_USERNAME = "test@email.com";
@@ -92,9 +105,6 @@ public class UserServiceUnitTest {
             .createdBy(TEST_UUID_FROM_EXTRACTED_USERNAME)
             .registerDate(LocalDateTime.now())
             .group(group)
-            .userHasEvents(null)
-            .userHasFiles(null)
-            .userRequestedLeaves(null)
             .build();
 
     private final UserResponseEntity EXPECTED_RESPONSE = AdminUserResponse.builder()
@@ -110,18 +120,144 @@ public class UserServiceUnitTest {
             .createdBy(USER_CREATOR.getEmail())
             .registerDate(TEST_USER.getRegisterDate())
             .build();
+    private static final User CURRENT_USER = User.builder()
+            .userId(UUID.randomUUID())
+            .firstname("TEST_CURRENT_USER_FIRSTNAME")
+            .lastname("TEST_CURRENT_USER_LASTNAME")
+            .email("test@email.com")
+            .role(Role.valueOf("ADMIN"))
+            .build();
+
+
     @Test
-    @DisplayName("Store A User In Database And Return Admin User Response Entity")
+    @DisplayName("Should Store A User In Database And Return Admin User Response Entity")
     public void storeAUserInDatabaseAndReturnAdminUserResponseEntity() throws UserNotFoundException {
         when(jwtService.extractUsername(any(String.class))).thenReturn(TEST_EXTRACTED_USERNAME);
         when(userRepository.findByEmail(any(String.class))).thenReturn(Optional.of(USER_CREATOR));
         when(groupRepository.findById(any(UUID.class))).thenReturn(Optional.of(group));
-        when(userConverter.fromRequestToEntity(eq(USER_CREATE_REQUEST),
-                eq(USER_CREATOR.getUserId()), eq(group))).thenReturn(TEST_USER);
-        when(userRepository.save(any(User.class))).thenReturn(TEST_USER);
+        when(userConverter.fromRequestToEntity(USER_CREATE_REQUEST,
+                USER_CREATOR.getUserId(), group)).thenReturn(TEST_USER);
+        when(userRepository.save(TEST_USER)).thenReturn(TEST_USER);
         when(userConverter.fromUserToAdminUser(eq(TEST_USER))).thenReturn((AdminUserResponse) EXPECTED_RESPONSE);
         UserResponseEntity response = userService.create(USER_CREATE_REQUEST, TEST_TOKEN);
         assertEquals(EXPECTED_RESPONSE,response);
+    }
+
+    @Test
+    @DisplayName("Should Return A User in form that corresponds to the current user")
+    void shouldReturnAUserInFormThatCorrespondsToTheCurrentUser() throws UserNotFoundException {
+        when(userRepository.findById(any(UUID.class))).thenReturn(Optional.of(TEST_USER));
+        when(userRepository.findByEmail(any(String.class))).thenReturn(Optional.of(CURRENT_USER));
+        when(userConverter.fromUserToAdminUser(eq(TEST_USER))).thenReturn((AdminUserResponse) EXPECTED_RESPONSE);
+        UserResponseEntity response = userService.read(TEST_USER.getUserId());
+        assertEquals(EXPECTED_RESPONSE,response);
+    }
+    @Test
+    @DisplayName("Should Return All Users in form that corresponds to the current user")
+    void shouldReturnAllUsersInFormThatCorrespondsToTheCurrentUser() {
+        User user1 = User.builder().userId(UUID.randomUUID()).firstname("TEST_USER_FIRSTNAME1")
+                .lastname("TEST_USER_LASTNAME1").email("test@email1.com")
+                .role(Role.valueOf("USER")).build();
+        User user2 = User.builder().userId(UUID.randomUUID()).firstname("TEST_USER_FIRSTNAME2")
+                .lastname("TEST_USER_LASTNAME2").email("test@email2.com")
+                .role(Role.valueOf("MANAGER")).build();
+        User user3 = User.builder().userId(UUID.randomUUID()).firstname("TEST_USER_FIRSTNAME3")
+                .lastname("TEST_USER_LASTNAME3").email("test@email3.com")
+                .role(Role.valueOf("USER")).build();
+        List<User> userList = new ArrayList<>();
+        userList.add(user1);
+        userList.add(user2);
+        userList.add(user3);
+        final Set<AdminUserResponse> EXPECTED_RESPONSE = userConverter.fromUserListToAdminList(Set.copyOf(userList));
+        when(userRepository.findByEmail(any(String.class))).thenReturn(Optional.of(CURRENT_USER));
+        when(userRepository.findAll()).thenReturn(userList);
+        when(userConverter.fromUserListToAdminList(eq(new HashSet<>(userList)))).thenReturn(EXPECTED_RESPONSE);
+        List<UserResponseEntity> response = userService.read();
+        assertEquals(List.copyOf(EXPECTED_RESPONSE), response);
+    }
+
+    @Test
+    @DisplayName("Should Update A User, Save Him And Return Updated User")
+    void shouldUpdateAUserSaveHimAndReturnThisUserResponse() throws UserNotFoundException {
+        final String TEST_UPDATED_ROLE = "HR";
+        var userUpdateRequest = UserRequestEntity.builder()
+                .firstname(TEST_REQUEST_FIRSTNAME)
+                .lastname(TEST_REQUEST_LASTNAME)
+                .email(TEST_REQUEST_EMAIL)
+                .specialization(TEST_REQUEST_SPECIALIZATION)
+                .currentProject(TEST_REQUEST_CURRENT_PROJECT)
+                .role(TEST_UPDATED_ROLE)
+                .group(group.getGroupId())
+                .build();
+        var updatedUser = User.builder()
+                .userId(TEST_USER.getUserId())
+                .firstname(TEST_USER.getFirstname())
+                .lastname(TEST_USER.getLastname())
+                .email(TEST_USER.getEmail())
+                .specialization(TEST_USER.getSpecialization())
+                .currentProject(TEST_USER.getCurrentProject())
+                .role(Role.valueOf(TEST_UPDATED_ROLE))
+                .createdBy(TEST_USER.getCreatedBy())
+                .registerDate(TEST_USER.getRegisterDate())
+                .group(group)
+                .build();
+        var EXPECTED_RESPONSE = AdminUserResponse.builder()
+                .userId(TEST_USER.getUserId())
+                .firstname(userUpdateRequest.getFirstname())
+                .lastname(userUpdateRequest.getLastname())
+                .email(userUpdateRequest.getEmail())
+                .specialization(userUpdateRequest.getSpecialization())
+                .currentProject(userUpdateRequest.getCurrentProject())
+                .role(Role.valueOf(TEST_UPDATED_ROLE))
+                .groupName(group.getGroupName())
+                .build();
+        when(userRepository.findById(any(UUID.class))).thenReturn(Optional.of(TEST_USER));
+        when(groupRepository.findById(eq(group.getGroupId()))).thenReturn(Optional.of(group));
+        when(userConverter.updateSetting(eq(TEST_USER),eq(userUpdateRequest),eq(group))).thenReturn(updatedUser);
+        when(userRepository.save(updatedUser)).thenReturn(updatedUser);
+        when(userConverter.fromUserToAdminUser(updatedUser)).thenReturn(EXPECTED_RESPONSE);
+        UserResponseEntity response = userService.update(UUID.randomUUID(),userUpdateRequest);
+        assertEquals(EXPECTED_RESPONSE,response);
+    }
+
+    @Test
+    @DisplayName("Should Patch A User, Save Him And Return Patched User")
+    void shouldPatchAUserSaveHimAndReturnPatchedUser() throws UserNotFoundException {
+        Map<String,String> TEST_MAP = new HashMap<>();
+        final String TEST_PATCH_ROLE_KEY = "role";
+        final String TEST_PATCH_ROLE_VALUE = "HR";
+        TEST_MAP.put(TEST_PATCH_ROLE_KEY,TEST_PATCH_ROLE_VALUE);
+        var patcedUser = User.builder()
+                .userId(UUID.randomUUID())
+                .firstname(TEST_REQUEST_FIRSTNAME)
+                .lastname(TEST_REQUEST_LASTNAME)
+                .email(TEST_REQUEST_EMAIL)
+                .specialization(TEST_REQUEST_SPECIALIZATION)
+                .currentProject(TEST_REQUEST_CURRENT_PROJECT)
+                .role(Role.valueOf(TEST_PATCH_ROLE_VALUE))
+                .group(group)
+                .build();
+        var EXPECTED_RESPONSE = AdminUserResponse.builder()
+                .userId(TEST_USER.getUserId())
+                .firstname(TEST_USER.getFirstname())
+                .lastname(TEST_USER.getLastname())
+                .email(TEST_USER.getEmail())
+                .specialization(TEST_USER.getSpecialization())
+                .currentProject(TEST_USER.getCurrentProject())
+                .role(Role.valueOf(TEST_MAP.get(TEST_PATCH_ROLE_KEY)))
+                .groupName(group.getGroupName())
+                .build();
+        when(userRepository.findById(any(UUID.class))).thenReturn(Optional.of(TEST_USER));
+        when(userRepository.save(TEST_USER)).thenReturn(patcedUser);
+        when(userConverter.fromUserToAdminUser(patcedUser)).thenReturn(EXPECTED_RESPONSE);
+        var response = userService.patch(UUID.randomUUID(),TEST_MAP);
+        assertEquals(EXPECTED_RESPONSE,response);
+    }
+
+    @Test
+    @DisplayName("shouldPatchAUserSaveHimAndReturnPatchedUser")
+    void shouldReturnAllEventsOfASpecifiedUser(){
+
     }
 }
 
