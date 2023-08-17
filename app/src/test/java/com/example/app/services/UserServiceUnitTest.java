@@ -1,12 +1,16 @@
 package com.example.app.services;
 
+import com.example.app.entities.Event;
 import com.example.app.entities.Group;
 import com.example.app.entities.Role;
 import com.example.app.entities.User;
 import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.UserRequestEntity;
+import com.example.app.models.responses.event.EventResponseEntity;
+import com.example.app.models.responses.event.MyEventResponse;
 import com.example.app.models.responses.user.AdminUserResponse;
 import com.example.app.models.responses.user.UserResponseEntity;
+import com.example.app.repositories.EventRepository;
 import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.utils.event.EntityResponseEventConverterImpl;
@@ -18,12 +22,15 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,9 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-
 public class UserServiceUnitTest {
-
 
     @InjectMocks
     private UserService userService;
@@ -47,6 +52,7 @@ public class UserServiceUnitTest {
     private EntityResponseEventConverterImpl eventConverter;
     @Mock
     private EntityResponseUserConverterImpl userConverter;
+
     private final SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
     @BeforeEach
     void setUp(){
@@ -255,9 +261,55 @@ public class UserServiceUnitTest {
     }
 
     @Test
-    @DisplayName("shouldPatchAUserSaveHimAndReturnPatchedUser")
-    void shouldReturnAllEventsOfASpecifiedUser(){
-
+    @DisplayName("Should return all events of a specified user")
+    void shouldReturnAllEventsOfASpecifiedUser() throws UserNotFoundException {
+        final String TEST_EVENT_BODY1 = "This is the test event 1";
+        final String TEST_EVENT_DESCRIPTION1 = "Test event 1";
+        final LocalDateTime TEST_DATE_TIME1 = LocalDateTime.of(2023, Month.AUGUST,17,18,25,30);
+        final LocalDateTime TEST_EXPIRATION1 = LocalDateTime.of(2023, Month.AUGUST,17,19,25,30);
+        var event1 = Event.builder()
+                .eventId(UUID.randomUUID())
+                .eventBody(TEST_EVENT_BODY1)
+                .eventDescription(TEST_EVENT_DESCRIPTION1)
+                .eventCreator(UUID.randomUUID())
+                .eventDateTime(TEST_DATE_TIME1)
+                .eventExpiration(TEST_EXPIRATION1)
+                .build();
+        final String TEST_EVENT_BODY2 = "This is the test event 2";
+        final String TEST_EVENT_DESCRIPTION2 = "Test event 2";
+        final LocalDateTime TEST_DATE_TIME2 = LocalDateTime.of(2023, Month.AUGUST,18,18,25,30);
+        final LocalDateTime TEST_EXPIRATION2 = LocalDateTime.of(2023, Month.AUGUST,18,19,25,30);
+        var event2 = Event.builder()
+                .eventId(UUID.randomUUID())
+                .eventBody(TEST_EVENT_BODY2)
+                .eventDescription(TEST_EVENT_DESCRIPTION2)
+                .eventCreator(UUID.randomUUID())
+                .eventDateTime(TEST_DATE_TIME2)
+                .eventExpiration(TEST_EXPIRATION2)
+                .build();
+        TEST_USER.getUserHasEvents().add(event1);
+        TEST_USER.getUserHasEvents().add(event2);
+        Set<EventResponseEntity> myEventSet = new HashSet<>();
+        var myEventResponse1 = MyEventResponse.builder()
+                .eventId(event1.getEventId())
+                .eventBody(event1.getEventBody())
+                .eventDescription(event1.getEventDescription())
+                .eventDateTime(event1.getEventDateTime())
+                .eventExpiration(event1.getEventExpiration())
+                .build();
+        var myEventResponse2 = MyEventResponse.builder()
+                .eventId(event2.getEventId())
+                .eventBody(event2.getEventBody())
+                .eventDescription(event2.getEventDescription())
+                .eventDateTime(event2.getEventDateTime())
+                .eventExpiration(event2.getEventExpiration())
+                .build();
+        myEventSet.add(myEventResponse1);
+        myEventSet.add(myEventResponse2);
+        when(userRepository.findById(TEST_USER.getUserId())).thenReturn(Optional.of(TEST_USER));
+        when(eventConverter.fromEventListToMyList(TEST_USER.getUserHasEvents())).thenReturn(myEventSet);
+        var response = userService.readUserEvents(TEST_USER.getUserId());
+        assertEquals(myEventSet,response);
     }
 }
 
