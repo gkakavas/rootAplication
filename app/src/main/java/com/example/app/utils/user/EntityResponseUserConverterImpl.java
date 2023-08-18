@@ -1,11 +1,11 @@
 package com.example.app.utils.user;
 
 import com.example.app.entities.Group;
+import com.example.app.entities.Role;
 import com.example.app.entities.User;
 import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.user.AdminUserResponse;
 import com.example.app.models.responses.user.OtherUserResponse;
-import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -93,18 +93,19 @@ public class EntityResponseUserConverterImpl implements EntityResponseUserConver
                 .group(userGroup)
                 .userHasEvents(null)
                 .userHasFiles(null)
+                .userRequestedLeaves(null)
                 .build();
     }
 
     @Override
     public User updateSetting(User user, UserRequestEntity request, Group group){
-        user.setPassword(request.getPassword());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setFirstname(request.getFirstname());
         user.setLastname(request.getLastname());
         user.setEmail(request.getEmail());
         user.setSpecialization(request.getSpecialization());
         user.setCurrentProject(request.getCurrentProject());
-        user.setRoleValue(request.getRole());
+        user.setRole(Role.valueOf(request.getRole()));
         user.setGroup(group);
         return user;
     }

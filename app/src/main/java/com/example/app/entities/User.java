@@ -14,6 +14,8 @@ import java.util.*;
 
 @Getter
 @Setter
+@ToString
+@EqualsAndHashCode
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

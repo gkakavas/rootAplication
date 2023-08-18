@@ -31,7 +31,6 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
     private final UserRepository userRepo;
     private final JwtService jwtService;
     private final EntityResponseEventConverter eventConverter;
-    private Object key;
 
     @Override
     public EventResponseEntity create(EventRequestEntity request, String token)

@@ -40,8 +40,6 @@ public class UserControllerTest {
     private MockMvc mockMvc;
     @Autowired
     private ObjectMapper objectMapper;
-
-    private static final Logger logger = LoggerFactory.getLogger(UserControllerTest.class);
     private static final String TEST_FIRSTNAME = "firstname";
     private static final String TEST_LASTNAME="lastname";
     private static final String TEST_EMAIL="firstname@lastname";
