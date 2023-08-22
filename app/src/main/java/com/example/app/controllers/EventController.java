@@ -34,14 +34,14 @@ public class EventController implements CrudController<EventResponseEntity, Even
         return new ResponseEntity<>(service.create(request,token),HttpStatus.CREATED);
     }
     @PreAuthorize("hasAuthority('event::createByGroup')")
-    @PostMapping("/createGroupEvent")
+    @PostMapping("/createGroupEvent/{id}")
     public ResponseEntity<EventResponseEntity> createByGroup
             (
             @RequestBody @Valid EventRequestEntity request,
             @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
-            @RequestParam UUID groupId)
+            @PathVariable UUID id)
             throws UserNotFoundException, GroupNotFoundException {
-        return new ResponseEntity<>(service.createForGroup(request,token,groupId),HttpStatus.CREATED);
+        return new ResponseEntity<>(service.createForGroup(request,token,id),HttpStatus.CREATED);
     }
     @PreAuthorize("hasAuthority('event::readOne')")
     @Override
