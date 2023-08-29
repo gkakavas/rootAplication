@@ -14,6 +14,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import static org.springframework.http.HttpMethod.*;
 
@@ -22,20 +23,21 @@ import static org.springframework.http.HttpMethod.*;
 @EnableWebSecurity
 @RequiredArgsConstructor
 @EnableMethodSecurity(securedEnabled = true, jsr250Enabled = true)
-public class SecurityConfig {
+public class SecurityConfig implements WebMvcConfigurer {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
     @Bean
-    public AccessDeniedHandler accessDeniedHandler() {
+    AccessDeniedHandler accessDeniedHandler() {
         return new CustomAccessDeniedHandler();
     }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers("/auth/authenticate").permitAll()
                         .requestMatchers("/auth/register").permitAll()
-
+                        .requestMatchers("/access-denied").permitAll()
                         .requestMatchers(POST,"/user/create").hasAuthority("user::create")
                         .requestMatchers(GET,"/user/").hasAuthority("user::readAll")
                         .requestMatchers(GET,"/user/{id}").hasAuthority("user::readOne")
@@ -43,10 +45,26 @@ public class SecurityConfig {
                         .requestMatchers(DELETE,"/user/delete/{id}").hasAuthority("user::delete")
                         .requestMatchers(PATCH,"/user/patch/{id}").hasAuthority("user::patch")
                         .requestMatchers(GET,"/user/{id}/events").hasAuthority("user::readUserEvents")
+
+                        .requestMatchers(POST,"/event/create").hasAuthority("event::create")
+                        .requestMatchers(POST,"/createGroupEvent/{id}").hasAuthority("event::createByGroup")
+                        .requestMatchers(GET,"/event/").hasAuthority("event::readOne")
+                        .requestMatchers(GET,"/event/{id}").hasAuthority("event::readAll")
+                        .requestMatchers(PUT,"/event/update/{id}").hasAuthority("event::update")
+                        .requestMatchers(DELETE,"/event/delete/{id}").hasAuthority("event::delete")
+                        .requestMatchers(PATCH,"/addUsers/{eventId}").hasAuthority("event::addUsersToEvent")
+                        .requestMatchers(PATCH,"/removeUsers/{eventId}").hasAuthority("event::removeUsersFromEvent")
+                        .requestMatchers(PATCH,"/patchEventDetails/{eventId}").hasAuthority("event::patchEventDetails")
+
+                        .requestMatchers(POST,"/group/create").hasAuthority("group::create")
+                        .requestMatchers(GET,"/group/{id}").hasAuthority("group::readOne")
+                        .requestMatchers(GET,"/group/").hasAuthority("group::readAll")
+                        .requestMatchers(PUT,"/group/update/{id}").hasAuthority("group::update")
+                        .requestMatchers(DELETE,"/group/delete/{id}").hasAuthority("group::delete")
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider).addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .exceptionHandling((accessDeniedHandler)->accessDeniedHandler());
+                .exceptionHandling(customizer -> customizer.accessDeniedHandler(accessDeniedHandler()));
         return httpSecurity.build();
     }
 

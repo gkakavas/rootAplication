@@ -32,7 +32,7 @@ public class EntityResponseLeaveConverterImpl implements EntityResponseLeaveConv
                 .approvedBy(null)
                 .approvedOn(leave.getApprovedOn())
                 .approved(leave.isApproved())
-                .requestedBy((AdminUserResponse) userConverter.fromUserToAdminUser(leave.getRequestedBy()))
+                .requestedBy(userConverter.fromUserToAdminUser(leave.getRequestedBy()))
                 .build();
         try{
             response.setApprovedBy(userRepo.findById(leave.getApprovedBy()).orElseThrow().getEmail());

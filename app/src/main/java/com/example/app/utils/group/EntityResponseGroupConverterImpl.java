@@ -31,7 +31,7 @@ public class EntityResponseGroupConverterImpl implements EntityResponseGroupConv
                 .build();
         group.getGroupHasUsers().forEach((user)->
                 response.getUsers()
-                        .add((OtherUserResponse) userConverter.fromUserToOtherUser(user)));
+                        .add(userConverter.fromUserToOtherUser(user)));
         return response;
     }
     @Override
@@ -50,8 +50,7 @@ public class EntityResponseGroupConverterImpl implements EntityResponseGroupConv
                 .build();
         group.getGroupHasUsers().forEach((user)->
                 response.getUsers()
-                        .add((AdminUserResponse)
-                                userConverter.fromUserToAdminUser(user)));
+                        .add(userConverter.fromUserToAdminUser(user)));
         try {
             response.setGroupCreator(userRepo.findById(group.getGroupCreator()).orElseThrow().getEmail());
         }catch (NoSuchElementException e){

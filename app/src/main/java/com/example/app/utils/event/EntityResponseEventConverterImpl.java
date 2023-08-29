@@ -1,6 +1,7 @@
 package com.example.app.utils.event;
 
 import com.example.app.entities.Event;
+import com.example.app.entities.User;
 import com.example.app.models.requests.EventRequestEntity;
 import com.example.app.models.responses.event.AdminHrMngEventResponse;
 import com.example.app.models.responses.event.EventResponseEntity;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -35,8 +37,8 @@ private final UserRepository userRepo;
                 .eventCreator(null)
                 .eventDateTime(event.getEventDateTime())
                 .eventExpiration(event.getEventExpiration())
+                .users(event.getUsersJoinInEvent().stream().map(User::getEmail).collect(Collectors.toSet()))
                 .build();
-        event.getUsersJoinInEvent().forEach((user)->response.getUsers().add(user.getEmail()));
         try {
             response.setEventCreator(userRepo.findById(event.getEventCreator()).orElseThrow().getEmail());
         }catch (NoSuchElementException e){

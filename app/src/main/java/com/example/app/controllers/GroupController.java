@@ -21,35 +21,30 @@ import java.util.UUID;
 public class GroupController implements CrudController<GroupResponseEntity,GroupRequestEntity, GroupNotFoundException>{
     private final GroupService service;
 
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Override
     public ResponseEntity<GroupResponseEntity> create(@Valid GroupRequestEntity request, String token)
     throws UserNotFoundException {
-        return new ResponseEntity<>(service.create(request,token),HttpStatus.OK);
+        return new ResponseEntity<>(service.create(request,token),HttpStatus.CREATED);
     }
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')")
     @Override
     public ResponseEntity<GroupResponseEntity> readOne(UUID id)
     throws GroupNotFoundException{
         return new ResponseEntity<>(service.read(id),HttpStatus.OK);
     }
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')")
     @Override
     public List<GroupResponseEntity> readAll() {
         return service.read();
     }
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')")
     @Override
     public ResponseEntity<GroupResponseEntity> update(UUID id, GroupRequestEntity request)
     throws GroupNotFoundException{
         return new ResponseEntity<>(service.update(id,request),HttpStatus.OK);
     }
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Override
     public ResponseEntity<GroupResponseEntity> delete(UUID id)
     throws GroupNotFoundException{
         service.delete(id);
-        return new ResponseEntity<>(HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
 //    these methods will be accessible in ROLE_ADMIN or ROLE_USER

@@ -12,8 +12,11 @@ import com.example.app.services.EventService;
 import com.example.app.services.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -26,7 +29,8 @@ import java.util.*;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -54,6 +58,7 @@ public class EventControllerTest {
             .eventExpiration(eventExpiration)
             .idsSet(uuidSet)
             .build();
+
     private static final AdminHrMngEventResponse response= AdminHrMngEventResponse.builder()
             .eventId(UUID.randomUUID())
             .eventBody("Test event Body")
@@ -85,7 +90,7 @@ public class EventControllerTest {
     @Test
     @DisplayName("Should create a new event by group and return this")
     void shouldCreateANewEventByGroupAndReturnThisBack() throws Exception {
-        when(eventService.createForGroup(any(EventRequestEntity.class),any(String.class),any(UUID.class))).thenReturn(response);
+        when(eventService.createForGroup(any(EventRequestEntity.class),any(UUID.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.post("/event/createGroupEvent/{id}",UUID.randomUUID())
                         .header("Authorization",TEST_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -101,7 +106,7 @@ public class EventControllerTest {
     }
     @Test
     @DisplayName("Should return a specified event")
-    void shouldReturnTheSpecifiedUser() throws Exception {
+    void shouldReturnTheSpecifiedEvent() throws Exception {
         when(eventService.read(any(UUID.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.get("/event/{id}",UUID.randomUUID()))
                 .andExpect(status().isOk())
@@ -181,22 +186,57 @@ public class EventControllerTest {
     }
 
     @Test
-    @DisplayName("should add an user to an existing event")
-    void shouldAddAnUserToAnExistingEvent() throws Exception {
-        when(eventService.addUserToEvent(uuidSet,any(UUID.class))).thenReturn(response);
-        this.mockMvc.perform(MockMvcRequestBuilders.delete("/event/addUserToEvent/{id}",UUID.randomUUID())
-                        .header("Authorization",TEST_TOKEN))
-                .andExpect(status().isNoContent());
+    @DisplayName("should add users to an existing event")
+    void shouldAddUsersToAnExistingEvent() throws Exception {
+        when(eventService.addUsersToEvent(anySet(),any(UUID.class))).thenReturn(response);
+        this.mockMvc.perform(MockMvcRequestBuilders.patch("/event/addUsers/{eventId}",response.getEventId())
+                        .header("Authorization",TEST_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(uuidSet)))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.users",containsInAnyOrder(response.getUsers().toArray())));
     }
 
     @Test
-    @DisplayName("should remove a user from an existing event")
-    void shouldRemoveAnUserFromAnExistingEvent(){
-
+    @DisplayName("should remove users from an existing event")
+    void shouldRemoveUsersFromAnExistingEvent() throws Exception {
+        when(eventService.removeUsersFromEvent(anySet(),any(UUID.class))).thenReturn(response);
+        this.mockMvc.perform(MockMvcRequestBuilders.patch("/event/removeUsers/{eventId}",response.getEventId())
+                        .header("Authorization",TEST_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(uuidSet)))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.users",containsInAnyOrder(response.getUsers().toArray())));
     }
     @Test
     @DisplayName("should patch the details of an existing event")
-    void shouldPatchTheDetailsOfAnExistingEvent(){
-
+    void shouldPatchTheDetailsOfAnExistingEvent() throws Exception{
+        var patchedExpiration = LocalDateTime.of(2023,9,18,17,0,1);
+        var patchedDescription = "patched description";
+        var patchedResponse = AdminHrMngEventResponse.builder()
+                .eventId(response.getEventId())
+                .eventBody(response.getEventBody())
+                .eventDescription(patchedDescription)
+                .eventDateTime(response.getEventDateTime())
+                .eventExpiration(patchedExpiration)
+                .eventCreator(response.getEventCreator())
+                .users(response.getUsers())
+                .build();
+        Map<String,String> requestMap = new HashMap<>();
+        requestMap.put("eventDescription",patchedDescription);
+        requestMap.put("eventExpiration",patchedExpiration.toString());
+        when(eventService.patchEventDetails(any(UUID.class),anyMap())).thenReturn(patchedResponse);
+        this.mockMvc.perform(MockMvcRequestBuilders.patch("/event/patchEventDetails/{eventId}",patchedResponse.getEventId())
+                        .header("Authorization",TEST_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestMap)))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.eventId",equalTo(patchedResponse.getEventId().toString())))
+                .andExpect(jsonPath("$.eventBody",equalTo(patchedResponse.getEventBody())))
+                .andExpect(jsonPath("$.eventDescription",equalTo(patchedResponse.getEventDescription())))
+                .andExpect(jsonPath("$.eventCreator",equalTo(patchedResponse.getEventCreator())))
+                .andExpect(jsonPath("$.eventDateTime",equalTo(patchedResponse.getEventDateTime().toString())))
+                .andExpect(jsonPath("$.eventExpiration",equalTo(patchedResponse.getEventExpiration().toString())))
+                .andExpect(jsonPath("$.users",containsInAnyOrder(patchedResponse.getUsers().toArray())));
     }
 }

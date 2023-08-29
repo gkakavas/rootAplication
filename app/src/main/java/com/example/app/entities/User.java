@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -15,7 +17,6 @@ import java.util.*;
 @Getter
 @Setter
 @ToString
-@EqualsAndHashCode
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -111,6 +112,17 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        User user = (User) o;
+
+        return new EqualsBuilder().append(userId, user.userId).append(password, user.password).append(firstname, user.firstname).append(lastname, user.lastname).append(email, user.email).append(specialization, user.specialization).append(currentProject, user.currentProject).append(createdBy, user.createdBy).append(registerDate, user.registerDate).append(lastLogin, user.lastLogin).append(roleValue, user.roleValue).append(role, user.role).append(userHasEvents, user.userHasEvents).append(group, user.group).append(userHasFiles, user.userHasFiles).append(userRequestedLeaves, user.userRequestedLeaves).isEquals();
     }
 }
 
