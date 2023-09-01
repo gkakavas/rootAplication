@@ -43,15 +43,14 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
         var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
         var currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepo.findByEmail(currentUserEmail).orElseThrow(UserNotFoundException::new);
-        if(currentUser.getRole().name().equals("ADMIN")) {
+        if(currentUser.getRole().equals(Role.ADMIN)) {
             return userConverter.fromUserToAdminUser(user);
         }
-        else if(currentUser.getRoleValue().equals("ROLE_USER")|| currentUser.getRoleValue().equals("ROLE_HR")
-                ||currentUser.getRoleValue().equals("ROLE_MANAGER")){
+        else if(currentUser.getRole().equals(Role.USER)|| currentUser.getRole().equals(Role.HR)
+                ||currentUser.getRole().equals(Role.MANAGER)){
             return userConverter.fromUserToOtherUser(user);
         }
-        else
-            throw new AccessDeniedException("Unauthorized request");
+        else throw new AccessDeniedException("Unauthorized request");
     }
     @Override
     public List<UserResponseEntity> read() {

@@ -85,4 +85,12 @@ public class ApplicationExceptionHandler {
         errorMap.put("role", ex.getMessage());
         return errorMap;
     }
+
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(IllegalTypeOfFileException.class)
+    public Map<String, String> handleInvalidTypeOfFile(IllegalTypeOfFileException ex){
+        Map<String, String> errorMap = new HashMap<>();
+            errorMap.put("Error", ex.getMessage());
+        return errorMap;
+    }
 }

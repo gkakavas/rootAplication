@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -25,20 +26,15 @@ public class EntityResponseGroupConverterImpl implements EntityResponseGroupConv
     private final UserRepository userRepo;
     @Override
     public ManagerGroupResponse fromGroupToMngGroup(Group group){
-        var response = ManagerGroupResponse.builder()
+        return ManagerGroupResponse.builder()
                 .groupId(group.getGroupId())
                 .groupName(group.getGroupName())
+                .users(userConverter.fromUserListToOtherList(group.getGroupHasUsers()))
                 .build();
-        group.getGroupHasUsers().forEach((user)->
-                response.getUsers()
-                        .add(userConverter.fromUserToOtherUser(user)));
-        return response;
     }
     @Override
     public List<GroupResponseEntity> fromGroupListToMngGroupList(List<Group> groups){
-        List<GroupResponseEntity> managerGroupResponseList = new ArrayList<>();
-        groups.forEach(group->managerGroupResponseList.add(fromGroupToMngGroup(group)));
-        return managerGroupResponseList;
+        return groups.stream().map(this::fromGroupToMngGroup).distinct().collect(Collectors.toList());
     }
     @Override
     public GroupResponseEntity fromGroupToAdminGroup(Group group){
@@ -47,10 +43,8 @@ public class EntityResponseGroupConverterImpl implements EntityResponseGroupConv
                 .groupName(group.getGroupName())
                 .groupCreationDate(group.getGroupCreationDate())
                 .groupCreator(null)
+                .users(userConverter.fromUserListToAdminList(group.getGroupHasUsers()))
                 .build();
-        group.getGroupHasUsers().forEach((user)->
-                response.getUsers()
-                        .add(userConverter.fromUserToAdminUser(user)));
         try {
             response.setGroupCreator(userRepo.findById(group.getGroupCreator()).orElseThrow().getEmail());
         }catch (NoSuchElementException e){
@@ -61,9 +55,7 @@ public class EntityResponseGroupConverterImpl implements EntityResponseGroupConv
 
     @Override
     public List<GroupResponseEntity> fromGroupListToAdminGroupList(List<Group> groups){
-        List<GroupResponseEntity> adminGroupResponseList = new ArrayList<>();
-        groups.forEach(group->adminGroupResponseList.add(fromGroupToAdminGroup(group)));
-        return adminGroupResponseList;
+        return groups.stream().map(this::fromGroupToAdminGroup).distinct().collect(Collectors.toList());
     }
 
     @Override

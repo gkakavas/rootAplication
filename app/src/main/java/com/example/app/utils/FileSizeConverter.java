@@ -4,7 +4,7 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 public class FileSizeConverter {
-    public static String converter(Long fileSize){
+    public static String convert(Long fileSize){
 
         if(fileSize>=0L&&fileSize<1024){
             return fileSize+" Bytes";

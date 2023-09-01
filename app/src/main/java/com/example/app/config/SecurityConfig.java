@@ -35,9 +35,10 @@ public class SecurityConfig implements WebMvcConfigurer {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests((authorize) -> authorize
+
                         .requestMatchers("/auth/authenticate").permitAll()
                         .requestMatchers("/auth/register").permitAll()
-                        .requestMatchers("/access-denied").permitAll()
+
                         .requestMatchers(POST,"/user/create").hasAuthority("user::create")
                         .requestMatchers(GET,"/user/").hasAuthority("user::readAll")
                         .requestMatchers(GET,"/user/{id}").hasAuthority("user::readOne")
@@ -61,10 +62,21 @@ public class SecurityConfig implements WebMvcConfigurer {
                         .requestMatchers(GET,"/group/").hasAuthority("group::readAll")
                         .requestMatchers(PUT,"/group/update/{id}").hasAuthority("group::update")
                         .requestMatchers(DELETE,"/group/delete/{id}").hasAuthority("group::delete")
+
+                        .requestMatchers(POST,"/file/upload").hasAuthority("file::upload")
+                        .requestMatchers(GET,"/file/download/evaluation/{fileId}").hasAuthority("file::downloadEvaluation")
+                        .requestMatchers(GET,"/file/download/timesheet/{fileId}").hasAuthority("file::downloadTimesheet")
+                        .requestMatchers(GET,"/file/evaluation/").hasAuthority("file::readAllEvaluations")
+                        .requestMatchers(GET,"/file/timesheet/").hasAuthority("file::readAllTimesheets")
+                        .requestMatchers(DELETE,"/file/delete/{fileId}").hasAuthority("file::delete")
+                        .requestMatchers(PATCH,"/file/approveEvaluation/{fileId}").hasAuthority("file::approveEvaluation")
+
+                        .requestMatchers("/access-denied").permitAll()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider).addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(customizer -> customizer.accessDeniedHandler(accessDeniedHandler()));
+
         return httpSecurity.build();
     }
 

@@ -8,22 +8,30 @@ import com.example.app.exception.FileNotFoundException;
 import com.example.app.exception.IllegalTypeOfFileException;
 import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.responses.common.UserWithFiles;
+import com.example.app.models.responses.file.AdminHrManagerFileResponse;
 import com.example.app.models.responses.file.FileResponseEntity;
+import com.example.app.models.responses.file.UserFileResponse;
 import com.example.app.repositories.FileRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.utils.common.EntityResponseCommonConverter;
 import com.example.app.utils.file.EntityResponseFileConverter;
+import com.example.app.utils.file.EntityResponseFileConverterImp;
+import com.example.app.utils.file.FileContent;
 import com.example.app.utils.user.EntityResponseUserConverter;
+import com.example.app.utils.user.EntityResponseUserConverterImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.MalformedURLException;
 import java.nio.file.*;
 import java.security.Principal;
@@ -37,20 +45,13 @@ public class FileStorageService {
     private final JwtService jwtService;
     private final UserRepository userRepo;
     private final FileRepository fileRepo;
-    private final FileDownloadAuthorityService fileDownloadAuthService;
     private final EntityResponseCommonConverter commonConverter;
-    private final EntityResponseUserConverter userConverter;
-    private final EntityResponseFileConverter fileConverter;
+    private final EntityResponseUserConverterImpl userConverter;
+    private final EntityResponseFileConverterImp fileConverter;
     private final Path root = Paths.get("uploads");
     private final Path timesheet = root.resolve("timesheets");
     private final Path evaluation = root.resolve("evaluations");
     private FileKind fileKind;
-    public static final String
-            txt = "text/plain",
-            docx = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            xls = "application/vnd.ms-excel",
-            xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-
 
     public void init() {
         try {
@@ -68,11 +69,14 @@ public class FileStorageService {
             Path userPath = null;
 
             try {
-                if(Objects.equals(file.getContentType(), docx) || Objects.equals(file.getContentType(), txt)){
+                if(Objects.equals(file.getContentType(),FileContent.docx.getFileContent())
+                        ||Objects.equals(file.getContentType(), FileContent.txt.getFileContent())
+                        ||Objects.equals(file.getContentType(),FileContent.rtf.getFileContent())){
                     userPath = Files.createDirectories(evaluation.resolve(user.getUserId().toString()));
                     fileKind = FileKind.EVALUATION;
                 }
-                else if(Objects.equals(file.getContentType(), xls) || Objects.equals(file.getContentType(), xlsx)){
+                else if(Objects.equals(file.getContentType(), FileContent.xls.getFileContent())
+                        ||Objects.equals(file.getContentType(), FileContent.xlsx.getFileContent())){
                     userPath = Files.createDirectories(timesheet.resolve(user.getUserId().toString()));
                     fileKind = FileKind.TIMESHEET;
                 }
@@ -97,19 +101,18 @@ public class FileStorageService {
             }
     }
 
-    public Resource download(UUID fileId,FileKind fileKind) throws UserNotFoundException, FileNotFoundException {
+
+    public FileResponseEntity download(UUID fileId,FileKind fileKind) throws UserNotFoundException, FileNotFoundException {
         if (fileRepo.existsByFileIdAndFileKind(fileId, fileKind)) {
-            try {
-                var path = fileDownloadAuthService.checkAuthority(fileId);
-                Resource resource = new UrlResource(path.toUri());
-                if (resource.exists() || resource.isReadable()) {
-                    return resource;
-                } else {
-                    throw new RuntimeException("Could not read the file!");
+                var file = fileRepo.findById(fileId).orElseThrow(FileNotFoundException::new);
+                var user = userRepo.findByEmail(SecurityContextHolder.getContext()
+                        .getAuthentication().getName()).orElseThrow(UserNotFoundException::new);
+                var response = fileConverter.fromFileToResource(file);
+                if(Arrays.stream(Role.values()).anyMatch(role -> role.equals(user.getRole()))){
+                    return response;
                 }
-            } catch (MalformedURLException | FileNotFoundException e) {
-                throw new RuntimeException("Error: " + e.getMessage());
-            }
+                else throw new AccessDeniedException("You have not authority to access this resource");
+
         }
         else throw new FileNotFoundException();
     }
