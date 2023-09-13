@@ -16,15 +16,13 @@ import java.util.UUID;
 
 @Getter
 @Setter
+@ToString
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Table(name="_file")
 public class File {
-
-
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @NotNull
@@ -42,4 +40,15 @@ public class File {
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "user_id")
     private User uploadedBy;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        File file = (File) o;
+
+        return new EqualsBuilder().append(fileId, file.fileId).append(filename, file.filename).append(fileSize, file.fileSize).append(fileType, file.fileType).append(uploadDate, file.uploadDate).append(accessUrl, file.accessUrl).append(approved, file.approved).append(approvedBy, file.approvedBy).append(approvedDate, file.approvedDate).append(fileKind, file.fileKind).append(uploadedBy, file.uploadedBy).isEquals();
+    }
 }

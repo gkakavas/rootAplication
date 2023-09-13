@@ -12,6 +12,7 @@ import com.example.app.utils.user.EntityResponseUserConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -32,7 +33,7 @@ public class EntityResponseLeaveConverterImpl implements EntityResponseLeaveConv
                 .approvedBy(null)
                 .approvedOn(leave.getApprovedOn())
                 .approved(leave.isApproved())
-                .requestedBy(userConverter.fromUserToAdminUser(leave.getRequestedBy()))
+                .requestedBy(leave.getRequestedBy().getEmail())
                 .build();
         try{
             response.setApprovedBy(userRepo.findById(leave.getApprovedBy()).orElseThrow().getEmail());
@@ -62,16 +63,12 @@ public class EntityResponseLeaveConverterImpl implements EntityResponseLeaveConv
 
     @Override
     public List<LeaveResponseEntity> fromLeaveListToAdminHrMngLeaveList(Set<Leave> leaveList) {
-        List<LeaveResponseEntity> responseList = new ArrayList<>();
-        leaveList.forEach((leave)->responseList.add(fromLeaveToAdminHrMngLeave(leave)));
-        return responseList;
+        return leaveList.stream().map(this::fromLeaveToAdminHrMngLeave).toList();
     }
 
     @Override
     public List<LeaveResponseEntity> fromLeaveListToMyLeaveList(Set<Leave> leaveList) {
-        List<LeaveResponseEntity> responseList = new ArrayList<>();
-        leaveList.forEach((leave)->responseList.add(fromLeaveToMyLeave(leave)));
-        return responseList;
+        return leaveList.stream().map(this::fromLeaveToMyLeave).toList();
     }
 
     @Override
@@ -88,10 +85,18 @@ public class EntityResponseLeaveConverterImpl implements EntityResponseLeaveConv
     }
 
     @Override
-    public Leave fromRequestToEntity(LeaveRequestEntity request, Leave leave) {
+    public Leave updateLeave(LeaveRequestEntity request, Leave leave) {
         leave.setLeaveType(request.getLeaveType());
         leave.setLeaveStarts(request.getLeaveStarts());
         leave.setLeaveEnds(request.getLeaveEnds());
+        return leave;
+    }
+
+    @Override
+    public Leave approveLeave(Leave leave, User user) {
+        leave.setApproved(true);
+        leave.setApprovedOn(LocalDateTime.now());
+        leave.setApprovedBy(user.getUserId());
         return leave;
     }
 }

@@ -14,5 +14,6 @@ public interface EntityResponseLeaveConverter {
     List<LeaveResponseEntity> fromLeaveListToAdminHrMngLeaveList(Set<Leave> leaveList);
     List<LeaveResponseEntity> fromLeaveListToMyLeaveList(Set<Leave> leaveList);
     Leave fromRequestToEntity(LeaveRequestEntity request, User requestedBy);
-    Leave fromRequestToEntity(LeaveRequestEntity request, Leave leave);
+    Leave updateLeave(LeaveRequestEntity request, Leave leave);
+    Leave approveLeave(Leave leave, User user);
 }

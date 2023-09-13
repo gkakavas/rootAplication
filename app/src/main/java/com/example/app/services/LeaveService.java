@@ -17,6 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -27,18 +28,19 @@ public class LeaveService implements CrudService<LeaveResponseEntity, LeaveReque
     private final UserRepository userRepo;
     private final EntityResponseLeaveConverter leaveConverter;
     private final EntityResponseCommonConverter commonConverter;
+
     @Override
-    public LeaveResponseEntity create(LeaveRequestEntity request, String token) throws UserNotFoundException{
-            var user = userRepo.findByEmail(jwtService.extractUsername(token.substring(7))).orElseThrow(UserNotFoundException::new);
-            var newLeave = leaveRepo.save(leaveConverter.fromRequestToEntity(request,user));
-            return leaveConverter.fromLeaveToMyLeave(newLeave);
+    public LeaveResponseEntity create(LeaveRequestEntity request, String token) {
+        var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
+                .orElseThrow(() -> new AccessDeniedException("You have not authority to access this resource"));
+        var newLeave = leaveRepo.save(leaveConverter.fromRequestToEntity(request, currentUser));
+        return leaveConverter.fromLeaveToMyLeave(newLeave);
     }
     @Override
     public LeaveResponseEntity read(UUID id) throws LeaveNotFoundException {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        User currentUser =userRepo.findByEmail(userDetails.getUsername()).orElseThrow(()
+        User currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow(()
                 -> new AccessDeniedException("You have not authority to access this resource"));
-        Leave leave = leaveRepo.findById(id).orElseThrow(LeaveNotFoundException::new);
+        var leave = leaveRepo.findById(id).orElseThrow(LeaveNotFoundException::new);
         if(currentUser.getRole().equals(Role.ADMIN)||currentUser.getRole().equals(Role.HR)){
             return leaveConverter.fromLeaveToAdminHrMngLeave(leave);
         }
@@ -55,10 +57,9 @@ public class LeaveService implements CrudService<LeaveResponseEntity, LeaveReque
     public List<LeaveResponseEntity> read() {
         var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow(()
                 -> new AccessDeniedException("You have not authority to access this resource"));
-
         if (currentUser.getRole().equals(Role.HR)||currentUser.getRole().equals(Role.ADMIN)) {
             var users = Set.copyOf(userRepo.findAll());
-            return List.copyOf(commonConverter.usersWithLeaves((users)));
+            return List.copyOf(commonConverter.usersWithLeaves(users));
         }
         else if (currentUser.getRole().equals(Role.MANAGER) && currentUser.getGroup()!=null) {
             var users = Set.copyOf(userRepo.findAllByGroup(currentUser.getGroup()));
@@ -72,15 +73,10 @@ public class LeaveService implements CrudService<LeaveResponseEntity, LeaveReque
 
     @Override
     public LeaveResponseEntity update(UUID id, LeaveRequestEntity request) throws LeaveNotFoundException {
-        var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow(()
-                -> new AccessDeniedException("You have not authority to access this resource"));
-        if(currentUser.getRole().equals(Role.USER)){
-            var leave = leaveRepo.findById(id).orElseThrow(LeaveNotFoundException::new);
-            var updatedLeave = leaveConverter.fromRequestToEntity(request,leave);
-            var newLeave = leaveRepo.save(updatedLeave);
-            return leaveConverter.fromLeaveToMyLeave(newLeave);
-        }
-        return null;
+        var leave = leaveRepo.findById(id).orElseThrow(LeaveNotFoundException::new);
+        var updatedLeave = leaveConverter.updateLeave(request,leave);
+        var newLeave = leaveRepo.save(updatedLeave);
+        return leaveConverter.fromLeaveToMyLeave(newLeave);
     }
 
     @Override
@@ -95,18 +91,15 @@ public class LeaveService implements CrudService<LeaveResponseEntity, LeaveReque
 
     }
 
-    public LeaveResponseEntity approveLeave(UUID leaveId,String token) throws LeaveNotFoundException,UserNotFoundException{
+    public LeaveResponseEntity approveLeave(UUID leaveId) throws LeaveNotFoundException,UserNotFoundException{
         var leave = leaveRepo.findById(leaveId).orElseThrow(LeaveNotFoundException::new);
+        var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
+                .orElseThrow(UserNotFoundException::new);
         if(!leave.isApproved()) {
-            leave.setApprovedBy(userRepo.findByEmail(
-                            jwtService.extractUsername(token.substring(7))).orElseThrow(
-                            UserNotFoundException::new)
-                    .getUserId());
-            leave.setApprovedOn(LocalDate.now());
-            leave.setApproved(true);
-            var patcedLeave = leaveRepo.save(leave);
+            var patcedLeave = leaveRepo.save(leaveConverter.approveLeave(leave,currentUser));
             return leaveConverter.fromLeaveToAdminHrMngLeave(patcedLeave);
         }
-        return null;
+        else return leaveConverter.fromLeaveToAdminHrMngLeave(leave);
     }
+
 }

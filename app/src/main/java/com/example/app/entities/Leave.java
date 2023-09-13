@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -23,7 +24,7 @@ public class Leave {
     private LocalDate leaveStarts;
     private LocalDate leaveEnds;
     private UUID approvedBy;
-    private LocalDate approvedOn;
+    private LocalDateTime approvedOn;
     private Boolean approved;
     @JsonIgnore
     @ManyToOne(cascade = CascadeType.PERSIST,fetch = FetchType.EAGER)

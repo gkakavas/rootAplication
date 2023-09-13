@@ -71,6 +71,13 @@ public class SecurityConfig implements WebMvcConfigurer {
                         .requestMatchers(DELETE,"/file/delete/{fileId}").hasAuthority("file::delete")
                         .requestMatchers(PATCH,"/file/approveEvaluation/{fileId}").hasAuthority("file::approveEvaluation")
 
+                        .requestMatchers(POST,"/leave/create").hasAuthority("leave::create")
+                        .requestMatchers(GET,"/leave/{id}").hasAuthority("leave::readOne")
+                        .requestMatchers(GET,"/leave/").hasAuthority("leave::readAll")
+                        .requestMatchers(PUT,"/leave/update/{id}").hasAuthority("leave::update")
+                        .requestMatchers(DELETE,"/leave/delete/{id}").hasAuthority("leave::delete")
+                        .requestMatchers(PATCH,"/leave/approval/{id}").hasAuthority("leave::approve")
+
                         .requestMatchers("/access-denied").permitAll()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

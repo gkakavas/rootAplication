@@ -21,45 +21,39 @@ import java.util.UUID;
 public class LeaveController implements CrudController<LeaveResponseEntity, LeaveRequestEntity, LeaveNotFoundException> {
 
     private final LeaveService service;
-    @PreAuthorize("hasRole('ROLE_USER')")
+
     @Override
     public ResponseEntity<LeaveResponseEntity> create(@Valid LeaveRequestEntity request, String token) throws UserNotFoundException {
         return new ResponseEntity<>(service.create(request,token), HttpStatus.CREATED);
     }
 
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_HR','ROLE_MANAGER')")
     @Override
     public ResponseEntity<LeaveResponseEntity> readOne(UUID id) throws LeaveNotFoundException {
         return new ResponseEntity<>(service.read(id),HttpStatus.OK);
     }
 
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_HR','ROLE_MANAGER','ROLE_USER')")
     @Override
     public List<LeaveResponseEntity> readAll() {
         return service.read();
     }
 
-    @PreAuthorize("hasRole('ROLE_USER')")
     @Override
     public ResponseEntity<LeaveResponseEntity> update(UUID id, @Valid LeaveRequestEntity request)
     throws LeaveNotFoundException{
         return new ResponseEntity<>(service.update(id,request), HttpStatus.OK);
     }
 
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_USER')")
     @Override
     public ResponseEntity<LeaveResponseEntity> delete(UUID id)
     throws LeaveNotFoundException{
         service.delete(id);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @PreAuthorize("hasRole('ROLE_MANAGER')")
     @PatchMapping("/approval/{id}")
     public ResponseEntity<LeaveResponseEntity> approveLeave(
-            @PathVariable UUID id,
-            @RequestHeader(HttpHeaders.AUTHORIZATION) String token)
+            @PathVariable UUID id)
     throws LeaveNotFoundException,UserNotFoundException{
-        return new ResponseEntity<>(service.approveLeave(id,token),HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(service.approveLeave(id),HttpStatus.OK);
     }
 }

@@ -6,6 +6,7 @@ import com.example.app.models.requests.EventRequestEntity;
 import com.example.app.models.responses.event.AdminHrMngEventResponse;
 import com.example.app.models.responses.event.MyEventResponse;
 import com.example.app.repositories.UserRepository;
+import com.example.app.utils.event.EntityResponseEventConverter;
 import com.example.app.utils.event.EntityResponseEventConverterImpl;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.Assertions;
@@ -23,7 +24,7 @@ import static org.mockito.Mockito.when;
 
 public class EventConvertersTest {
     @InjectMocks
-    private EntityResponseEventConverterImpl eventConverter;
+    private EntityResponseEventConverter eventConverter;
     @Mock
     private UserRepository userRepo;
 

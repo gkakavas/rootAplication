@@ -81,14 +81,14 @@ public class FileController {
 
     @DeleteMapping("/delete/{fileId}")
     public ResponseEntity<FileResponseEntity> delete(@PathVariable("fileId") UUID fileId)
-            throws FileNotFoundException {
+            throws FileNotFoundException, UserNotFoundException {
         fileStorageService.delete(fileId);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PatchMapping("/approveEvaluation/{fileId}")
     public ResponseEntity<FileResponseEntity> approveEvaluation(
-            @PathVariable("fileId") UUID fileId , Principal principal) throws FileNotFoundException, UserNotFoundException {
-        return new ResponseEntity<>(fileStorageService.approveEvaluation(fileId,principal),HttpStatus.ACCEPTED);
+    @PathVariable("fileId") UUID fileId) throws FileNotFoundException, UserNotFoundException {
+        return new ResponseEntity<>(fileStorageService.approveEvaluation(fileId),HttpStatus.ACCEPTED);
     }
 }

@@ -13,9 +13,6 @@ import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.utils.group.EntityResponseGroupConverter;
 import org.instancio.Instancio;
-import org.instancio.Select;
-import org.instancio.generators.Generators;
-import org.junit.Assert;
 import org.junit.jupiter.api.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -23,8 +20,6 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 

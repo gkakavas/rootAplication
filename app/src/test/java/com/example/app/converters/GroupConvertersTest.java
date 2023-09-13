@@ -9,6 +9,7 @@ import com.example.app.models.responses.group.ManagerGroupResponse;
 import com.example.app.models.responses.user.AdminUserResponse;
 import com.example.app.models.responses.user.OtherUserResponse;
 import com.example.app.repositories.UserRepository;
+import com.example.app.utils.group.EntityResponseGroupConverter;
 import com.example.app.utils.group.EntityResponseGroupConverterImpl;
 import com.example.app.utils.user.EntityResponseUserConverter;
 import org.instancio.Instancio;
@@ -28,7 +29,7 @@ import static org.mockito.Mockito.when;
 
 public class GroupConvertersTest {
     @InjectMocks
-    private EntityResponseGroupConverterImpl groupConverter;
+    private EntityResponseGroupConverter groupConverter;
     @Mock
     private EntityResponseUserConverter userConverter;
     @Mock

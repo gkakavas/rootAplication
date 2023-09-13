@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -22,9 +23,9 @@ public class AdminHrMngLeaveResponse implements LeaveResponseEntity {
     private LocalDate leaveStarts;
     private LocalDate leaveEnds;
     private String approvedBy;
-    private LocalDate approvedOn;
+    private LocalDateTime approvedOn;
     private Boolean approved;
-    private AdminUserResponse requestedBy;
+    private String requestedBy;
 
     public Boolean isApproved(){
         return this.approved;

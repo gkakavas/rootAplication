@@ -95,16 +95,12 @@ public class EntityResponseFileConverterImp implements EntityResponseFileConvert
 
     @Override
     public List<FileResponseEntity> fromFileListToAdminList(Set<File> fileList) {
-        List<FileResponseEntity> responseList = new ArrayList<>();
-        fileList.forEach((file)->responseList.add(fromFileToAdmin(file)));
-        return responseList;
+        return fileList.stream().map(this::fromFileToAdmin).toList();
     }
 
     @Override
     public List<FileResponseEntity> fromFileListToUserFileList(Set<File> fileList) {
-        List<FileResponseEntity> responseList = new ArrayList<>();
-        fileList.forEach((file)->responseList.add(fromFileToUser(file)));
-        return responseList;
+        return fileList.stream().map(this::fromFileToUser).toList();
     }
 
     public File extractMultipartInfo(MultipartFile multipartFile, User fileCreator, String accessUrl, FileKind fileKind){

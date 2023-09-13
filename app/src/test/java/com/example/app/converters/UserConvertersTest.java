@@ -7,6 +7,7 @@ import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.user.AdminUserResponse;
 import com.example.app.models.responses.user.OtherUserResponse;
 import com.example.app.repositories.UserRepository;
+import com.example.app.utils.user.EntityResponseUserConverter;
 import com.example.app.utils.user.EntityResponseUserConverterImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,7 +34,7 @@ import static org.mockito.Mockito.when;
 public class UserConvertersTest {
 
     @InjectMocks
-    private EntityResponseUserConverterImpl userConverter;
+    private EntityResponseUserConverter userConverter;
     @Mock
     private UserRepository userRepository;
     @Mock

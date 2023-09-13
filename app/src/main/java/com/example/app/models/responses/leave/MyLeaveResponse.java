@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -20,7 +21,7 @@ public class MyLeaveResponse implements LeaveResponseEntity{
     private LocalDate leaveStarts;
     private LocalDate leaveEnds;
     private String approvedBy;
-    private LocalDate approvedOn;
+    private LocalDateTime approvedOn;
     private Boolean approved;
     public Boolean isApproved(){
         return this.approved;
