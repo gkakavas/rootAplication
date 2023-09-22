@@ -36,8 +36,9 @@ public class SecurityConfig implements WebMvcConfigurer {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests((authorize) -> authorize
 
-                        .requestMatchers("/auth/authenticate").permitAll()
-                        .requestMatchers("/auth/register").permitAll()
+                        .requestMatchers(POST,"/auth/authenticate").permitAll()
+                        .requestMatchers(POST,"/auth/register").permitAll()
+                        .requestMatchers(GET,"/access-denied").permitAll()
 
                         .requestMatchers(POST,"/user/create").hasAuthority("user::create")
                         .requestMatchers(GET,"/user/").hasAuthority("user::readAll")
@@ -77,13 +78,11 @@ public class SecurityConfig implements WebMvcConfigurer {
                         .requestMatchers(PUT,"/leave/update/{id}").hasAuthority("leave::update")
                         .requestMatchers(DELETE,"/leave/delete/{id}").hasAuthority("leave::delete")
                         .requestMatchers(PATCH,"/leave/approval/{id}").hasAuthority("leave::approve")
-
-                        .requestMatchers("/access-denied").permitAll()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(authenticationProvider).addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .authenticationProvider(authenticationProvider)
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(customizer -> customizer.accessDeniedHandler(accessDeniedHandler()));
-
         return httpSecurity.build();
     }
 

@@ -21,44 +21,32 @@ import java.util.Set;
 @Component
 @RequiredArgsConstructor
 public class EntityResponseLeaveConverterImpl implements EntityResponseLeaveConverter {
-    private final EntityResponseUserConverter userConverter;
     private final UserRepository userRepo;
     @Override
     public LeaveResponseEntity fromLeaveToAdminHrMngLeave(Leave leave) {
-        var response= AdminHrMngLeaveResponse.builder()
+        return AdminHrMngLeaveResponse.builder()
                 .leaveId(leave.getLeaveId())
                 .leaveType(leave.getLeaveType())
                 .leaveStarts(leave.getLeaveStarts())
                 .leaveEnds(leave.getLeaveEnds())
-                .approvedBy(null)
+                .approvedBy(userRepo.findById(leave.getApprovedBy()).map(User::getEmail).orElse(null))
                 .approvedOn(leave.getApprovedOn())
                 .approved(leave.isApproved())
                 .requestedBy(leave.getRequestedBy().getEmail())
                 .build();
-        try{
-            response.setApprovedBy(userRepo.findById(leave.getApprovedBy()).orElseThrow().getEmail());
-        }catch (NoSuchElementException e){
-            response.setApprovedBy(null);
-        }
-        return response;
+        //continuing
     }
     @Override
     public LeaveResponseEntity fromLeaveToMyLeave(Leave leave) {
-        var response =  MyLeaveResponse.builder()
+        return MyLeaveResponse.builder()
                 .leaveId(leave.getLeaveId())
                 .leaveType(leave.getLeaveType())
                 .leaveStarts(leave.getLeaveStarts())
                 .leaveEnds(leave.getLeaveEnds())
                 .approved(leave.isApproved())
-                .approvedBy(null)
+                .approvedBy(userRepo.findById(leave.getApprovedBy()).map(User::getEmail).orElse(null))
                 .approvedOn(leave.getApprovedOn())
                 .build();
-        try{
-            response.setApprovedBy(userRepo.findById(leave.getApprovedBy()).orElseThrow().getEmail());
-        }catch (NoSuchElementException e){
-            response.setApprovedBy(null);
-        }
-        return response;
     }
 
     @Override

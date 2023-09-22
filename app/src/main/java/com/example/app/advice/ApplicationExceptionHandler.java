@@ -2,9 +2,7 @@ package com.example.app.advice;
 
 import com.example.app.exception.*;
 import org.hibernate.exception.ConstraintViolationException;
-import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -91,6 +89,22 @@ public class ApplicationExceptionHandler {
     public Map<String, String> handleInvalidTypeOfFile(IllegalTypeOfFileException ex){
         Map<String, String> errorMap = new HashMap<>();
             errorMap.put("Error", ex.getMessage());
+        return errorMap;
+    }
+
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(NullUuidException.class)
+    public Map<String, String> handleNullUuid(NullUuidException ex){
+        Map<String,String> errorMap =  new HashMap<>();
+        errorMap.put("error", ex.getMessage());
+        return errorMap;
+    }
+
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(IllegalUuidFormatException.class)
+    public Map<String, String> handleIllegalUuidFormat(IllegalUuidFormatException ex){
+        Map<String,String> errorMap =  new HashMap<>();
+        errorMap.put("error", ex.getMessage());
         return errorMap;
     }
 }

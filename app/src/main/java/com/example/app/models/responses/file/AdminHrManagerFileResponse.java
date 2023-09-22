@@ -1,17 +1,9 @@
 package com.example.app.models.responses.file;
 
 import com.example.app.entities.FileKind;
-import com.example.app.entities.User;
-import com.example.app.models.responses.user.AdminUserResponse;
-import com.example.app.models.responses.user.OtherUserResponse;
-import com.example.app.utils.file.UrlResourceSerializer;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.lang.Nullable;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;

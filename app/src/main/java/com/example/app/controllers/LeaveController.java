@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
-import java.util.UUID;
+import com.example.app.models.requests.RequestId;
 
 @RestController
 @RequestMapping("/leave")
@@ -28,8 +28,8 @@ public class LeaveController implements CrudController<LeaveResponseEntity, Leav
     }
 
     @Override
-    public ResponseEntity<LeaveResponseEntity> readOne(UUID id) throws LeaveNotFoundException {
-        return new ResponseEntity<>(service.read(id),HttpStatus.OK);
+    public ResponseEntity<LeaveResponseEntity> readOne(RequestId id) throws LeaveNotFoundException {
+        return new ResponseEntity<>(service.read(id.getUuid()),HttpStatus.OK);
     }
 
     @Override
@@ -38,22 +38,22 @@ public class LeaveController implements CrudController<LeaveResponseEntity, Leav
     }
 
     @Override
-    public ResponseEntity<LeaveResponseEntity> update(UUID id, @Valid LeaveRequestEntity request)
+    public ResponseEntity<LeaveResponseEntity> update(RequestId id, @Valid LeaveRequestEntity request)
     throws LeaveNotFoundException{
-        return new ResponseEntity<>(service.update(id,request), HttpStatus.OK);
+        return new ResponseEntity<>(service.update(id.getUuid(),request), HttpStatus.OK);
     }
 
     @Override
-    public ResponseEntity<LeaveResponseEntity> delete(UUID id)
+    public ResponseEntity<LeaveResponseEntity> delete(RequestId id)
     throws LeaveNotFoundException{
-        service.delete(id);
+        service.delete(id.getUuid());
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PatchMapping("/approval/{id}")
     public ResponseEntity<LeaveResponseEntity> approveLeave(
-            @PathVariable UUID id)
+            @PathVariable RequestId id)
     throws LeaveNotFoundException,UserNotFoundException{
-        return new ResponseEntity<>(service.approveLeave(id),HttpStatus.OK);
+        return new ResponseEntity<>(service.approveLeave(id.getUuid()),HttpStatus.OK);
     }
 }

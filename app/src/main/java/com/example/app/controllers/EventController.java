@@ -18,7 +18,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
+import java.util.stream.Collectors;
+
+import com.example.app.models.requests.RequestId;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,14 +38,14 @@ public class EventController implements CrudController<EventResponseEntity, Even
     public ResponseEntity<EventResponseEntity> createByGroup
             (
             @RequestBody @Valid EventRequestEntity request,
-            @PathVariable UUID id)
+            @PathVariable RequestId id)
             throws UserNotFoundException, GroupNotFoundException {
-        return new ResponseEntity<>(service.createForGroup(request,id),HttpStatus.CREATED);
+        return new ResponseEntity<>(service.createForGroup(request,id.getUuid()),HttpStatus.CREATED);
     }
     @Override
-    public ResponseEntity<EventResponseEntity> readOne( UUID id)
+    public ResponseEntity<EventResponseEntity> readOne(RequestId id)
     throws EventNotFoundException{
-        return new ResponseEntity<>((service.read(id)),HttpStatus.OK);
+        return new ResponseEntity<>((service.read(id.getUuid())),HttpStatus.OK);
     }
 
     @Override
@@ -52,32 +54,34 @@ public class EventController implements CrudController<EventResponseEntity, Even
     }
 
     @Override
-    public ResponseEntity<EventResponseEntity> update(UUID id, @Valid EventRequestEntity request)
+    public ResponseEntity<EventResponseEntity> update(RequestId id, @Valid EventRequestEntity request)
     throws EventNotFoundException{
-        return new ResponseEntity<>(service.update(id, request),HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(service.update(id.getUuid(), request),HttpStatus.ACCEPTED);
     }
     @Override
-    public ResponseEntity<EventResponseEntity> delete(UUID id)
+    public ResponseEntity<EventResponseEntity> delete(RequestId id)
     throws EventNotFoundException{
-        service.delete(id);
+        service.delete(id.getUuid());
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
     @PatchMapping("/addUsers/{eventId}")
     public ResponseEntity<EventResponseEntity> addUsersToEvent(
-            @PathVariable UUID eventId,@RequestBody Set<UUID> idsSet)
+            @PathVariable RequestId eventId,@RequestBody Set<RequestId> idsSet)
     throws EventNotFoundException{
-        return new ResponseEntity<>(service.addUsersToEvent(idsSet,eventId),HttpStatus.ACCEPTED);
+        var uuidSet = idsSet.stream().map(RequestId::getUuid).collect(Collectors.toSet());
+        return new ResponseEntity<>(service.addUsersToEvent(uuidSet, eventId.getUuid()),HttpStatus.ACCEPTED);
     }
     @PatchMapping("/removeUsers/{eventId}")
     public ResponseEntity<EventResponseEntity> removeUsersFromEvent(
-            @PathVariable UUID eventId,@RequestBody Set<UUID> idsSet)
+            @PathVariable RequestId eventId,@RequestBody Set<RequestId> idsSet)
     throws EventNotFoundException{
-        return new ResponseEntity<>(service.removeUsersFromEvent(idsSet,eventId),HttpStatus.ACCEPTED);
+        var uuidSet = idsSet.stream().map(RequestId::getUuid).collect(Collectors.toSet());
+        return new ResponseEntity<>(service.removeUsersFromEvent(uuidSet,eventId.getUuid()),HttpStatus.ACCEPTED);
     }
     @PatchMapping("/patchEventDetails/{eventId}")
         public ResponseEntity<EventResponseEntity> patchEventDetails(
-            @PathVariable UUID eventId, @RequestBody Map<String,String> request)
+            @PathVariable RequestId eventId, @RequestBody Map<String,String> request)
         throws EventNotFoundException{
-            return new ResponseEntity<>(service.patchEventDetails(eventId,request),HttpStatus.ACCEPTED);
+            return new ResponseEntity<>(service.patchEventDetails(eventId.getUuid(),request),HttpStatus.ACCEPTED);
         }
 }

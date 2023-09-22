@@ -1,5 +1,6 @@
 package com.example.app.controllers;
 
+import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.AuthenticationRequest;
 import com.example.app.models.responses.AuthenticationResponse;
 import com.example.app.models.requests.RegisterRequest;
@@ -20,7 +21,7 @@ public class AuthenticationController {
         return ResponseEntity.ok(authService.register(request));
     }
     @PostMapping("/authenticate")
-    public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody @Valid AuthenticationRequest request){
+    public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody @Valid AuthenticationRequest request) throws UserNotFoundException {
         return ResponseEntity.ok(authService.authenticate(request));
     }
 

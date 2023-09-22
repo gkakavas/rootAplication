@@ -19,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.beanvalidation.MethodValidationPostProcessor;
 
 import java.security.Principal;
+import java.time.Clock;
 
 @Configuration
 @RequiredArgsConstructor
@@ -50,5 +51,10 @@ public class ApplicationConfig {
     @Bean
     public MethodValidationPostProcessor methodValidationPostProcessor() {
         return new MethodValidationPostProcessor();
+    }
+
+    @Bean
+    public Clock clock(){
+        return Clock.systemDefaultZone();
     }
 }

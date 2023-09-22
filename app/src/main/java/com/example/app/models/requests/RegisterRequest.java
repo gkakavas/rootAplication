@@ -1,7 +1,7 @@
 package com.example.app.models.requests;
 
 import com.example.app.entities.Role;
-import com.example.app.utils.validator.ValueOfEnum;
+import com.example.app.utils.validator.user.ValueOfEnum;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -13,9 +13,9 @@ import lombok.*;
 @NoArgsConstructor
 public class RegisterRequest {
 
-    @Size(min = 1, max = 255)
+    @Size(min = 3, max = 255)
     private String firstname;
-    @Size(min = 1, max = 255)
+    @Size(min = 3, max = 255)
     private String lastname;
     @Email
     private String email;
