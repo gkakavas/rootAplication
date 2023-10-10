@@ -1,7 +1,9 @@
 package com.example.app.exception;
 
-public class IllegalUuidFormatException extends RuntimeException {
-    public IllegalUuidFormatException(){
-        super("This UUID is not in the correct format");
+import org.springframework.http.converter.HttpMessageNotReadableException;
+
+public class NullUuidException extends HttpMessageNotReadableException {
+    public NullUuidException(){
+        super("Not allowed null UUID");
     }
 }

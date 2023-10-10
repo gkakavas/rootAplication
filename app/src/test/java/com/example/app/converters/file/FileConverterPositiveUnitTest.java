@@ -162,7 +162,7 @@ public class FileConverterPositiveUnitTestSuite {
         var fileCreator = Instancio.create(User.class);
         var fileKind = FileKind.TIMESHEET;
         try(InputStream stream = new FileInputStream("C:\\Users\\georgios.kakavas\\Downloads\\rootAplication\\app\\src\\test\\testResources\\testExcelFile.xlsx")){
-            multipartFile = new MockMultipartFile("testExcelFile","testExcelFile.xlsx",FileContent.xlsx.getFileContent(), stream);
+            multipartFile = new MockMultipartFile("testExcelFile", "testExcelFile.xlsx",FileContent.xlsx.getFileContent(), stream);
         }
         var accessUrl = multipartFile.getResource().toString();
         var expectedResponse = File.builder()

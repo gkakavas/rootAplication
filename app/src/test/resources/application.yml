@@ -1,0 +1,26 @@
+Spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/Database
+    username: User
+    password: 4y7sV96vA9wv46VR
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+      format_sql: true
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  main:
+    allow-bean-definition-overriding: true
+Logging:
+  level:
+    com.example: INFO
+    org.springframework.security: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+initial-data-loader: false
+
+
