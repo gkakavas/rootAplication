@@ -10,6 +10,8 @@ import com.example.app.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -66,8 +68,10 @@ private final UserRepository userRepo;
                 .eventDescription(request.getEventDescription())
                 .eventBody(request.getEventBody())
                 .eventCreator(eventCreator)
-                .eventDateTime(request.getEventDateTime())
-                .eventExpiration(request.getEventExpiration())
+                .eventDateTime(LocalDateTime.parse(request.getEventDateTime(),
+                        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                .eventExpiration(LocalDateTime.parse(request.getEventExpiration(),
+                                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                 .build();
     }
 
@@ -75,8 +79,10 @@ private final UserRepository userRepo;
     public Event eventUpdate(EventRequestEntity request, Event event) {
         event.setEventDescription(request.getEventDescription());
         event.setEventBody(request.getEventBody());
-        event.setEventDateTime(request.getEventDateTime());
-        event.setEventExpiration(request.getEventExpiration());
+        event.setEventDateTime(LocalDateTime.parse(request.getEventDateTime(),
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        event.setEventExpiration(LocalDateTime.parse(request.getEventExpiration(),
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         return event;
     }
 }

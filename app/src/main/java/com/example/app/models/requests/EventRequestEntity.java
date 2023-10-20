@@ -1,10 +1,9 @@
 package com.example.app.models.requests;
 
 import com.example.app.entities.User;
+import com.example.app.utils.validator.date.DateTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,17 +20,19 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class EventRequestEntity {
-
-    @NotBlank(message = "Event Description is required")
+public class EventRequestEntity implements RequestEntity {
+    @NotBlank(message = "Event description is required")
+    @Size(min = 5,max=100,message = "Event body should contain at least 5 and no many than 100 characters including spaces")
     private String eventDescription;
-    @NotBlank(message = "Event Body is required")
+    @NotBlank(message = "Event body is required")
+    @Size(min = 100,message = "Event body should contain at least 100 characters including spaces")
     private String eventBody;
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime eventDateTime;
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime eventExpiration;
+    @NotBlank(message = "Event date and time is required")
+    @DateTime(message = "Invalid event date and time format. The correct format is yyyy-MM-dd HH:mm:ss")
+    private String eventDateTime;
+    @NotBlank(message = "Event expiration is required")
+    @DateTime(message = "Invalid event expiration format. The correct format is yyyy-MM-dd HH:mm:ss")
+    private String eventExpiration;
     @Builder.Default
     private Set<UUID> idsSet = new HashSet<>();
-
 }

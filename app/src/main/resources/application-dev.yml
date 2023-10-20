@@ -16,7 +16,7 @@ Spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 Logging:
   level:
-    root: INFO
-    com.example: DEBUG
+    com.example: INFO
+    org.springframework.security: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

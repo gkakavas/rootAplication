@@ -1,2 +1,4 @@
-package com.example.app.models.requests;public interface RequestEntity {
+package com.example.app.models.requests;
+
+public interface RequestEntity {
 }

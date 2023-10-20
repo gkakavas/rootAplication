@@ -1,9 +1,4 @@
 Spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/Database
-    username: User
-    password: 4y7sV96vA9wv46VR
-    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -22,5 +17,3 @@ Logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 initial-data-loader: false
-
-

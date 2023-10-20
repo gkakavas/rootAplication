@@ -27,7 +27,7 @@ public class Group {
     private UUID groupCreator;
     private LocalDateTime groupCreationDate;
 
-    @OneToMany(mappedBy = "group",cascade= CascadeType.ALL)
+    @OneToMany(mappedBy = "group",cascade = {CascadeType.PERSIST,CascadeType.MERGE} )
     @Builder.Default
     private Set<User> groupHasUsers = new HashSet<>();
 

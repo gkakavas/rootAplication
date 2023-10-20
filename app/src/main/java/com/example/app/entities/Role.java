@@ -33,6 +33,7 @@ public enum Role {
     HR(Set.of(
             USER_READ_ONE,
             USER_READ_ALL,
+            READ_USER_EVENTS,
             EVENT_CREATE,
             EVENT_CREATE_BY_GROUP,
             EVENT_READ_ONE,
@@ -52,6 +53,7 @@ public enum Role {
     MANAGER(Set.of(
             USER_READ_ONE,
             USER_READ_ALL,
+            READ_USER_EVENTS,
             EVENT_CREATE_BY_GROUP,
             EVENT_READ_ONE,
             EVENT_READ_ALL,

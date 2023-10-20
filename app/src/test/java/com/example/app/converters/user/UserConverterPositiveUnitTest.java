@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-public class UserConverterPositiveUnitTestSuite {
+public class UserConverterPositiveUnitTest {
 
     @InjectMocks
     private EntityResponseUserConverterImpl userConverter;
@@ -46,7 +46,7 @@ public class UserConverterPositiveUnitTestSuite {
     private static final String TEST_REQUEST_CURRENT_PROJECT="test_current_project";
     private static final UUID TEST_REQUEST_GROUP = UUID.randomUUID();
     private static final String TEST_REQUEST_ROLE= "ADMIN";
-    Logger logger = LoggerFactory.getLogger(UserConverterPositiveUnitTestSuite.class);
+    Logger logger = LoggerFactory.getLogger(UserConverterPositiveUnitTest.class);
 
     private static final User user1 = User.builder()
             .userId(UUID.randomUUID())

@@ -46,6 +46,32 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
             var responseEvent = eventRepo.save(newEvent);
             return eventConverter.fromEventToAdminHrMngEvent(responseEvent);
     }
+
+    public EventResponseEntity createForGroup(EventRequestEntity request, UUID groupId)
+            throws GroupNotFoundException, UserNotFoundException {
+        var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
+                .orElseThrow(UserNotFoundException::new);
+        if(currentUser.getRole().equals(Role.ADMIN)||currentUser.getRole().equals(Role.HR)){
+            var group = groupRepo.findById(groupId).orElseThrow(GroupNotFoundException::new);
+            var event = eventConverter.fromRequestToEvent(request,currentUser.getUserId());
+            event.getUsersJoinInEvent().addAll(group.getGroupHasUsers());
+            for(User user: group.getGroupHasUsers()){
+                user.getUserHasEvents().add(event);
+            }
+            var newEvent = eventRepo.save(event);
+            return eventConverter.fromEventToAdminHrMngEvent(newEvent);
+        }
+        else if (currentUser.getRole().equals(Role.MANAGER)) {
+            var event = eventConverter.fromRequestToEvent(request,currentUser.getUserId());
+            event.getUsersJoinInEvent().addAll(currentUser.getGroup().getGroupHasUsers());
+            for(User user: currentUser.getGroup().getGroupHasUsers()){
+                user.getUserHasEvents().add(event);
+            }
+            var newEvent = eventRepo.save(event);
+            return eventConverter.fromEventToAdminHrMngEvent(newEvent);
+        }
+        else throw new AccessDeniedException("You have not authority to access this resource");
+    }
     @Override
     public EventResponseEntity read(UUID id)
     throws EventNotFoundException{
@@ -88,27 +114,6 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
         else{
             throw new EventNotFoundException();
         }
-    }
-
-    public EventResponseEntity createForGroup(EventRequestEntity request, UUID groupId)
-            throws GroupNotFoundException, UserNotFoundException {
-
-        var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
-                .orElseThrow(UserNotFoundException::new);
-        if(currentUser.getRole().equals(Role.ADMIN)||currentUser.getRole().equals(Role.HR)){
-            var group = groupRepo.findById(groupId).orElseThrow(GroupNotFoundException::new);
-            var event = eventConverter.fromRequestToEvent(request,currentUser.getUserId());
-            event.getUsersJoinInEvent().addAll(group.getGroupHasUsers());
-            var newEvent = eventRepo.save(event);
-            return eventConverter.fromEventToAdminHrMngEvent(newEvent);
-        }
-        else if (currentUser.getRole().equals(Role.MANAGER)) {
-            var event = eventConverter.fromRequestToEvent(request,currentUser.getUserId());
-            event.getUsersJoinInEvent().addAll(currentUser.getGroup().getGroupHasUsers());
-            var newEvent = eventRepo.save(event);
-            return eventConverter.fromEventToAdminHrMngEvent(newEvent);
-        }
-        else throw new AccessDeniedException("You have not authority to access this resource");
     }
 
     public EventResponseEntity addUsersToEvent(Set<UUID> idsSet, UUID eventId) throws EventNotFoundException{

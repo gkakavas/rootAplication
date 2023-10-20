@@ -1,4 +1,4 @@
-package com.example.app.generators.user;
+package com.example.app.tool;
 
 import com.example.app.entities.Group;
 import com.example.app.entities.Role;
@@ -27,7 +27,7 @@ public class UserRelevantGenerator {
                 .password("TestPass123")
                 .firstname("testFirstname")
                 .lastname("testLastname")
-                .email(RandomStringUtils.random(3)+"@email.com")
+                .email(Instancio.create(String.class)+"@email.com")
                 .specialization("testSpecialization")
                 .currentProject("testCurrentProject")
                 .createdBy(creator)

@@ -10,6 +10,5 @@ import java.util.UUID;
 
 public interface LeaveRepository extends JpaRepository<Leave, UUID> {
     List<Leave> findAllByRequestedBy(User user);
-
     List<Leave> findAllByRequestedBy_Group(Group group);
 }

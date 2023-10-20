@@ -10,31 +10,36 @@ import com.example.app.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ReflectionUtils;
+import org.springframework.validation.Validator;
 
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Component
 @RequiredArgsConstructor
 public class EntityResponseUserConverterImpl implements EntityResponseUserConverter{
+
     private final UserRepository userRepo;
     private final PasswordEncoder passwordEncoder;
 
     @Override
     public AdminUserResponse fromUserToAdminUser(User user) {
-            var response =  AdminUserResponse.builder()
-            .userId(user.getUserId())
-            .firstname(user.getFirstname())
-            .lastname(user.getLastname())
-            .email(user.getEmail())
-            .specialization(user.getSpecialization())
-            .currentProject(user.getCurrentProject())
-            .groupName(null)
-            .registerDate(user.getRegisterDate())
-            .createdBy(null)
-            .lastLogin(user.getLastLogin())
-            .role(user.getRole())
-                    .build();
+        var response = AdminUserResponse.builder()
+                .userId(user.getUserId())
+                .firstname(user.getFirstname())
+                .lastname(user.getLastname())
+                .email(user.getEmail())
+                .specialization(user.getSpecialization())
+                .currentProject(user.getCurrentProject())
+                .groupName(null)
+                .registerDate(user.getRegisterDate())
+                .createdBy(null)
+                .lastLogin(user.getLastLogin())
+                .role(user.getRole())
+                .build();
             if(user.getGroup()!=null){
                 response.setGroupName(user.getGroup().getGroupName());
             }
@@ -87,9 +92,10 @@ public class EntityResponseUserConverterImpl implements EntityResponseUserConver
                 .specialization(request.getSpecialization())
                 .currentProject(request.getCurrentProject())
                 .createdBy(userCreator)
-                .registerDate(LocalDateTime.now())
+                .registerDate(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .lastLogin(null)
                 .roleValue(request.getRole())
+                .role(Role.valueOf(request.getRole()))
                 .group(userGroup)
                 .userHasEvents(null)
                 .userHasFiles(null)

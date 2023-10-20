@@ -3,20 +3,13 @@ package com.example.app.controllers.event;
 import com.example.app.advice.ApplicationExceptionHandler;
 import com.example.app.config.TestSecurityConfig;
 import com.example.app.controllers.EventController;
-import com.example.app.entities.User;
-import com.example.app.exception.EventNotFoundException;
 import com.example.app.models.requests.EventRequestEntity;
-import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.event.AdminHrMngEventResponse;
 import com.example.app.models.responses.event.EventResponseEntity;
 import com.example.app.services.EventService;
-import com.example.app.services.UserService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -36,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest
 @ContextConfiguration(classes = {TestSecurityConfig.class, EventController.class, ApplicationExceptionHandler.class})
-public class EventControllerTest {
+public class EventControllerPositiveUnitTest {
     @MockBean
     private EventService eventService;
     @Autowired
@@ -53,8 +46,8 @@ public class EventControllerTest {
     private static final EventRequestEntity request = EventRequestEntity.builder()
             .eventBody("test_event_body")
             .eventDescription("test_event_description")
-            .eventDateTime(eventDateTime)
-            .eventExpiration(eventExpiration)
+            .eventDateTime(eventDateTime.toString())
+            .eventExpiration(eventExpiration.toString())
             .idsSet(uuidSet)
             .build();
 
@@ -155,8 +148,8 @@ public class EventControllerTest {
                 .eventId(UUID.randomUUID())
                 .eventBody(request.getEventBody())
                 .eventDescription(request.getEventDescription())
-                .eventDateTime(request.getEventDateTime())
-                .eventExpiration(request.getEventExpiration())
+                .eventDateTime(LocalDateTime.parse(request.getEventDateTime()))
+                .eventExpiration(LocalDateTime.parse(request.getEventExpiration()))
                 .eventCreator(response.getEventCreator())
                 .users(response.getUsers())
                 .build();

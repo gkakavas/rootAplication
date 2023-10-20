@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +34,7 @@ public class AuthenticationService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.valueOf(request.getRole()))
                 .specialization(request.getSpecialization())
-                .registerDate(LocalDateTime.now(clock))
+                .registerDate(LocalDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS))
                 .build();
         repository.save(user);
 
@@ -48,7 +49,7 @@ public class AuthenticationService {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         var user = repository.findByEmail(request.getEmail()).orElseThrow(UserNotFoundException::new);
         var jwtToken = jwtService.generateToken(user);
-        user.setLastLogin(LocalDateTime.now());
+        user.setLastLogin(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
         repository.save(user);
         return AuthenticationResponse.builder()
                 .token(jwtToken)

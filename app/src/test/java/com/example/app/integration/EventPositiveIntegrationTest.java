@@ -1,2 +1,4 @@
-package com.example.app.integration;public class EventPositiveIntegrationTest {
+package com.example.app.integration;
+
+public class EventPositiveIntegrationTest {
 }

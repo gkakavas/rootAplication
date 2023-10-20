@@ -1,5 +1,6 @@
-package com.example.app.utils.validator.user;
+package com.example.app.utils.validator.venum;
 
+import com.example.app.utils.validator.venum.ValueOfEnumValidator;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 

@@ -1,110 +1,142 @@
 package com.example.app.advice;
 
 import com.example.app.exception.*;
-import org.hibernate.exception.ConstraintViolationException;
+import com.example.app.models.responses.error.ErrorResponse;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.postgresql.util.PSQLException;
+import java.sql.SQLException;
+import java.util.*;
 
 @RestControllerAdvice
 public class ApplicationExceptionHandler {
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public Map<String, String> handleInvalidArgument(MethodArgumentNotValidException ex){
+    public ResponseEntity<ErrorResponse<Map<String,String>>> handleInvalidArgument(MethodArgumentNotValidException ex){
         Map<String, String> errorMap = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(error ->{
-            errorMap.put(error.getField(),error.getDefaultMessage());
-                });
-        return errorMap;
-    }
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+                errorMap.put(error.getField(),error.getDefaultMessage()));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorResponse.<Map<String,String>>builder()
+                .message(errorMap)
+                .responseCode(HttpStatus.BAD_REQUEST)
+                .build());
+        }
     @ExceptionHandler(UserNotFoundException.class)
-    public Map<String, String> handleUserException(UserNotFoundException ex){
-        Map<String, String> errorMap = new HashMap<>();
-        errorMap.put("errorMessage",ex.getMessage());
-        return errorMap;
+    public ResponseEntity<ErrorResponse<String>> handleUserException(UserNotFoundException ex){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.<String>builder()
+                .message(ex.getMessage())
+                .responseCode(HttpStatus.NOT_FOUND)
+                .build());
     }
-
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(EventNotFoundException.class)
-    public Map<String, String> handleEventException(EventNotFoundException ex){
-        Map<String, String> errorMap = new HashMap<>();
-        errorMap.put("errorMessage",ex.getMessage());
-        return errorMap;
+    public ResponseEntity<ErrorResponse<String>> handleEventException(EventNotFoundException ex){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.<String>builder()
+                .message(ex.getMessage())
+                .responseCode(HttpStatus.NOT_FOUND)
+                .build());
     }
 
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(GroupNotFoundException.class)
-    public Map<String, String> handleGroupException(GroupNotFoundException ex){
-        Map<String, String> errorMap = new HashMap<>();
-        errorMap.put("errorMessage",ex.getMessage());
-        return errorMap;
+    public ResponseEntity<ErrorResponse<String>> handleGroupException(GroupNotFoundException ex){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.<String>builder()
+                .message(ex.getMessage())
+                .responseCode(HttpStatus.NOT_FOUND)
+                .build());
     }
 
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+
     @ExceptionHandler(LeaveNotFoundException.class)
-    public Map<String, String> handleUserException(LeaveNotFoundException ex){
-        Map<String, String> errorMap = new HashMap<>();
-        errorMap.put("errorMessage",ex.getMessage());
-        return errorMap;
+    public ResponseEntity<ErrorResponse<String>> handleUserException(LeaveNotFoundException ex){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.<String>builder()
+                .message(ex.getMessage())
+                .responseCode(HttpStatus.NOT_FOUND)
+                .build());
     }
 
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(FileNotFoundException.class)
-    public Map<String, String> handleFileException(FileNotFoundException ex){
-        Map<String, String> errorMap = new HashMap<>();
-        errorMap.put("errorMessage",ex.getMessage());
-        return errorMap;
+    public ResponseEntity<ErrorResponse<String>> handleFileException(FileNotFoundException ex){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.<String>builder()
+                .message(ex.getMessage())
+                .responseCode(HttpStatus.NOT_FOUND)
+                .build());
     }
 //    exception when the id is not UUID type
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(ConstraintViolationException.class)
-    public Map<String, String>handleConstraintViolation(ConstraintViolationException ex){
-        Map<String,String> errorMap =  new HashMap<>();
-        errorMap.put("errorMessage", ex.getMessage());
-        return errorMap;
-    }
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(InvalidRoleException.class)
-    public Map<String, String>handleInvalidRole(InvalidRoleException ex){
-        Map<String,String> errorMap =  new HashMap<>();
-        errorMap.put("role", ex.getMessage());
-        return errorMap;
+    public ResponseEntity<ErrorResponse<List<String>>> handleConstraintViolation(ConstraintViolationException ex){
+        List<String> violationMessages = new ArrayList<>();
+        for(ConstraintViolation<?> constraintViolation : ex.getConstraintViolations()){
+            violationMessages.add(constraintViolation.getMessageTemplate());
+        }
+        return ResponseEntity.badRequest().body(ErrorResponse.<List<String>> builder()
+                .message(violationMessages)
+                .responseCode(HttpStatus.BAD_REQUEST)
+                .build());
     }
 
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(NullRoleException.class)
-    public Map<String, String>handleNullRole(NullRoleException ex){
-        Map<String,String> errorMap =  new HashMap<>();
-        errorMap.put("role", ex.getMessage());
-        return errorMap;
-    }
-
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(IllegalTypeOfFileException.class)
-    public Map<String, String> handleInvalidTypeOfFile(IllegalTypeOfFileException ex){
-        Map<String, String> errorMap = new HashMap<>();
-            errorMap.put("Error", ex.getMessage());
-        return errorMap;
+    public ResponseEntity<ErrorResponse<String>> handleInvalidTypeOfFile(IllegalTypeOfFileException ex){
+        return ResponseEntity.internalServerError().body(ErrorResponse.<String> builder()
+                .message(ex.getMessage())
+                .responseCode(HttpStatus.INTERNAL_SERVER_ERROR)
+                .build());
     }
 
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    @ExceptionHandler(NullUuidException.class)
-    public Map<String, String> handleNullUuid(NullUuidException ex){
-        Map<String,String> errorMap =  new HashMap<>();
-        errorMap.put("error", ex.getMessage());
-        return errorMap;
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse<String>> handleTypeMismatchException(MethodArgumentTypeMismatchException ex) {
+        if(ex.getMessage().contains("Invalid UUID")){
+            return ResponseEntity.badRequest().body(ErrorResponse.<String> builder()
+                        .message("Invalid path variable's UUID")
+                        .responseCode(HttpStatus.BAD_REQUEST)
+                    .build());
+        }
+        else return null;
     }
-
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    @ExceptionHandler(IllegalUuidFormatException.class)
-    public Map<String, String> handleIllegalUuidFormat(IllegalUuidFormatException ex){
-        Map<String,String> errorMap =  new HashMap<>();
-        errorMap.put("error", ex.getMessage());
-        return errorMap;
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse<Map<String,String>>> handleNullRequestBody(HttpMessageNotReadableException ex) {
+        String exceptionMessage = ex.getMessage();
+        Map<String,String> errorMap = new HashMap<>();
+        if (exceptionMessage.contains("UUID has to be represented by standard 36-char representation")) {
+            errorMap.put("error","Invalid UUID value provided");
+            return ResponseEntity.badRequest()
+                    .body(ErrorResponse.<Map<String,String>>builder()
+                            .message(errorMap)
+                            .responseCode(HttpStatus.BAD_REQUEST)
+                            .build());
+        }
+        else if (exceptionMessage.contains("Required request body is missing")) {
+            errorMap.put("error","Request body is required");
+        }
+        else {errorMap.put("error","Unexpected error during converting the Json. " +
+                "Make sure that response body values is correct");
+        }
+        return ResponseEntity.internalServerError()
+                .body(ErrorResponse.<Map<String,String>> builder()
+                        .message(errorMap)
+                        .responseCode(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .build());
+    }
+    @ExceptionHandler(PSQLException.class)
+    public ResponseEntity<ErrorResponse<Map<String,String>>> handleSQLException(PSQLException ex){
+        String exceptionMessage = ex.getMessage();
+        Map<String,String> errorMap = new HashMap<>();
+        if (exceptionMessage.contains("duplicate key value violates unique constraint \"_user_email_key\"")) {
+            errorMap.put("email","This email already exists");
+        }
+        else{
+            errorMap.put("error","Unexpected SQL exception occurs");
+        }
+        return ResponseEntity.internalServerError()
+                .body(ErrorResponse.<Map<String,String>>builder()
+                        .message(errorMap)
+                        .responseCode(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .build());
     }
 }

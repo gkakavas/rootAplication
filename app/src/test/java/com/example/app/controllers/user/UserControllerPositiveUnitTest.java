@@ -13,8 +13,6 @@ import com.example.app.services.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -34,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest
 @ContextConfiguration(classes = {TestSecurityConfig.class, UserController.class, ApplicationExceptionHandler.class})
-public class UserControllerTest {
+public class UserControllerPositiveUnitTest {
     @MockBean
     private UserService userService;
     @Autowired
@@ -219,64 +217,5 @@ public class UserControllerTest {
         this.mockMvc.perform(MockMvcRequestBuilders.get("/user/{id}/events",TEST_USER_ID.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size()", equalTo(set.size())));
-    }
-    @Test
-    @DisplayName("Should return validation error messages")
-    void shouldReturnValidationErrorMessages() throws Exception{
-        final String INVALID_MIN_SIZE_TEST_FIRSTNAME = "foo";
-        final String INVALID_MAX_SIZE_TEST_LASTNAME="barbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbar";
-        final String INVALID_FORM_TEST_EMAIL="invalid email";
-        final String INVALID_TEST_PASSWORD="1234";
-        final String INVALID_TEST_ROLE = "anything_other";
-        final String INVALID_FIRSTNAME_MESSAGE = "Firstname must be between 4 and 50 characters";
-        final String INVALID_LASTNAME_MESSAGE = "Lastname must be between 4 and 50 characters";
-        final String INVALID_EMAIL_MESSAGE ="Email must be in a normal email form";
-        final String INVALID_PASSWORD_MESSAGE="Password must be at least 8 characters long and it contains at least one letter and one digit";
-        final String INVALID_ROLE_MESSAGE = "Value is not well-formed";
-        UserRequestEntity invalidRequest = UserRequestEntity.builder()
-                .firstname(INVALID_MIN_SIZE_TEST_FIRSTNAME)
-                .lastname(INVALID_MAX_SIZE_TEST_LASTNAME)
-                .email(INVALID_FORM_TEST_EMAIL)
-                .password(INVALID_TEST_PASSWORD)
-                .currentProject(TEST_CURRENT_PROJECT)
-                .specialization(TEST_SPECIALIZATION)
-                .role(INVALID_TEST_ROLE)
-                .group(TEST_GROUP_ID)
-                .build();
-
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/user/create")
-                        .header("Authorization",TEST_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidRequest)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.firstname",equalTo(INVALID_FIRSTNAME_MESSAGE)))
-                .andExpect(jsonPath("$.lastname",equalTo(INVALID_LASTNAME_MESSAGE)))
-                .andExpect(jsonPath("$.email",equalTo(INVALID_EMAIL_MESSAGE)))
-                .andExpect(jsonPath("$.password",equalTo(INVALID_PASSWORD_MESSAGE)))
-                .andExpect(jsonPath("$.role",equalTo(INVALID_ROLE_MESSAGE)));
-    }
-    @Test
-    @DisplayName("Should return null error messages")
-    void shouldReturnNullRoleErrorMessage() throws Exception{
-
-        UserRequestEntity nullRequest = UserRequestEntity.builder()
-                .build();
-        final String NULL_FIRSTNAME_MESSAGE = "Firstname is required";
-        final String NULL_LASTNAME_MESSAGE = "Lastname is required";
-        final String NULL_EMAIL_MESSAGE ="Email is required";
-        final String NULL_PASSWORD_MESSAGE="Password is required";
-        final String NULL_ROLE_MESSAGE = "Role is required";
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/user/create")
-                        .header("Authorization",TEST_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(nullRequest)))
-                .andExpect(status().isBadRequest())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.firstname",equalTo(NULL_FIRSTNAME_MESSAGE)))
-                .andExpect(jsonPath("$.lastname",equalTo(NULL_LASTNAME_MESSAGE)))
-                .andExpect(jsonPath("$.email",equalTo(NULL_EMAIL_MESSAGE)))
-                .andExpect(jsonPath("$.password",equalTo(NULL_PASSWORD_MESSAGE)))
-                .andExpect(jsonPath("$.role",equalTo(NULL_ROLE_MESSAGE)));
-
     }
 }

@@ -1,6 +1,7 @@
 package com.example.app.services;
 
 import com.example.app.entities.*;
+import com.example.app.exception.GroupNotFoundException;
 import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.event.EventResponseEntity;
@@ -10,6 +11,7 @@ import com.example.app.repositories.UserRepository;
 import com.example.app.utils.event.EntityResponseEventConverter;
 import com.example.app.utils.user.EntityResponseUserConverter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -93,24 +95,30 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
         }
     }
 
-    public UserResponseEntity patch(UUID userId, Map<String, String> userFields) throws UserNotFoundException {
-        if (!userFields.isEmpty()) {
+    public UserResponseEntity patch(UUID userId, Map<String, String> userFields) throws UserNotFoundException, GroupNotFoundException {
             var user = userRepo.findById(userId).orElseThrow(UserNotFoundException::new);
-            userFields.forEach((key, value) -> {
-                Field field = ReflectionUtils.findField(User.class, key);
-                assert field != null;
-                field.setAccessible(true);
-                if(key.equals("role")){
-                    ReflectionUtils.setField(field, user, Role.valueOf(value));
-                }
-                else ReflectionUtils.setField(field, user, value);
+        for (Map.Entry<String, String> entry : userFields.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+            Field field = ReflectionUtils.findField(User.class, key);
+            assert field != null;
+            field.setAccessible(true);
+            if (key.equals("group")) {
+                var group = groupRepo.findById(UUID.fromString(userFields.get("group"))).orElseThrow(GroupNotFoundException::new);
+                group.getGroupHasUsers().add(user);
+                user.setGroup(group);
+                groupRepo.save(group);
             }
-            );
-            var patcedUser = userRepo.save(user);
-            return userConverter.fromUserToAdminUser(patcedUser);
+            else if (key.equals("role")) {
+                ReflectionUtils.setField(field, user, Role.valueOf(value));
+            }
+            else {
+                ReflectionUtils.setField(field, user, value);
+            }
         }
-        else
-            throw new NullPointerException("");
+        userRepo.save(user);
+        var patchedUser = userRepo.findById(user.getUserId()).orElseThrow(UserNotFoundException::new);
+        return userConverter.fromUserToAdminUser(patchedUser);
     }
 
     public Set<EventResponseEntity> readUserEvents(UUID userId)throws UserNotFoundException {

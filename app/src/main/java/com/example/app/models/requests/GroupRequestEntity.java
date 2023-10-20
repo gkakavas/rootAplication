@@ -9,7 +9,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class GroupRequestEntity {
+public class GroupRequestEntity implements RequestEntity {
     private String groupName;
     @Builder.Default
     private Set<UUID> idsSet = new HashSet<>();

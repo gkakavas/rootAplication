@@ -3,48 +3,81 @@ package com.example.app.utils.validator.user;
 import com.example.app.entities.Role;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import jakarta.validation.metadata.ConstraintDescriptor;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-public class UserPatchMapValueValidator implements ConstraintValidator<ValidUserPatchValue, Map<String,String>> {
+public class UserPatchMapValueValidator implements ConstraintValidator<UserPatchValue, Map<String,String>> {
 
     @Override
     public boolean isValid(Map<String, String> patchMap, ConstraintValidatorContext context) {
+        context.disableDefaultConstraintViolation();
+        if(patchMap.isEmpty()){
+            context.buildConstraintViolationWithTemplate("Patch request cannot be empty")
+                    .addConstraintViolation();
+            return false;
+        }
+        int constraintViolationsCounter = 0;
         for (Map.Entry<String, String> entry : patchMap.entrySet()) {
             String fieldName = entry.getKey();
             String fieldValue = entry.getValue();
+            var fieldValues = Arrays.stream(AllowedUserFields.values()).map(Enum::name).toList();
+                if (!fieldValues.contains(fieldName)) {
+                    context.buildConstraintViolationWithTemplate("Field value is not valid")
+                            .addPropertyNode(fieldName)
+                            .addConstraintViolation();
+                    ++constraintViolationsCounter;
+                }
             switch (fieldName) {
-                case "firstname" : if (!isValidFirstname(fieldValue)){
-                    context.buildConstraintViolationWithTemplate("Firstname must be between 4 and 50 characters")
-                            .addConstraintViolation();
-                    return false;
+                case "firstname" ->{
+                    if (!isValidFirstname(fieldValue)) {
+                        context.buildConstraintViolationWithTemplate(
+                                "Firstname must be between 4 and 50 characters")
+                                .addConstraintViolation();
+                        ++constraintViolationsCounter;
+                    }
                 }
-                case "lastname" : if (!isValidLastname(fieldValue)){
-                    context.buildConstraintViolationWithTemplate("Lastname must be between 4 and 50 characters")
-                            .addConstraintViolation();
-                    return false;
+                case "lastname" -> {
+                    if (!isValidLastname(fieldValue)) {
+                        context.buildConstraintViolationWithTemplate(
+                                "Lastname must be between 4 and 50 characters")
+                                .addConstraintViolation();
+                        ++constraintViolationsCounter;
+                    }
                 }
-                case "email" : if (!isValidEmail(fieldValue)){
-                    context.buildConstraintViolationWithTemplate("Email must be in a normal email form")
-                            .addConstraintViolation();
-                    return false;
+                case "email" -> {
+                    if (!isValidEmail(fieldValue)) {
+                        context.buildConstraintViolationWithTemplate(
+                                "Email must be in a normal email form")
+                                .addConstraintViolation();
+                        ++constraintViolationsCounter;
+                    }
                 }
-                case "role" : if (!isValidRole(fieldValue)) {
-                    context.buildConstraintViolationWithTemplate("Role value is not in the correct form")
-                            .addConstraintViolation();
-                    return false;
+                case "role" -> {
+                    if (!isValidRole(fieldValue)) {
+                        context.buildConstraintViolationWithTemplate(
+                                "Role value is not in the correct form")
+                                .addConstraintViolation();
+                        ++constraintViolationsCounter;
+                    }
                 }
-                case "group" : if (!isValidGroup(fieldValue)){
-                    context.buildConstraintViolationWithTemplate("UUID must be in a normal UUID from")
-                            .addConstraintViolation();
-                    return false;}
+                case "group" -> {
+                    if (!isValidGroup(fieldValue)) {
+                        context.buildConstraintViolationWithTemplate(
+                                "UUID must be in a normal UUID from")
+                                .addConstraintViolation();
+                        ++constraintViolationsCounter;
+                    }
+                }
             }
         }
-        return true;
+        return constraintViolationsCounter <= 0;
     }
 
     public boolean isValidFirstname(String firstnameValue){

@@ -1,7 +1,7 @@
 package com.example.app.models;
 
 import com.example.app.entities.Role;
-import com.example.app.utils.validator.user.ValueOfEnum;
+import com.example.app.utils.validator.venum.ValueOfEnum;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

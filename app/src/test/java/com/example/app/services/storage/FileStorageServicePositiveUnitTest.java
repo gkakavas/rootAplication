@@ -101,7 +101,7 @@ public class FileStorageServicePositiveUnitTest {
     @DisplayName("Should save a file both filesystem and database")
     void upload() throws IOException, UserNotFoundException, IllegalTypeOfFileException {
         var currentUser = Instancio.create(User.class);
-        MultipartFile multipartFile = new MockMultipartFile("testExcelFile","testExcelFile.xlsx",FileContent.xlsx.getFileContent(), new FileInputStream("C:\\Users\\georgios.kakavas\\Downloads\\rootAplication\\app\\src\\test\\testResources\\testExcelFile.xlsx"));
+        MultipartFile multipartFile = new MockMultipartFile("testExcelFile", "testExcelFile.xlsx",FileContent.xlsx.getFileContent(), new FileInputStream("C:\\Users\\georgios.kakavas\\Downloads\\rootAplication\\app\\src\\test\\testResources\\testExcelFile.xlsx"));
         var file = Instancio.of(File.class)
                 .set(field("filename"),multipartFile.getOriginalFilename())
                 .set(field("fileType"),multipartFile.getContentType())
@@ -439,7 +439,7 @@ public class FileStorageServicePositiveUnitTest {
     @DisplayName("Should extract multipart info from file save it in database and return the response")
     void saveInDatabase() throws IOException {
         var currentUser = Instancio.of(User.class).create();
-        MultipartFile multipartFile = new MockMultipartFile("testExcelFile","testExcelFile.xlsx",FileContent.xlsx.getFileContent(), new FileInputStream("C:\\Users\\georgios.kakavas\\Downloads\\rootAplication\\app\\src\\test\\testResources\\testExcelFile.xlsx"));
+        MultipartFile multipartFile = new MockMultipartFile("testExcelFile", "testExcelFile.xlsx",FileContent.xlsx.getFileContent(), new FileInputStream("C:\\Users\\georgios.kakavas\\Downloads\\rootAplication\\app\\src\\test\\testResources\\testExcelFile.xlsx"));
         var extractedFileEntity = File.builder()
                 .fileId(UUID.randomUUID())
                 .filename(multipartFile.getOriginalFilename())

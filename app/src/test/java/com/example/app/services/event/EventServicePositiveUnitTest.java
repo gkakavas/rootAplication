@@ -81,8 +81,8 @@ public class EventServicePositiveUnitTest {
                 .eventId(UUID.randomUUID())
                 .eventBody(request.getEventBody())
                 .eventDescription(request.getEventDescription())
-                .eventDateTime(request.getEventDateTime())
-                .eventExpiration(request.getEventExpiration())
+                .eventDateTime(LocalDateTime.parse(request.getEventDateTime()))
+                .eventExpiration(LocalDateTime.parse(request.getEventExpiration()))
                 .eventCreator(UUID.randomUUID())
                 .usersJoinInEvent(Instancio.createSet(User.class))
                 .build();
@@ -167,8 +167,8 @@ public class EventServicePositiveUnitTest {
                 .eventId(event.getEventId())
                 .eventBody(updateRequest.getEventBody())
                 .eventDescription(updateRequest.getEventDescription())
-                .eventDateTime(updatedEvent.getEventDateTime())
-                .eventExpiration(updateRequest.getEventExpiration())
+                .eventDateTime(LocalDateTime.parse(updateRequest.getEventDateTime()))
+                .eventExpiration(LocalDateTime.parse(updateRequest.getEventExpiration()))
                 .eventCreator("creator with id" + event.getEventCreator().toString())
                 .users(event.getUsersJoinInEvent().stream().map(User::getEmail).collect(Collectors.toSet()))
                 .build();

@@ -25,7 +25,7 @@ import static org.instancio.Select.field;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
-public class GroupConverterPositiveUnitTestSuite {
+public class GroupConverterPositiveUnitTest {
     @InjectMocks
     private EntityResponseGroupConverterImpl groupConverter;
     @Mock

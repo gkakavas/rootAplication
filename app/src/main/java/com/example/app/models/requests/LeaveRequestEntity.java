@@ -12,7 +12,7 @@ import java.time.LocalDate;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class LeaveRequestEntity {
+public class LeaveRequestEntity implements RequestEntity {
     private LeaveType leaveType;
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate leaveStarts;

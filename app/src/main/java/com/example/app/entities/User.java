@@ -1,22 +1,23 @@
 package com.example.app.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 @Getter
 @Setter
-@ToString
+@ToString(exclude = "userHasEvents")
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -48,14 +49,12 @@ public class User implements UserDetails {
     void fillRole() {
         if(this.roleValue!=null) {
             this.role = Role.valueOf(roleValue);
-            log.debug(role.toString());
         }
     }
     @PrePersist
     void fillPersistent() {
         if(this.role!=null) {
             this.roleValue = role.name();
-            log.debug(roleValue);
         }
     }
 
@@ -71,11 +70,11 @@ public class User implements UserDetails {
     @JoinColumn(name= "group_id")
     private Group group;
 
-    @OneToMany(mappedBy = "uploadedBy",fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "uploadedBy",fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     @Builder.Default
     private Set<File> userHasFiles = new HashSet<>();
 
-    @OneToMany(mappedBy = "requestedBy", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "requestedBy",fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     @Builder.Default
     private Set<Leave> userRequestedLeaves = new HashSet<>();
 

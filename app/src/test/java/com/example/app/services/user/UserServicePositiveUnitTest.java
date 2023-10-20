@@ -4,6 +4,7 @@ import com.example.app.entities.Event;
 import com.example.app.entities.Group;
 import com.example.app.entities.Role;
 import com.example.app.entities.User;
+import com.example.app.exception.GroupNotFoundException;
 import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.event.EventResponseEntity;
@@ -230,7 +231,7 @@ public class UserServicePositiveUnitTest {
 
     @Test
     @DisplayName("Should Patch A User, Save Him And Return Patched User")
-    void shouldPatchAUserSaveHimAndReturnPatchedUser() throws UserNotFoundException {
+    void shouldPatchAUserSaveHimAndReturnPatchedUser() throws UserNotFoundException, GroupNotFoundException {
         Map<String,String> TEST_MAP = new HashMap<>();
         final String TEST_PATCH_ROLE_KEY = "role";
         final String TEST_PATCH_ROLE_VALUE = "HR";

@@ -1,5 +1,5 @@
 package com.example.app.utils.validator.user;
-public enum AllowUserFields {
+public enum AllowedUserFields {
     firstname,
     lastname,
     email,

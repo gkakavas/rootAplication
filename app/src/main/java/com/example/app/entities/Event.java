@@ -13,7 +13,7 @@ import java.util.UUID;
 
 @Getter
 @Setter
-@ToString
+@ToString(exclude = "usersJoinInEvent")
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -25,6 +25,7 @@ public class Event {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID eventId;
     private String eventDescription;
+    @Lob
     private String eventBody;
     private UUID eventCreator;
     private LocalDateTime eventDateTime;

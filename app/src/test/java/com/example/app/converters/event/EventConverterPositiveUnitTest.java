@@ -15,13 +15,15 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import static org.instancio.Select.field;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-public class EventConverterPositiveUnitTestSuite {
+public class EventConverterPositiveUnitTest {
     @InjectMocks
     private EntityResponseEventConverterImpl eventConverter;
     @Mock
@@ -141,8 +143,8 @@ public class EventConverterPositiveUnitTestSuite {
                 .eventDescription(eventRequest.getEventDescription())
                 .eventBody(eventRequest.getEventBody())
                 .eventCreator(user.getUserId())
-                .eventDateTime(eventRequest.getEventDateTime())
-                .eventExpiration(eventRequest.getEventExpiration())
+                .eventDateTime(LocalDateTime.parse(eventRequest.getEventDateTime()))
+                .eventExpiration(LocalDateTime.parse(eventRequest.getEventExpiration()))
                 .build();
         var response = eventConverter.fromRequestToEvent(eventRequest,user.getUserId());
         Assertions.assertEquals(expectedResponse, response);
@@ -156,8 +158,8 @@ public class EventConverterPositiveUnitTestSuite {
                 .eventDescription(eventRequest.getEventDescription())
                 .eventBody(eventRequest.getEventBody())
                 .eventCreator(event.getEventCreator())
-                .eventDateTime(eventRequest.getEventDateTime())
-                .eventExpiration(eventRequest.getEventExpiration())
+                .eventDateTime(LocalDateTime.parse(eventRequest.getEventDateTime()))
+                .eventExpiration(LocalDateTime.parse(eventRequest.getEventExpiration()))
                 .usersJoinInEvent(event.getUsersJoinInEvent())
                 .build();
         var response = eventConverter.eventUpdate(eventRequest,event);

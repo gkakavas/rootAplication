@@ -15,14 +15,11 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
 import static org.springframework.http.HttpMethod.*;
-
-
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
-@EnableMethodSecurity(securedEnabled = true, jsr250Enabled = true)
+@EnableMethodSecurity(securedEnabled = true,jsr250Enabled = true)
 public class SecurityConfig implements WebMvcConfigurer {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
@@ -41,7 +38,7 @@ public class SecurityConfig implements WebMvcConfigurer {
                         .requestMatchers(GET,"/access-denied").permitAll()
 
                         .requestMatchers(POST,"/user/create").hasAuthority("user::create")
-                        .requestMatchers(GET,"/user/").hasAuthority("user::readAll")
+                        .requestMatchers(GET,"/user/all").hasAuthority("user::readAll")
                         .requestMatchers(GET,"/user/{id}").hasAuthority("user::readOne")
                         .requestMatchers(PUT,"/user/update/{id}").hasAuthority("user::update")
                         .requestMatchers(DELETE,"/user/delete/{id}").hasAuthority("user::delete")
@@ -49,18 +46,18 @@ public class SecurityConfig implements WebMvcConfigurer {
                         .requestMatchers(GET,"/user/{id}/events").hasAuthority("user::readUserEvents")
 
                         .requestMatchers(POST,"/event/create").hasAuthority("event::create")
-                        .requestMatchers(POST,"/createGroupEvent/{id}").hasAuthority("event::createByGroup")
-                        .requestMatchers(GET,"/event/").hasAuthority("event::readOne")
-                        .requestMatchers(GET,"/event/{id}").hasAuthority("event::readAll")
+                        .requestMatchers(POST,"/event/createGroupEvent/{id}").hasAuthority("event::createByGroup")
+                        .requestMatchers(GET,"/event/all").hasAuthority("event::readAll")
+                        .requestMatchers(GET,"/event/{id}").hasAuthority("event::readOne")
                         .requestMatchers(PUT,"/event/update/{id}").hasAuthority("event::update")
                         .requestMatchers(DELETE,"/event/delete/{id}").hasAuthority("event::delete")
-                        .requestMatchers(PATCH,"/addUsers/{eventId}").hasAuthority("event::addUsersToEvent")
-                        .requestMatchers(PATCH,"/removeUsers/{eventId}").hasAuthority("event::removeUsersFromEvent")
-                        .requestMatchers(PATCH,"/patchEventDetails/{eventId}").hasAuthority("event::patchEventDetails")
+                        .requestMatchers(PATCH,"/event/addUsers/{eventId}").hasAuthority("event::addUsersToEvent")
+                        .requestMatchers(PATCH,"/event/removeUsers/{eventId}").hasAuthority("event::removeUsersFromEvent")
+                        .requestMatchers(PATCH,"/event/patchEventDetails/{eventId}").hasAuthority("event::patchEventDetails")
 
                         .requestMatchers(POST,"/group/create").hasAuthority("group::create")
                         .requestMatchers(GET,"/group/{id}").hasAuthority("group::readOne")
-                        .requestMatchers(GET,"/group/").hasAuthority("group::readAll")
+                        .requestMatchers(GET,"/group/all").hasAuthority("group::readAll")
                         .requestMatchers(PUT,"/group/update/{id}").hasAuthority("group::update")
                         .requestMatchers(DELETE,"/group/delete/{id}").hasAuthority("group::delete")
 
@@ -74,7 +71,7 @@ public class SecurityConfig implements WebMvcConfigurer {
 
                         .requestMatchers(POST,"/leave/create").hasAuthority("leave::create")
                         .requestMatchers(GET,"/leave/{id}").hasAuthority("leave::readOne")
-                        .requestMatchers(GET,"/leave/").hasAuthority("leave::readAll")
+                        .requestMatchers(GET,"/leave/all").hasAuthority("leave::readAll")
                         .requestMatchers(PUT,"/leave/update/{id}").hasAuthority("leave::update")
                         .requestMatchers(DELETE,"/leave/delete/{id}").hasAuthority("leave::delete")
                         .requestMatchers(PATCH,"/leave/approval/{id}").hasAuthority("leave::approve")
@@ -85,7 +82,4 @@ public class SecurityConfig implements WebMvcConfigurer {
                 .exceptionHandling(customizer -> customizer.accessDeniedHandler(accessDeniedHandler()));
         return httpSecurity.build();
     }
-
-
-
 }

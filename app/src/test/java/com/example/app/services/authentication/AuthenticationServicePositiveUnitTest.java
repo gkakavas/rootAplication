@@ -79,7 +79,6 @@ public class AuthenticationServicePositiveUnitTest {
                 .role("USER")
                 .specialization("testSpecialization")
                 .build();
-
         when(passwordEncoder.encode(eq(request.getPassword()))).thenReturn(request.getPassword());
         when(userRepo.save(any(User.class))).thenReturn(user);
         when(jwtService.generateToken(eq(user))).thenReturn(testToken);

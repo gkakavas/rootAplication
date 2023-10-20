@@ -1,4 +1,4 @@
-package com.example.app.generators.group;
+package com.example.app.tool;
 
 import com.example.app.entities.Group;
 import com.example.app.entities.User;

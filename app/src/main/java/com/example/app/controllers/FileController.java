@@ -33,7 +33,6 @@ import java.util.UUID;
 public class FileController {
     private final FileStorageService fileStorageService;
 
-
     @PostMapping("/upload")
     public ResponseEntity<FileResponseEntity> upload(@RequestBody MultipartFile file,
                                                      @RequestHeader(HttpHeaders.AUTHORIZATION) String token) throws UserNotFoundException,

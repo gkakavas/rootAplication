@@ -1,7 +1,7 @@
 package com.example.app.models.requests;
 
 import com.example.app.entities.Role;
-import com.example.app.utils.validator.user.ValueOfEnum;
+import com.example.app.utils.validator.venum.ValueOfEnum;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -11,7 +11,7 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RegisterRequest {
+public class RegisterRequest implements RequestEntity {
 
     @Size(min = 3, max = 255)
     private String firstname;
@@ -21,7 +21,7 @@ public class RegisterRequest {
     private String email;
     @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$", message = "Password must be at least 8 characters long and it contains at least one letter and one digit")
     private String password;
-    @ValueOfEnum(enumClass = Role.class)
+    @ValueOfEnum(enumClass = Role.class,message = "Role value is not in the correct form")
     private String role;
     private String specialization;
     private String currentProject;

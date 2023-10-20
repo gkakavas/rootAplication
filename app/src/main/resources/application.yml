@@ -1,4 +1,4 @@
-Spring:
+spring:
   Datasource:
     url: jdbc:postgresql://postgres:5432/postgres
     username: User
@@ -17,9 +17,11 @@ Spring:
 
   profiles:
     active: application-dev.yml
+
 Logging:
   level:
-    root: INFO
-    com.example: DEBUG
+    com.example: INFO
+    org.springframework.security: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+initial-data-loader: true

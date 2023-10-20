@@ -33,7 +33,7 @@ import static org.instancio.Select.field;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-public class FileConverterPositiveUnitTestSuite {
+public class FileConverterPositiveUnitTest {
     @InjectMocks
     private EntityResponseFileConverterImp fileConverter;
     @Mock
