@@ -25,6 +25,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
@@ -40,7 +41,6 @@ import java.util.stream.Collectors;
 import static org.instancio.Select.field;
 import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles(value = "application.yml")
 public class UserPositiveIntegrationTest {
     @LocalServerPort
     private int port;
@@ -54,7 +54,7 @@ public class UserPositiveIntegrationTest {
     private EventRepository eventRepo;
     @Autowired
     private ObjectMapper objectMapper;
-    private static RestTemplate restTemplate;
+    private static TestRestTemplate restTemplate;
     private String baseUrl = "http://localhost";
     private String token;
     private User user;
@@ -62,8 +62,7 @@ public class UserPositiveIntegrationTest {
 
     @BeforeAll
     public static void init(){
-        restTemplate = new RestTemplate();
-        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+        restTemplate = new TestRestTemplate();
     }
     private void setUp(){
         userRepo.save(user);
@@ -340,7 +339,7 @@ public class UserPositiveIntegrationTest {
     @Test
     @DisplayName("when a read user events request dispatched " +
             "should retrieve all the events of the current user from database and return them")
-    void shouldRetrieveAllTheEventsOfTheCurrentUserFromDatabaseAndReturnThem(/*String roleValue*/) throws IOException {
+    void shouldRetrieveAllTheEventsOfTheCurrentUserFromDatabaseAndReturnThem(String roleValue) throws IOException {
         this.user = UserRelevantGenerator.generateValidUser(null,Role.valueOf("USER"),null);
         var events = new HashSet<Event>();
         var size = 5;

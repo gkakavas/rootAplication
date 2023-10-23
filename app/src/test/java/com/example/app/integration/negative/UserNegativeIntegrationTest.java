@@ -35,7 +35,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles(value = "application.yml")
 public class UserNegativeIntegrationTest {
     @LocalServerPort
     private int port;
@@ -91,7 +90,6 @@ public class UserNegativeIntegrationTest {
                     HttpMethod.POST,
                     request,
                     String.class);
-            System.err.println(response.getBody());
             ObjectNode rootNode = objectMapper.readValue(response.getBody(), ObjectNode.class);
             Map<String,String> actualResponseMap = new HashMap<>();
             actualResponseMap.put("email",rootNode.get("message").get("email").textValue());
