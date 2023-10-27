@@ -4,6 +4,7 @@ import com.example.app.entities.Role;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import jakarta.validation.metadata.ConstraintDescriptor;
+import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -18,11 +19,6 @@ public class UserPatchMapValueValidator implements ConstraintValidator<UserPatch
     @Override
     public boolean isValid(Map<String, String> patchMap, ConstraintValidatorContext context) {
         context.disableDefaultConstraintViolation();
-        if(patchMap.isEmpty()){
-            context.buildConstraintViolationWithTemplate("Patch request cannot be empty")
-                    .addConstraintViolation();
-            return false;
-        }
         int constraintViolationsCounter = 0;
         for (Map.Entry<String, String> entry : patchMap.entrySet()) {
             String fieldName = entry.getKey();
@@ -39,6 +35,7 @@ public class UserPatchMapValueValidator implements ConstraintValidator<UserPatch
                     if (!isValidFirstname(fieldValue)) {
                         context.buildConstraintViolationWithTemplate(
                                 "Firstname must be between 4 and 50 characters")
+                                .addPropertyNode("firstname")
                                 .addConstraintViolation();
                         ++constraintViolationsCounter;
                     }
@@ -47,6 +44,7 @@ public class UserPatchMapValueValidator implements ConstraintValidator<UserPatch
                     if (!isValidLastname(fieldValue)) {
                         context.buildConstraintViolationWithTemplate(
                                 "Lastname must be between 4 and 50 characters")
+                                .addPropertyNode("lastname")
                                 .addConstraintViolation();
                         ++constraintViolationsCounter;
                     }
@@ -55,6 +53,7 @@ public class UserPatchMapValueValidator implements ConstraintValidator<UserPatch
                     if (!isValidEmail(fieldValue)) {
                         context.buildConstraintViolationWithTemplate(
                                 "Email must be in a normal email form")
+                                .addPropertyNode("email")
                                 .addConstraintViolation();
                         ++constraintViolationsCounter;
                     }
@@ -63,6 +62,7 @@ public class UserPatchMapValueValidator implements ConstraintValidator<UserPatch
                     if (!isValidRole(fieldValue)) {
                         context.buildConstraintViolationWithTemplate(
                                 "Role value is not in the correct form")
+                                .addPropertyNode("role")
                                 .addConstraintViolation();
                         ++constraintViolationsCounter;
                     }
@@ -70,7 +70,8 @@ public class UserPatchMapValueValidator implements ConstraintValidator<UserPatch
                 case "group" -> {
                     if (!isValidGroup(fieldValue)) {
                         context.buildConstraintViolationWithTemplate(
-                                "UUID must be in a normal UUID from")
+                                "UUID must be in a normal UUID form")
+                                .addPropertyNode("group")
                                 .addConstraintViolation();
                         ++constraintViolationsCounter;
                     }

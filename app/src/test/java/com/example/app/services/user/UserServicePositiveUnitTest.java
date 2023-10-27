@@ -148,7 +148,7 @@ public class UserServicePositiveUnitTest {
                 USER_CREATOR.getUserId(), group)).thenReturn(TEST_USER);
         when(userRepository.save(TEST_USER)).thenReturn(TEST_USER);
         when(userConverter.fromUserToAdminUser(eq(TEST_USER))).thenReturn((AdminUserResponse) EXPECTED_RESPONSE);
-        UserResponseEntity response = userService.create(USER_CREATE_REQUEST, TEST_TOKEN);
+        UserResponseEntity response = userService.create(USER_CREATE_REQUEST);
         assertEquals(EXPECTED_RESPONSE,response);
     }
 

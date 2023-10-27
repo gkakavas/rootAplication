@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS public.groups
     TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.groups
-    OWNER to "User";
+    OWNER to "test";
 
 --create table Users
 
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS public.users
     TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.users
-    OWNER to "User";
+    OWNER to "test";
 
 --create table Events
 
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS public.events
     TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.events
-    OWNER to "User";
+    OWNER to "test";
 
 --create table Users_Events_Mapping
 
@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS public.user_event_mapping
     TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.user_event_mapping
-    OWNER to "User";
+    OWNER to "test";
 
 --create table Leaves
 
@@ -107,7 +107,7 @@ CREATE TABLE IF NOT EXISTS public.leaves
     TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.leaves
-    OWNER to "User";
+    OWNER to "test";
 
 --create table Files
 
@@ -135,4 +135,4 @@ CREATE TABLE IF NOT EXISTS public.files
     TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.files
-    OWNER to "User";
+    OWNER to "test";

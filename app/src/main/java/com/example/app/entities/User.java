@@ -1,5 +1,6 @@
 package com.example.app.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -17,12 +18,12 @@ import java.util.UUID;
 
 @Getter
 @Setter
-@ToString(exclude = "userHasEvents")
+@ToString(exclude = {"userHasEvents","userHasFiles"})
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity(name="User")
-@Table(name="_user")
+@Table(name="users")
 @Slf4j
 public class User implements UserDetails {
 
@@ -57,24 +58,24 @@ public class User implements UserDetails {
             this.roleValue = role.name();
         }
     }
+    @JsonBackReference
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name= "group_id")
+    private Group group;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE}, fetch = FetchType.EAGER)
-    @JoinTable(name = "user_event",
+    @ManyToMany(cascade = {CascadeType.PERSIST}, fetch = FetchType.EAGER)
+    @JoinTable(name = "user_event_mapping",
             joinColumns = {@JoinColumn(name = "user_id")},
             inverseJoinColumns = {@JoinColumn(name = "event_id")}
     )
     @Builder.Default
     private Set<Event> userHasEvents = new HashSet<>();
 
-    @ManyToOne
-    @JoinColumn(name= "group_id")
-    private Group group;
-
     @OneToMany(mappedBy = "uploadedBy",fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     @Builder.Default
     private Set<File> userHasFiles = new HashSet<>();
 
-    @OneToMany(mappedBy = "requestedBy",fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+    @OneToMany(mappedBy = "requestedBy",fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST})
     @Builder.Default
     private Set<Leave> userRequestedLeaves = new HashSet<>();
 

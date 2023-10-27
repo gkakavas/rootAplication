@@ -27,8 +27,8 @@ public class UserController implements CrudController<UserResponseEntity, UserRe
 
     @Override
     public ResponseEntity<UserResponseEntity> create
-            (@Validated UserRequestEntity request, String token) throws UserNotFoundException{
-        return new ResponseEntity<>(service.create(request,token), HttpStatus.CREATED);
+            (@Validated UserRequestEntity request) throws UserNotFoundException{
+        return new ResponseEntity<>(service.create(request), HttpStatus.CREATED);
     }
     @Override
     public ResponseEntity<UserResponseEntity> readOne(UUID id) throws UserNotFoundException {

@@ -69,16 +69,16 @@ public class EntityResponseCommonConverterImpl implements EntityResponseCommonCo
         var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow(UserNotFoundException::new);
         Set<UserWithFiles> userWithFilesList = new HashSet<>();
         if(currentUser.getRole().equals(Role.ADMIN)){
-            for(User user:users){
+            for (User user : users) {
                 user.getUserHasFiles().forEach((file) -> userWithFilesList.add(UserWithFiles.builder()
-                                .user(userConverter.fromUserToAdminUser(user))
-                                .files(fileConverter.fromFileListToAdminList(user.getUserHasFiles()))
+                        .user(userConverter.fromUserToAdminUser(user))
+                        .files(fileConverter.fromFileListToAdminList(user.getUserHasFiles()))
                         .build()));
             }
             return userWithFilesList;
         }
-        else if(Arrays.asList(Role.HR,Role.MANAGER,Role.USER).contains(currentUser.getRole())){
-            for(User user:users){
+        else if(Arrays.asList(Role.HR,Role.MANAGER).contains(currentUser.getRole())){
+            for (User user : users) {
                 user.getUserHasFiles().forEach((file) -> userWithFilesList.add(UserWithFiles.builder()
                         .user(userConverter.fromUserToOtherUser(user))
                         .files(fileConverter.fromFileListToUserFileList(user.getUserHasFiles()))
@@ -87,9 +87,7 @@ public class EntityResponseCommonConverterImpl implements EntityResponseCommonCo
             return userWithFilesList;
         }
         else throw new AccessDeniedException("You have not authority to access this resource");
-
     }
-
     @Override
     public Set<EventWithUsers> eventsWithUsersList(Set<Event> events){
         return null;

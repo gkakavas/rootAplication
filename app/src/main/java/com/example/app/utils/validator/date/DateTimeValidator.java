@@ -2,6 +2,9 @@ package com.example.app.utils.validator.date;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -19,7 +22,7 @@ public class DateTimeValidator implements ConstraintValidator<DateTime,String> {
             return true; // Allow null or empty values
         }
         try {
-            LocalDateTime parsedDateTime = LocalDateTime.parse(value, DateTimeFormatter.ofPattern(format));
+            LocalDateTime parsedDateTime = LocalDateTime.parse(value);
             return true;
         } catch (Exception e) {
             return false; // Invalid LocalDateTime format

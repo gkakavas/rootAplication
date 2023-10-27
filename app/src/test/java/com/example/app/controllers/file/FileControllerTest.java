@@ -7,6 +7,7 @@ import com.example.app.entities.FileKind;
 import com.example.app.models.responses.common.UserWithFiles;
 import com.example.app.models.responses.file.AdminHrManagerFileResponse;
 import com.example.app.models.responses.file.FileResourceResponse;
+import com.example.app.models.responses.file.FileResponseEntity;
 import com.example.app.models.responses.file.UserFileResponse;
 import com.example.app.models.responses.user.AdminUserResponse;
 import com.example.app.services.FileStorageService;
@@ -64,7 +65,7 @@ public class FileControllerTest {
                 .ignore(field("approvedDate"))
                 .set(field("fileKind"), FileKind.EVALUATION)
                 .create();
-        when(fileStorageService.upload(request, token)).thenReturn(response);
+        when(fileStorageService.upload(request)).thenReturn(response);
         this.mockMvc.perform(multipart("/file/upload").file(request)
                         .header("Authorization", token))
                 .andExpect(status().isCreated())
@@ -135,15 +136,15 @@ public class FileControllerTest {
     @Test
     @DisplayName("Should return all evaluations")
     void readAllEvaluation() throws Exception {
-        Set<UserWithFiles> expectedResponse = new HashSet<>();
+        Set<FileResponseEntity> expectedResponse = new HashSet<>();
         for(int i=1;i<6;i++){
             expectedResponse.add(
-                    Instancio.of(UserWithFiles.class)
+                     Instancio.of(UserFileResponse.class)
                             .set(field("user"),Instancio.create(AdminUserResponse.class))
                             .set(field("files"),Instancio.createList(AdminHrManagerFileResponse.class))
                             .create());
         }
-        when(fileStorageService.readAll(FileKind.EVALUATION)).thenReturn(expectedResponse);
+        when(fileStorageService.readAll(FileKind.EVALUATION)).thenReturn(Set.copyOf(expectedResponse));
         this.mockMvc.perform(MockMvcRequestBuilders.get("/file/evaluation/"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size()",equalTo(expectedResponse.size())))
@@ -153,7 +154,7 @@ public class FileControllerTest {
     @Test
     @DisplayName("Should return all evaluations")
     void readAllTimesheet() throws Exception {
-        Set<UserWithFiles> expectedResponse = new HashSet<>();
+        Set<FileResponseEntity> expectedResponse = new HashSet<>();
         for(int i=1;i<6;i++){
             expectedResponse.add(
                     Instancio.of(UserWithFiles.class)

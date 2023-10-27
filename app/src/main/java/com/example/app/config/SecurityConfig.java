@@ -5,6 +5,7 @@ import com.example.app.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -36,6 +37,7 @@ public class SecurityConfig implements WebMvcConfigurer {
                         .requestMatchers(POST,"/auth/authenticate").permitAll()
                         .requestMatchers(POST,"/auth/register").permitAll()
                         .requestMatchers(GET,"/access-denied").permitAll()
+                        .requestMatchers(GET,"/test/user").permitAll()
 
                         .requestMatchers(POST,"/user/create").hasAuthority("user::create")
                         .requestMatchers(GET,"/user/all").hasAuthority("user::readAll")
@@ -64,8 +66,8 @@ public class SecurityConfig implements WebMvcConfigurer {
                         .requestMatchers(POST,"/file/upload").hasAuthority("file::upload")
                         .requestMatchers(GET,"/file/download/evaluation/{fileId}").hasAuthority("file::downloadEvaluation")
                         .requestMatchers(GET,"/file/download/timesheet/{fileId}").hasAuthority("file::downloadTimesheet")
-                        .requestMatchers(GET,"/file/evaluation/").hasAuthority("file::readAllEvaluations")
-                        .requestMatchers(GET,"/file/timesheet/").hasAuthority("file::readAllTimesheets")
+                        .requestMatchers(GET,"/file/evaluation/all").hasAuthority("file::readAllEvaluations")
+                        .requestMatchers(GET,"/file/timesheet/all").hasAuthority("file::readAllTimesheets")
                         .requestMatchers(DELETE,"/file/delete/{fileId}").hasAuthority("file::delete")
                         .requestMatchers(PATCH,"/file/approveEvaluation/{fileId}").hasAuthority("file::approveEvaluation")
 

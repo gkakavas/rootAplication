@@ -4,6 +4,7 @@ import com.example.app.exception.*;
 import com.example.app.models.responses.error.ErrorResponse;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -17,8 +18,6 @@ import java.util.*;
 
 @RestControllerAdvice
 public class ApplicationExceptionHandler {
-
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse<Map<String,String>>> handleInvalidArgument(MethodArgumentNotValidException ex){
         Map<String, String> errorMap = new HashMap<>();
@@ -70,12 +69,15 @@ public class ApplicationExceptionHandler {
     }
 //    exception when the id is not UUID type
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ErrorResponse<List<String>>> handleConstraintViolation(ConstraintViolationException ex){
-        List<String> violationMessages = new ArrayList<>();
+    public ResponseEntity<ErrorResponse<Map<String,String>>> handleConstraintViolation(ConstraintViolationException ex){
+        Map<String,String> violationMessages = new HashMap<>();
         for(ConstraintViolation<?> constraintViolation : ex.getConstraintViolations()){
-            violationMessages.add(constraintViolation.getMessageTemplate());
+            String propertyPath = constraintViolation.getPropertyPath().toString();
+            String[] parts = propertyPath.split("\\.");
+            String lastPart = parts[parts.length - 1];
+            violationMessages.put(lastPart,constraintViolation.getMessageTemplate());
         }
-        return ResponseEntity.badRequest().body(ErrorResponse.<List<String>> builder()
+        return ResponseEntity.badRequest().body(ErrorResponse.<Map<String,String>> builder()
                 .message(violationMessages)
                 .responseCode(HttpStatus.BAD_REQUEST)
                 .build());
@@ -113,9 +115,14 @@ public class ApplicationExceptionHandler {
         }
         else if (exceptionMessage.contains("Required request body is missing")) {
             errorMap.put("error","Request body is required");
+            return ResponseEntity.badRequest()
+                    .body(ErrorResponse.<Map<String,String>>builder()
+                            .message(errorMap)
+                            .responseCode(HttpStatus.BAD_REQUEST)
+                            .build());
         }
         else {errorMap.put("error","Unexpected error during converting the Json. " +
-                "Make sure that response body values is correct");
+                "Make sure that response body values URI parameters is correct");
         }
         return ResponseEntity.internalServerError()
                 .body(ErrorResponse.<Map<String,String>> builder()
@@ -139,4 +146,5 @@ public class ApplicationExceptionHandler {
                         .responseCode(HttpStatus.INTERNAL_SERVER_ERROR)
                         .build());
     }
+
 }

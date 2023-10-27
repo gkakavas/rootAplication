@@ -2,6 +2,7 @@ package com.example.app.utils.event;
 
 import com.example.app.entities.Event;
 import com.example.app.entities.User;
+import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.EventRequestEntity;
 import com.example.app.models.responses.event.AdminHrMngEventResponse;
 import com.example.app.models.responses.event.EventResponseEntity;
@@ -12,13 +13,15 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 public class EntityResponseEventConverterImpl implements EntityResponseEventConverter{
-private final UserRepository userRepo;
+
+    private final UserRepository userRepo;
 
     @Override
     public EventResponseEntity fromEventToMyEvent(Event event){
@@ -37,14 +40,16 @@ private final UserRepository userRepo;
                 .eventDescription(event.getEventDescription())
                 .eventBody(event.getEventBody())
                 .eventCreator(null)
-                .eventDateTime(event.getEventDateTime())
-                .eventExpiration(event.getEventExpiration())
+                .eventDateTime(event.getEventDateTime().truncatedTo(ChronoUnit.SECONDS))
+                .eventExpiration(event.getEventExpiration().truncatedTo(ChronoUnit.SECONDS))
                 .users(event.getUsersJoinInEvent().stream().map(User::getEmail).collect(Collectors.toSet()))
                 .build();
-        try {
-            response.setEventCreator(userRepo.findById(event.getEventCreator()).orElseThrow().getEmail());
-        }catch (NoSuchElementException e){
-            response.setEventCreator(null);
+        if(event.getEventCreator()!=null) {
+            try {
+                response.setEventCreator(userRepo.findById(event.getEventCreator()).orElseThrow(UserNotFoundException::new).getEmail());
+            } catch (UserNotFoundException e) {
+                response.setEventCreator(null);
+            }
         }
         return response;
     }
@@ -68,10 +73,8 @@ private final UserRepository userRepo;
                 .eventDescription(request.getEventDescription())
                 .eventBody(request.getEventBody())
                 .eventCreator(eventCreator)
-                .eventDateTime(LocalDateTime.parse(request.getEventDateTime(),
-                        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
-                .eventExpiration(LocalDateTime.parse(request.getEventExpiration(),
-                                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                .eventDateTime(LocalDateTime.parse(request.getEventDateTime()))
+                .eventExpiration(LocalDateTime.parse(request.getEventExpiration()))
                 .build();
     }
 
@@ -79,10 +82,18 @@ private final UserRepository userRepo;
     public Event eventUpdate(EventRequestEntity request, Event event) {
         event.setEventDescription(request.getEventDescription());
         event.setEventBody(request.getEventBody());
-        event.setEventDateTime(LocalDateTime.parse(request.getEventDateTime(),
-                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        event.setEventExpiration(LocalDateTime.parse(request.getEventExpiration(),
-                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        event.setEventDateTime(LocalDateTime.parse(request.getEventDateTime()));
+        event.setEventExpiration(LocalDateTime.parse(request.getEventExpiration()));
+        if(request.getIdsSet()!=null){
+            try {
+                var users = userRepo.findAllById(request.getIdsSet());
+                event.getUsersJoinInEvent().clear();
+                event.getUsersJoinInEvent().addAll(users);
+            }catch (Exception e){
+                throw new RuntimeException("error during retrieving the users");
+            }
+
+        }
         return event;
     }
 }

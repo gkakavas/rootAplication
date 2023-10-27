@@ -1,5 +1,6 @@
 package com.example.app.entities;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -16,7 +17,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity(name="Group")
-@Table(name = "_group")
+@Table(name = "groups")
 public class Group {
 
 
@@ -27,7 +28,8 @@ public class Group {
     private UUID groupCreator;
     private LocalDateTime groupCreationDate;
 
-    @OneToMany(mappedBy = "group",cascade = {CascadeType.PERSIST,CascadeType.MERGE} )
+    @JsonManagedReference
+    @OneToMany(mappedBy = "group",fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
     @Builder.Default
     private Set<User> groupHasUsers = new HashSet<>();
 

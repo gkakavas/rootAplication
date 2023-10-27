@@ -13,7 +13,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity(name = "Leave")
-@Table(name = "_leave")
+@Table(name = "leaves")
 public class Leave {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

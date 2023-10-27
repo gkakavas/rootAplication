@@ -4,11 +4,11 @@ package com.example.app.utils.validator.venum;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 public class ValueOfEnumValidator implements ConstraintValidator<ValueOfEnum, String> {
     private List<String> acceptedValues;
 

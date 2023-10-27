@@ -45,10 +45,12 @@ public class EntityResponseGroupConverterImpl implements EntityResponseGroupConv
                 .groupCreator(null)
                 .users(userConverter.fromUserListToAdminList(group.getGroupHasUsers()))
                 .build();
-        try {
-            response.setGroupCreator(userRepo.findById(group.getGroupCreator()).orElseThrow().getEmail());
-        }catch (NoSuchElementException e){
-            response.setGroupCreator(null);
+        if(group.getGroupCreator()!=null) {
+            try {
+                response.setGroupCreator(userRepo.findById(group.getGroupCreator()).orElseThrow().getEmail());
+            } catch (NoSuchElementException e) {
+                response.setGroupCreator(null);
+            }
         }
         return response;
     }

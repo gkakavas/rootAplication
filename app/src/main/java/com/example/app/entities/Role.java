@@ -16,7 +16,6 @@ public enum Role {
             USER_READ_ONE,
             USER_READ_ALL,
             READ_USER_EVENTS,
-            EVENT_READ_ONE,
             LEAVE_CREATE,
             LEAVE_READ_ONE,
             LEAVE_READ_ALL,

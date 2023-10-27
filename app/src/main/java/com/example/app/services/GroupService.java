@@ -23,14 +23,13 @@ import java.util.UUID;
 public class GroupService implements CrudService<GroupResponseEntity, GroupRequestEntity, GroupNotFoundException>{
     private final UserRepository userRepo;
     private final GroupRepository groupRepo;
-    private final JwtService jwtService;
     private final EntityResponseGroupConverter groupConverter;
 
 
     @Override
-    public GroupResponseEntity create(GroupRequestEntity request,String token) throws UserNotFoundException {
+    public GroupResponseEntity create(GroupRequestEntity request) throws UserNotFoundException {
         var users = userRepo.findAllById(request.getIdsSet());
-        var groupCreator = userRepo.findByEmail(jwtService.extractUsername(token.substring(7)))
+        var groupCreator = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
                 .orElseThrow(UserNotFoundException::new);
         var group = groupConverter.fromRequestToGroup(request,groupCreator.getUserId());
         group.getGroupHasUsers().addAll(users);
@@ -89,7 +88,11 @@ public class GroupService implements CrudService<GroupResponseEntity, GroupReque
     @Override
     public boolean delete(UUID id) throws GroupNotFoundException{
         var group = groupRepo.findById(id).orElseThrow(GroupNotFoundException::new);
+        for(User user:group.getGroupHasUsers()){
+            user.setGroup(null);
+        }
         group.getGroupHasUsers().clear();
+        groupRepo.save(group);
         groupRepo.deleteById(id);
         return true;
     }

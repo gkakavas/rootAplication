@@ -92,7 +92,7 @@ public class UserControllerPositiveUnitTest {
     @Test
     @DisplayName("Should create a new user and return this")
     void shouldCreateANewUserAndReturnThisBack() throws Exception {
-        when(userService.create(any(UserRequestEntity.class),any(String.class))).thenReturn(response);
+        when(userService.create(any(UserRequestEntity.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.post("/user/create")
                         .header("Authorization",TEST_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)

@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Slf4j
@@ -33,9 +34,9 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
     private final EntityResponseEventConverter eventConverter;
 
     @Override
-    public EventResponseEntity create(EventRequestEntity request, String token)
+    public EventResponseEntity create(EventRequestEntity request)
     throws UserNotFoundException{
-        var eventCreator = userRepo.findByEmail(jwtService.extractUsername(token.substring(7)))
+        var eventCreator = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
                 .orElseThrow(UserNotFoundException::new);
             var newEvent = eventConverter.fromRequestToEvent(request,eventCreator.getUserId());
             var users = userRepo.findAllById(request.getIdsSet());
@@ -61,7 +62,7 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
             var newEvent = eventRepo.save(event);
             return eventConverter.fromEventToAdminHrMngEvent(newEvent);
         }
-        else if (currentUser.getRole().equals(Role.MANAGER)) {
+        else if (currentUser.getRole().equals(Role.MANAGER) && currentUser.getGroup().getGroupId().equals(groupId)) {
             var event = eventConverter.fromRequestToEvent(request,currentUser.getUserId());
             event.getUsersJoinInEvent().addAll(currentUser.getGroup().getGroupHasUsers());
             for(User user: currentUser.getGroup().getGroupHasUsers()){
@@ -81,10 +82,9 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
 
     @Override
     public List<EventResponseEntity> read() {
-        var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow(()
-                -> new AccessDeniedException("You have not authority to access this resource"));
-            if(currentUser.getRole().equals(Role.ADMIN)||currentUser.getRole().equals(Role.MANAGER)
-                    ||currentUser.getRole().equals(Role.HR)){
+        var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
+                .orElseThrow();
+        if(List.of(Role.ADMIN,Role.HR,Role.MANAGER).contains(currentUser.getRole())){
                 var events = Set.copyOf(eventRepo.findAll());
                 return List.copyOf(eventConverter.fromEventListToAdminHrMngList(events));
             } else if (currentUser.getRole().equals(Role.USER)) {
@@ -119,19 +119,19 @@ public class EventService implements CrudService<EventResponseEntity, EventReque
     public EventResponseEntity addUsersToEvent(Set<UUID> idsSet, UUID eventId) throws EventNotFoundException{
         var event = eventRepo.findById(eventId).orElseThrow(EventNotFoundException::new);
         var users = userRepo.findAllById(idsSet);
-        users.forEach((user)-> event.getUsersJoinInEvent().add(user));
         for(User user:users){
+            event.getUsersJoinInEvent().add(user);
             user.getUserHasEvents().add(event);
         }
-        var updatedEvent =  eventRepo.save(event);
+        var updatedEvent = eventRepo.save(event);
         return eventConverter.fromEventToAdminHrMngEvent(updatedEvent);
     }
 
     public EventResponseEntity removeUsersFromEvent(Set<UUID> idsSet, UUID eventId)throws EventNotFoundException{
         var event = eventRepo.findById(eventId).orElseThrow(EventNotFoundException::new);
         var users = userRepo.findAllById(idsSet);
-        users.forEach((user)-> event.getUsersJoinInEvent().remove(user));
         for(User user:users){
+            event.getUsersJoinInEvent().remove(user);
             user.getUserHasEvents().remove(event);
         }
         var updatedEvent = eventRepo.save(event);

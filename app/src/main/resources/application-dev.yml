@@ -1,22 +1,34 @@
 Spring:
   Datasource:
-    url: jdbc:postgresql://postgres:5432/postgres
+    url: jdbc:postgresql://postgres:5432/Database
     username: User
     password: 4y7sV96vA9wv46VR
     driver-class-name: org.postgresql.Driver
-
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      #ddl-auto: create-drop
+      ddl-auto: validate
     show-sql: true
     properties:
       hibernate:
         format_sql: true
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    baseline-on-migrate: true
+    enabled: true
+    user: User
+    password: 4y7sV96vA9wv46VR
+    baseline-description: init
+    baseline-version: 0
+    locations: classpath:db/migration/dev
+file-storage:
+  root: uploads
+  timesheet: ${file-storage.root}/timesheets
+  evaluation: ${file-storage.root}/evaluations
 Logging:
   level:
-    com.example: INFO
-    org.springframework.security: DEBUG
+    com.example: TRACE
+    org.springframework.security: trace
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

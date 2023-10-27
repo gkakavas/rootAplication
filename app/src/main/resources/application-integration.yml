@@ -1,19 +1,32 @@
 Spring:
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
     show-sql: true
     properties:
       hibernate:
       format_sql: true
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    baseline-on-migrate: true
+    enabled: true
+    user: test
+    password: test
+    baseline-description: init
+    baseline-version: 0
+    locations: classpath:db/migration/test
   main:
     allow-bean-definition-overriding: true
+file-storage:
+  root: testUploads
+  timesheet: ${file-storage.root}/timesheets
+  evaluation: ${file-storage.root}/evaluations
 Logging:
   level:
-    com.example: INFO
-    org.springframework.security: DEBUG
+    com.example: info
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
-initial-data-loader: false
+
+
+

@@ -73,7 +73,7 @@ public class GroupControllerTest {
     @Test
     @DisplayName("Should create a new group")
     void shouldCreateANewGroup() throws Exception {
-        when(groupService.create(any(GroupRequestEntity.class),any(String.class))).thenReturn(response);
+        when(groupService.create(any(GroupRequestEntity.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.post("/group/create")
                         .header("Authorization",testToken)
                         .contentType(MediaType.APPLICATION_JSON)

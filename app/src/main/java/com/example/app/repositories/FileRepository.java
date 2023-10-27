@@ -18,4 +18,5 @@ public interface FileRepository extends JpaRepository<File, UUID> {
     List<File> findAllByFileKindAndUploadedBy_Group(FileKind fileKind, Group group);
     Set<File> findAllByFileKindAndUploadedBy(FileKind fileKind, User user);
     boolean existsByFileIdAndFileKind(UUID fileId,FileKind fileKind);
+    Optional<File> findByFilename(String filename);
 }

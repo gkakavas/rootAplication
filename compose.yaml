@@ -8,9 +8,9 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - postgres
+      - db
 
-  postgres:
+  db:
     container_name: PostgresDB
     image: postgres:13.11
     environment:
@@ -28,7 +28,7 @@ services:
        PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
        PGADMIN_LISTEN_PORT: ${PGADMIN_LISTEN_PORT}
     depends_on:
-        - postgres
+        - db
     ports:
       - "5050:5050"
 

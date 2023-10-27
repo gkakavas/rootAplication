@@ -44,7 +44,7 @@ public class GroupServicePositiveUnitTest {
     @BeforeEach
      void setUp(){
         MockitoAnnotations.openMocks(this);
-        groupService = new GroupService(userRepo, groupRepo, jwtService, groupConverter);
+        groupService = new GroupService(userRepo, groupRepo, groupConverter);
         this.securityContext.setAuthentication(new UsernamePasswordAuthenticationToken("username", "password", List.of()));
         SecurityContextHolder.setContext(securityContext);
     }
@@ -73,7 +73,7 @@ public class GroupServicePositiveUnitTest {
         when(groupRepo.save(group)).thenReturn(group);
         var expectedResponse = Instancio.of(AdminGroupResponse.class).create();
         when(groupConverter.fromGroupToAdminGroup(group)).thenReturn(expectedResponse);
-        var response = groupService.create(groupCreateRequest,"testToken");
+        var response = groupService.create(groupCreateRequest);
         System.out.println(response);
         Assertions.assertEquals(expectedResponse,response);
     }

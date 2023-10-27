@@ -13,5 +13,5 @@ public @interface DateTime {
     String message() default "Invalid date and time";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
-    String format() default "yyyy-MM-dd HH:mm:ss";
+    String format() default "yyyy-MM-ddTHH:mm:ss";
 }

@@ -11,9 +11,7 @@ import java.util.UUID;
 @RequestMapping("/Default")
 public interface CrudController <RESPONSE_ENTITY ,REQUEST_ENTITY, EXCEPTION extends Throwable>{
     @PostMapping("/create")
-    ResponseEntity<RESPONSE_ENTITY> create
-            (@RequestBody REQUEST_ENTITY request,
-            @RequestHeader(HttpHeaders.AUTHORIZATION) String token) throws UserNotFoundException;
+    ResponseEntity<RESPONSE_ENTITY> create (@RequestBody REQUEST_ENTITY request) throws UserNotFoundException;
     @GetMapping("/{id}")
     ResponseEntity<RESPONSE_ENTITY> readOne (@PathVariable UUID id) throws EXCEPTION;
     @GetMapping ("/all")

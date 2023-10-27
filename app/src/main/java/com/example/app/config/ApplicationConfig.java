@@ -18,6 +18,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.beanvalidation.MethodValidationPostProcessor;
 
+import javax.sql.DataSource;
 import java.security.Principal;
 import java.time.Clock;
 

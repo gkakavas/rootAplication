@@ -28,8 +28,8 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     private final EntityResponseUserConverter userConverter;
     private final EntityResponseEventConverter eventConverter;
     @Override
-    public UserResponseEntity create(UserRequestEntity request, String token) throws UserNotFoundException {
-            var userCreator = userRepo.findByEmail(jwtService.extractUsername(token.substring(7)))
+    public UserResponseEntity create(UserRequestEntity request) throws UserNotFoundException {
+            var userCreator = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
                     .orElseThrow(UserNotFoundException::new);
             var group = groupRepo.findById(request.getGroup()).orElse(null);
             var user =  userRepo.save(userConverter.fromRequestToEntity(
@@ -84,8 +84,8 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     public boolean delete(UUID id) throws UserNotFoundException {
         if(id!=null){
             var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
-            user.getUserHasEvents().forEach((event)-> event.getUsersJoinInEvent().remove(user));
             user.getUserHasEvents().clear();
+            user.setGroup(null);
             userRepo.save(user);
             userRepo.deleteById(id);
          return true;

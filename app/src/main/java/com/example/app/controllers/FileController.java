@@ -34,20 +34,17 @@ public class FileController {
     private final FileStorageService fileStorageService;
 
     @PostMapping("/upload")
-    public ResponseEntity<FileResponseEntity> upload(@RequestBody MultipartFile file,
-                                                     @RequestHeader(HttpHeaders.AUTHORIZATION) String token) throws UserNotFoundException,
+    public ResponseEntity<FileResponseEntity> upload(@RequestBody MultipartFile file) throws UserNotFoundException,
             IllegalTypeOfFileException, IOException {
-            return new ResponseEntity<>(fileStorageService.upload(file,token), HttpStatus.CREATED);
+            return new ResponseEntity<>(fileStorageService.upload(file), HttpStatus.CREATED);
     }
 
     @GetMapping("/download/evaluation/{fileId}")
     public ResponseEntity<Resource> downloadEvaluation(@PathVariable UUID fileId) throws UserNotFoundException, FileNotFoundException, IOException {
         FileResourceResponse response = (FileResourceResponse) fileStorageService.download(fileId,FileKind.EVALUATION);
-
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + response.getFileName());
         headers.add(HttpHeaders.CONTENT_TYPE, response.getFileType());
-
         return ResponseEntity.ok()
                 .headers(headers)
                 .contentLength(response.getResource().contentLength())
@@ -68,13 +65,13 @@ public class FileController {
                 .body(response.getResource());
     }
 
-    @GetMapping("/evaluation/")
-    public ResponseEntity<Set<UserWithFiles>> readAllEvaluation() throws UserNotFoundException {
+    @GetMapping("/evaluation/all")
+    public ResponseEntity<Set<FileResponseEntity>> readAllEvaluation() throws UserNotFoundException {
         return new ResponseEntity<>(fileStorageService.readAll(FileKind.EVALUATION),HttpStatus.OK);
     }
 
-    @GetMapping("/timesheet/")
-    public ResponseEntity<Set<UserWithFiles>> readAllTimesheet() throws UserNotFoundException {
+    @GetMapping("/timesheet/all")
+    public ResponseEntity<Set<FileResponseEntity>> readAllTimesheet() throws UserNotFoundException {
         return new ResponseEntity<>(fileStorageService.readAll(FileKind.TIMESHEET),HttpStatus.OK);
     }
 
@@ -88,6 +85,6 @@ public class FileController {
     @PatchMapping("/approveEvaluation/{fileId}")
     public ResponseEntity<FileResponseEntity> approveEvaluation(
     @PathVariable("fileId") UUID fileId) throws FileNotFoundException, UserNotFoundException {
-        return new ResponseEntity<>(fileStorageService.approveEvaluation(fileId),HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(fileStorageService.approveEvaluation(fileId),HttpStatus.OK);
     }
 }

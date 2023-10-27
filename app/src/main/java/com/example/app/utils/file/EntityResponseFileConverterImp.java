@@ -24,8 +24,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class EntityResponseFileConverterImp implements EntityResponseFileConverter {
     private final UserRepository userRepo;
-
-
     @Override
     public FileResponseEntity fromFileToAdmin(File file) {
         var response = AdminHrManagerFileResponse.builder()
@@ -47,9 +45,6 @@ public class EntityResponseFileConverterImp implements EntityResponseFileConvert
         }
         return response;
     }
-
-
-
     @Override
     public FileResponseEntity fromFileToUser(File file) {
         var response = UserFileResponse.builder()
@@ -87,17 +82,14 @@ public class EntityResponseFileConverterImp implements EntityResponseFileConvert
             throw new RuntimeException("Error: " + e.getMessage());
         }
     }
-
     @Override
     public List<FileResponseEntity> fromFileListToAdminList(Set<File> fileList) {
         return fileList.stream().map(this::fromFileToAdmin).toList();
     }
-
     @Override
     public List<FileResponseEntity> fromFileListToUserFileList(Set<File> fileList) {
         return fileList.stream().map(this::fromFileToUser).toList();
     }
-
     public File extractMultipartInfo(MultipartFile multipartFile, User fileCreator, String accessUrl, FileKind fileKind){
         return File.builder()
                 .filename(multipartFile.getOriginalFilename())

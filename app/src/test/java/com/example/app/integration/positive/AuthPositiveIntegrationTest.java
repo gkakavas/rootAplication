@@ -1,2 +1,4 @@
-package com.example.app.integration.positive;public class AuthPositiveIntegrationTest {
+package com.example.app.integration.positive;
+
+public class AuthPositiveIntegrationTest {
 }

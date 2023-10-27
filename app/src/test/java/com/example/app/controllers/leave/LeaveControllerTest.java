@@ -60,7 +60,7 @@ public class LeaveControllerTest {
                 .leaveStarts(request.getLeaveStarts())
                 .leaveEnds(request.getLeaveEnds())
                 .build();
-        when(leaveService.create(any(LeaveRequestEntity.class),any(String.class))).thenReturn(response);
+        when(leaveService.create(any(LeaveRequestEntity.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.post("/leave/create")
                         .header("Authorization","testToken")
                         .content(objectMapper.writeValueAsString(request))

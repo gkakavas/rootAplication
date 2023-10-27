@@ -1,6 +1,7 @@
 package com.example.app.services.storage;
 
 
+import com.example.app.config.FileStorageProperties;
 import com.example.app.entities.*;
 import com.example.app.exception.FileNotFoundException;
 import com.example.app.exception.IllegalTypeOfFileException;
@@ -27,11 +28,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -49,6 +52,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.when;
 
+@ContextConfiguration(classes = FileStorageProperties.class)
 public class FileStorageServicePositiveUnitTest {
     @InjectMocks
     private FileStorageService fileStorageService;
@@ -64,6 +68,8 @@ public class FileStorageServicePositiveUnitTest {
     private EntityResponseUserConverterImpl userConverter;
     @Mock
     private EntityResponseFileConverterImp fileConverter;
+    @Autowired
+    private FileStorageProperties storageProperties;
     private java.io.File tempTestFile;
 
     private Path tempTestPath;
@@ -71,7 +77,7 @@ public class FileStorageServicePositiveUnitTest {
     @BeforeEach
     void setUp() throws IOException {
         MockitoAnnotations.openMocks(this);
-        fileStorageService = new FileStorageService(jwtService, userRepo, fileRepo, commonConverter, userConverter, fileConverter);
+        fileStorageService = new FileStorageService(userRepo, fileRepo, commonConverter, userConverter, fileConverter,storageProperties);
         this.securityContext.setAuthentication(new UsernamePasswordAuthenticationToken("test@email.com", "password", List.of()));
         SecurityContextHolder.setContext(securityContext);
         tempTestFile = java.io.File.createTempFile("testFile", ".txt");
@@ -90,12 +96,12 @@ public class FileStorageServicePositiveUnitTest {
     }
     @Test
     @DisplayName("Should init the directories")
-    void init(){
-        FileSystemUtils.deleteRecursively(fileStorageService.getRoot().toFile());
-        fileStorageService.init();
-        Assertions.assertTrue(Files.exists(fileStorageService.getEvaluation()));
-        Assertions.assertTrue(Files.exists(fileStorageService.getTimesheet()));
-        Assertions.assertTrue(Files.exists(fileStorageService.getRoot()));
+    void init() throws IOException {
+        Files.createDirectory(storageProperties.getTimesheet());
+        Files.createDirectory(storageProperties.getEvaluation());
+        Assertions.assertTrue(Files.exists(storageProperties.getRoot()));
+        Assertions.assertTrue(Files.exists(storageProperties.getTimesheet()));
+        Assertions.assertTrue(Files.exists(storageProperties.getEvaluation()));
     }
     @Test
     @DisplayName("Should save a file both filesystem and database")
@@ -133,7 +139,7 @@ public class FileStorageServicePositiveUnitTest {
         }
         when(fileConverter.extractMultipartInfo(any(), any(), any(), any())).thenReturn(file);
         when(fileRepo.save(file)).thenReturn(file);
-        var response = fileStorageService.upload(multipartFile,"testToken");
+        var response = fileStorageService.upload(multipartFile);
         if(List.of(Role.HR,Role.ADMIN,Role.MANAGER).contains(currentUser.getRole())){
             Assertions.assertNotNull(response);
             Assertions.assertEquals(adminResponse,response);
@@ -381,10 +387,10 @@ public class FileStorageServicePositiveUnitTest {
     @Test
     @DisplayName("Should delete all directories")
     void deleteAll() throws IOException {
-        var testPath = Files.createDirectories(fileStorageService.getEvaluation());
+        var testPath = Files.createDirectories(storageProperties.getEvaluation());
         Assertions.assertTrue(Files.exists(testPath));
         fileStorageService.deleteAll();
-        Assertions.assertFalse(Files.exists(fileStorageService.getRoot()));
+        Assertions.assertFalse(Files.exists(storageProperties.getRoot()));
     }
 
     @Test

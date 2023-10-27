@@ -1,4 +1,4 @@
-package com.example.app.integration;
+package com.example.app.integration.negative;
 
 import com.example.app.entities.Role;
 import com.example.app.entities.User;

@@ -16,12 +16,12 @@ import java.util.UUID;
 
 @Getter
 @Setter
-@ToString
+@ToString(exclude = "uploadedBy")
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
-@Table(name="_file")
+@Entity(name = "File")
+@Table(name="files")
 public class File {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -37,7 +37,7 @@ public class File {
     private LocalDateTime approvedDate;
     @Enumerated(value = EnumType.STRING)
     private FileKind fileKind;
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private User uploadedBy;
 

@@ -1,13 +1,10 @@
-package com.example.app.integration;
+package com.example.app.integration.positive;
 
 import com.example.app.entities.Event;
 import com.example.app.entities.Group;
-import com.example.app.entities.Role;
 import com.example.app.entities.User;
-import com.example.app.exception.EventNotFoundException;
 import com.example.app.models.requests.EventRequestEntity;
 import com.example.app.models.responses.event.AdminHrMngEventResponse;
-import com.example.app.models.responses.event.MyEventResponse;
 import com.example.app.repositories.EventRepository;
 import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
@@ -16,9 +13,10 @@ import com.example.app.tool.EventRelevantGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.instancio.Instancio;
-import org.junit.Ignore;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +33,7 @@ import org.testcontainers.junit.jupiter.Container;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -53,7 +52,7 @@ public class EventPositiveIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
     private static TestRestTemplate restTemplate;
-    private String baseUrl = "http://localhost";
+    private String baseUrl;
     @Container
     public static PostgreSQLContainer<?> myPostgresContainer = new PostgreSQLContainer<>("postgres:13.11")
             .withCommand("postgres", "-c", "log_statement=all");
@@ -65,7 +64,7 @@ public class EventPositiveIntegrationTest {
     private User currentUser;
     private String currentToken;
     private String roleValue;
-
+    private static HttpHeaders headers;
     @DynamicPropertySource
     public static void configureProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", myPostgresContainer::getJdbcUrl);
@@ -78,9 +77,11 @@ public class EventPositiveIntegrationTest {
     public static void init() {
         myPostgresContainer.start();
         restTemplate = new TestRestTemplate();
+        headers = new HttpHeaders();
     }
 
     public void setUp() {
+        baseUrl = "http://localhost:".concat(String.valueOf(port).concat("/event"));
         this.existingGroup = groupRepo.findByGroupName("group1").orElseThrow();
         this.existingUsers = userRepo.findAll();
         this.existingEvent = eventRepo.findByEventDescription("event_description_1").orElseThrow();
@@ -99,6 +100,8 @@ public class EventPositiveIntegrationTest {
                 currentToken = jwtService.generateToken(currentUser);
             }
         }
+
+        headers.set("Authorization", "Bearer " + currentToken);
     }
         @AfterEach
         void tearDown () {
@@ -116,12 +119,7 @@ public class EventPositiveIntegrationTest {
         void shouldCreateANewEventInDatabaseAndReturnThisEvent (String roleValue) throws JsonProcessingException {
             this.roleValue = roleValue;
             setUp();
-            this.baseUrl = baseUrl
-                    .concat(":")
-                    .concat(String.valueOf(port))
-                    .concat("/event/create");
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Bearer " + currentToken);
+            this.baseUrl = baseUrl.concat("/create");
             var createRequest = EventRelevantGenerator.generateValidEventRequestEntity("A_Random_Test_Event_Description");
             var existingUserEmails = existingUsers.stream().map(User::getEmail).collect(Collectors.toSet());
             var existingUserIds = existingUsers.stream().map(User::getUserId).collect(Collectors.toSet());
@@ -151,18 +149,12 @@ public class EventPositiveIntegrationTest {
         }
         @ParameterizedTest
         @ValueSource(strings = {"ADMIN", "HR", "MANAGER"})
-        @DisplayName("when a create group event request dispatched " +
+        @DisplayName("when a create group request dispatched " +
                 "should create a group event in database and return this event")
         void shouldCreateAGroupEventInDatabaseAndReturnThisEvent (String roleValue) throws JsonProcessingException {
             this.roleValue = roleValue;
             setUp();
-            this.baseUrl = baseUrl
-                    .concat(":")
-                    .concat(String.valueOf(port))
-                    .concat("/event/createGroupEvent/")
-                    .concat(this.existingGroup.getGroupId().toString());
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Bearer " + currentToken);
+            this.baseUrl = baseUrl.concat("/createGroupEvent/").concat(this.existingGroup.getGroupId().toString());
             var createRequest = EventRelevantGenerator.generateValidEventRequestEntity("A_Random_Test_Event_Description");
             HttpEntity<EventRequestEntity> request = new HttpEntity<>(createRequest, headers);
             ResponseEntity<String> response = restTemplate.exchange(
@@ -192,13 +184,7 @@ public class EventPositiveIntegrationTest {
     void shouldReadAnExistingEventFromDatabaseAndReturnThisEventInFormatThatCorrespondsInUserType(String roleValue) throws JsonProcessingException {
         this.roleValue =roleValue;
         setUp();
-        this.baseUrl = baseUrl
-                .concat(":")
-                .concat(String.valueOf(port))
-                .concat("/event/")
-                .concat(this.existingEvent.getEventId()+"");
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + currentToken);
+        this.baseUrl = baseUrl.concat("/").concat(this.existingEvent.getEventId()+"");
         ResponseEntity<String> response = restTemplate.exchange(
                 baseUrl,
                 HttpMethod.GET,
@@ -219,12 +205,7 @@ public class EventPositiveIntegrationTest {
     void shouldReadAllExistingEventsFromDatabaseAndReturnThemInFormatThatCorrespondsToUserType(String roleValue) throws JsonProcessingException {
         this.roleValue = roleValue;
         setUp();
-        this.baseUrl = baseUrl
-                .concat(":")
-                .concat(String.valueOf(port))
-                .concat("/event/all");
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + currentToken);
+        this.baseUrl = baseUrl.concat("/all");
         ResponseEntity<String> response = restTemplate.exchange(
                 baseUrl,
                 HttpMethod.GET,
@@ -248,13 +229,7 @@ public class EventPositiveIntegrationTest {
     void shouldUpdateTheExistingEventSaveItInDatabaseAndReturnThis(String roleValue) throws JsonProcessingException {
         this.roleValue = roleValue;
         setUp();
-        this.baseUrl = baseUrl
-                .concat(":")
-                .concat(String.valueOf(port))
-                .concat("/event/update/")
-                .concat(this.existingEvent.getEventId()+"");
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + currentToken);
+        this.baseUrl = baseUrl.concat("/update/").concat(this.existingEvent.getEventId()+"");
         var updateRequest = EventRelevantGenerator.generateValidEventRequestEntity(this.existingEvent.getEventDescription());
         HttpEntity<EventRequestEntity> request = new HttpEntity<>(updateRequest, headers);
         ResponseEntity<String> response = restTemplate.exchange(
@@ -283,13 +258,7 @@ public class EventPositiveIntegrationTest {
         var event = EventRelevantGenerator.generateValidEvent();
         event.getUsersJoinInEvent().addAll(this.existingUsers);
         var savedEvent = eventRepo.save(event);
-        this.baseUrl = baseUrl
-                .concat(":")
-                .concat(String.valueOf(port))
-                .concat("/event/delete/")
-                .concat(savedEvent.getEventId().toString());
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + currentToken);
+        this.baseUrl = baseUrl.concat("/delete/").concat(savedEvent.getEventId().toString());
         ResponseEntity<String> response = restTemplate.exchange(
                 baseUrl,
                 HttpMethod.DELETE,
@@ -305,13 +274,7 @@ public class EventPositiveIntegrationTest {
     void shouldAddExistingUsersInAnExistingEventAndReturnThePatchedEvent(String roleValue) throws JsonProcessingException {
         this.roleValue = roleValue;
         setUp();
-        this.baseUrl = baseUrl
-                .concat(":")
-                .concat(String.valueOf(port))
-                .concat("/event/addUsers/")
-                .concat(this.existingEvent.getEventId().toString());
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + currentToken);
+        this.baseUrl = baseUrl.concat("/addUsers/").concat(this.existingEvent.getEventId().toString());
         var addUsersToEventRequest = new HashSet<>(
                 Set.of(
                     UUID.fromString("45b3df4b-f5bf-49d1-b928-16bbdb8e323e"),
@@ -343,13 +306,8 @@ public class EventPositiveIntegrationTest {
                 )
                 .build();
         assertEquals(expectedResponse, actualResponse);
-        this.existingEvent = eventRepo.findById(this.existingEvent.getEventId()).orElseThrow();
-        var users = userRepo.findAllById(addUsersToEventRequest);
-        for(User user:users){
-            ///TO DO
-        }
-        this.existingEvent = eventRepo.save(this.existingEvent);
-        assertEquals(3,this.existingEvent.getUsersJoinInEvent().size());
+        existingEvent = eventRepo.save(existingEvent);
+        assertEquals(3,existingEvent.getUsersJoinInEvent().size());
     }
 
     @ParameterizedTest
@@ -358,11 +316,7 @@ public class EventPositiveIntegrationTest {
     void shouldRemoveExistingUsersFromAnExistingEventAndReturnThePatchedEvent(String roleValue) throws JsonProcessingException {
         this.roleValue = roleValue;
         setUp();
-        this.baseUrl = baseUrl
-                .concat(":")
-                .concat(String.valueOf(port))
-                .concat("/event/removeUsers/")
-                .concat(this.existingEvent.getEventId().toString());
+        this.baseUrl = baseUrl.concat("/removeUsers/").concat(this.existingEvent.getEventId().toString());
         var usersToAdd = userRepo.findAllById(Set.of(
                 UUID.fromString("45b3df4b-f5bf-49d1-b928-16bbdb8e323e"),
                 UUID.fromString("4d0dd9db-b777-4e8e-97ba-ef0b57534927")
@@ -373,9 +327,7 @@ public class EventPositiveIntegrationTest {
         }
         this.existingEvent = eventRepo.save(this.existingEvent);
         assertEquals(5,this.existingEvent.getUsersJoinInEvent().size());
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + currentToken);
-        var removeUsersFromEventRequest = new HashSet<UUID>(
+        var removeUsersFromEventRequest = new HashSet<>(
                 Set.of(
                         UUID.fromString("45b3df4b-f5bf-49d1-b928-16bbdb8e323e"),
                         UUID.fromString("4d0dd9db-b777-4e8e-97ba-ef0b57534927")
@@ -413,13 +365,7 @@ public class EventPositiveIntegrationTest {
     void shouldPatchTheExistingEventSaveItInDatabaseAndReturnThis(String roleValue) throws JsonProcessingException {
         this.roleValue = roleValue;
         setUp();
-        this.baseUrl = baseUrl
-                .concat(":")
-                .concat(String.valueOf(port))
-                .concat("/event/patchEventDetails/")
-                .concat(this.existingEvent.getEventId()+"");
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + currentToken);
+        this.baseUrl = baseUrl.concat("/patchEventDetails/").concat(this.existingEvent.getEventId().toString());
         var patchRequest = new HashMap<String,String>();
         patchRequest.put("eventDescription","TestDescriptionForTestEvent");
         patchRequest.put("eventBody","Lorem ipsum dolor sit amet," +
@@ -443,8 +389,10 @@ public class EventPositiveIntegrationTest {
                 .eventCreator(null)
                 .eventDateTime(LocalDateTime.parse(patchRequest.get("eventDateTime")))
                 .eventExpiration(LocalDateTime.parse(patchRequest.get("eventExpiration")))
+                .users(existingEvent.getUsersJoinInEvent().stream().map(User::getEmail).collect(Collectors.toSet()))
                 .build();
         assertEquals(expectedResponse,actualResponse);
+        eventRepo.save(existingEvent);
     }
 }
 

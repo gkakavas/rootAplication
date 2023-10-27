@@ -21,9 +21,9 @@ public class GroupController implements CrudController<GroupResponseEntity,Group
     private final GroupService service;
 
     @Override
-    public ResponseEntity<GroupResponseEntity> create(@Valid GroupRequestEntity request, String token)
+    public ResponseEntity<GroupResponseEntity> create(@Valid GroupRequestEntity request)
     throws UserNotFoundException {
-        return new ResponseEntity<>(service.create(request,token),HttpStatus.CREATED);
+        return new ResponseEntity<>(service.create(request),HttpStatus.CREATED);
     }
     @Override
     public ResponseEntity<GroupResponseEntity> readOne(UUID id)

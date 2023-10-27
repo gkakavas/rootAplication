@@ -30,12 +30,12 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.instancio.Select.field;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -126,32 +126,10 @@ public class EventControllerNegativeUnitTest {
                 .andExpect(jsonPath("$.message.error",equalTo("Invalid UUID value provided")))
                 .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
     }
-    @ParameterizedTest
-    @ValueSource(strings = {"/event/create", "/event/createGroupEvent/{id}"})
-    @DisplayName("If the create request is empty" +
-            "should return 400 and a response with error message and response status code")
-    void emptyCreateRequestShouldReturn400AndAResponseWithErrorMessageAndResponseStatusCode(String uri) throws Exception {
-        this.mockMvc.perform(MockMvcRequestBuilders.post(uri,UUID.randomUUID()))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.message.error",equalTo("Request body is required")))
-                .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.INTERNAL_SERVER_ERROR.name())));
-    }
     /*
       read one event negative unit test cases
       _______________________________________
     */
-    @Test
-    @DisplayName("If the readOne request has invalid UUID format" +
-            "should return 400 and a response with error message and response status code")
-    void invalidUUIDReadOneRequestShouldReturn400AndAResponseWithErrorMessageAndResponseStatusCode() throws Exception {
-        var invalidUuidFormat = "invalidUUID";
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/event/{id}",invalidUuidFormat)
-                )
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message",equalTo("Invalid path variable's UUID")))
-                .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
-    }
-
     @Test
     @DisplayName("If the readOne request provide a UUID that is not exist in database " +
             "should return 404 and a response with error message and response status code")
@@ -220,29 +198,6 @@ public class EventControllerNegativeUnitTest {
                 .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
     }
     @Test
-    @DisplayName("If the update request is empty" +
-            "should return 500 and a response with error message and response status code")
-    void updateRequestShouldReturnStatus500AndAResponseWithErrorMessageAndResponseStatusCode() throws Exception {
-        this.mockMvc.perform(MockMvcRequestBuilders.put("/event/update/{id}",UUID.randomUUID())
-                )
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.message.error",equalTo("Request body is required")))
-                .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.INTERNAL_SERVER_ERROR.name())));
-    }
-
-    @Test
-    @DisplayName("If update request has invalid UUID format as path variable " +
-            "should return 400 and a response with error message and response status code")
-    void updateRequestShouldReturn400StatusAndAResponseWithErrorMessageAndResponseStatusCode() throws Exception {
-        var invalidUuidFormat = "invalidUUID";
-        this.mockMvc.perform(MockMvcRequestBuilders.put("/event/update/{id}",invalidUuidFormat)
-                )
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message",equalTo("Invalid path variable's UUID")))
-                .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
-    }
-
-    @Test
     @DisplayName("If update request provide a UUID as path variable that is not exist in database " +
             "should return 404 and a response with error message and response status code")
     void updateRequestShouldReturn404AndAResponseWithErrorMessageAndResponseStatusCode() throws Exception {
@@ -267,17 +222,6 @@ public class EventControllerNegativeUnitTest {
       delete event negative unit test cases
       ______________________________________
      */
-
-    @Test
-    @DisplayName("If delete request has invalid UUID format" +
-            "should return 400 and a response with error message and response status code")
-    void deleteRequestShouldReturn400StatusAndAResponseWithErrorMessageAndResponseStatusCode() throws Exception {
-        var invalidUUID = "invalid_uuid";
-        this.mockMvc.perform(MockMvcRequestBuilders.delete("/event/delete/{id}",invalidUUID))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message",equalTo("Invalid path variable's UUID")))
-                .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
-    }
     @Test
     @DisplayName("If delete request provide a UUID as path variable that is not exist in database " +
             "should return 404 and a response with error message and response status code")
@@ -289,12 +233,167 @@ public class EventControllerNegativeUnitTest {
                 .andExpect(jsonPath("$.message",equalTo("Not found event with this id")))
                 .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.NOT_FOUND.name())));
     }
-
     /*
-     *addUsersToEvent
-     *removeUsersFromEvent
-     *patchEventDetail*
+    Add Users To Event and Remove Users From Event negative test cases
     */
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "/event/addUsers/{eventId}",
+            "/event/removeUsers/{eventId}"
+    })
+    @DisplayName("If addUsersToEvent request provide a UUID as path variable that is not exist in database " +
+            "should return 404 and a response with error message and response status code")
+    void addRemoveRequestShouldReturn404AndAResponseWithErrorMessageAndResponseStatusCode(String url) throws Exception {
+        when(eventService.addUsersToEvent(anySet(),any(UUID.class))).thenThrow(new EventNotFoundException());
+        when(eventService.removeUsersFromEvent(anySet(),any(UUID.class))).thenThrow(new EventNotFoundException());
+        this.mockMvc.perform(MockMvcRequestBuilders.patch(url,UUID.randomUUID())
+                .content(objectMapper.writeValueAsString(Set.of(UUID.randomUUID(),UUID.randomUUID())))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message",equalTo("Not found event with this id")))
+                .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.NOT_FOUND.name())));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "/event/addUsers/{eventId}",
+            "/event/removeUsers/{eventId}"
+    })
+    @DisplayName("If addUsersToEvent request has invalid UUID format on idsSet of request body" +
+            "should return 400 and a response with error message and response status code")
+    void invalidAddRemoveRequestShouldReturn400AndAResponseWithErrorMessageAndResponseStatusCode(String url) throws Exception {
+        this.mockMvc.perform(MockMvcRequestBuilders.patch(url,UUID.randomUUID())
+                        .content(objectMapper.writeValueAsString(Set.of("invalidUUID1","invalidUUID2")))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message.error",equalTo("Invalid UUID value provided")))
+                .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
+    }
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "/event/create",
+            "/event/createGroupEvent/{id}",
+            "/event/update/{id}",
+            "/event/addUsers/{eventId}",
+            "/event/removeUsers/{eventId}",
+            "/event/patchEventDetails/{eventId}"
+    })
+    @DisplayName("If any request performs that have to contain body and request body is empty" +
+            "should return 400 and a response with error message and response status code")
+    void emptyRequestShouldReturn400AndAResponseWithErrorMessageAndResponseStatusCode(String uri) throws Exception {
+        switch (uri) {
+            case "/event/create", "/event/createGroupEvent/{id}" ->
+                    this.mockMvc.perform(MockMvcRequestBuilders.post(uri, UUID.randomUUID()))
+                            .andExpect(status().isBadRequest())
+                            .andExpect(jsonPath("$.message.error", equalTo("Request body is required")))
+                            .andExpect(jsonPath("$.responseCode", equalTo(HttpStatus.BAD_REQUEST.name())));
+            case "/event/update/{id}" -> this.mockMvc.perform(MockMvcRequestBuilders.put(uri, UUID.randomUUID()))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message.error", equalTo("Request body is required")))
+                    .andExpect(jsonPath("$.responseCode", equalTo(HttpStatus.BAD_REQUEST.name())));
+            case "/event/addUsers/{eventId}", "/event/removeUsers/{eventId}", "/event/patchEventDetails/{eventId}" ->
+                    this.mockMvc.perform(MockMvcRequestBuilders.patch(uri, UUID.randomUUID()))
+                            .andExpect(status().isBadRequest())
+                            .andExpect(jsonPath("$.message.error", equalTo("Request body is required")))
+                            .andExpect(jsonPath("$.responseCode", equalTo(HttpStatus.BAD_REQUEST.name())));
+        }
+
+    }
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "/event/createGroupEvent/{id}",
+            "/event/{id}",
+            "/event/update/{id}",
+            "/event/delete/{id}",
+            "/event/addUsers/{eventId}",
+            "/event/removeUsers/{eventId}",
+            "/event/patchEventDetails/{eventId}"
+    })
+    @DisplayName("If any request performed that have to contains a UUID path variable and it is not valid" +
+            "should return 400 and a response with error message and response status code")
+    void invalidPathVariableUUIDRequestShouldReturn400AndAResponseWithErrorMessageAndResponseStatusCode(String uri) throws Exception {
+        String invalidUUID ="invalidUUID";
+        switch (uri) {
+            case "/event/createGroupEvent/{id}" -> this.mockMvc.perform(MockMvcRequestBuilders.post(uri, invalidUUID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(UserRequestEntity.builder().build())))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message", equalTo("Invalid path variable's UUID")))
+                    .andExpect(jsonPath("$.responseCode", equalTo(HttpStatus.BAD_REQUEST.name())));
+            case "/event/{id}" -> this.mockMvc.perform(MockMvcRequestBuilders.get(uri, invalidUUID))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message", equalTo("Invalid path variable's UUID")))
+                    .andExpect(jsonPath("$.responseCode", equalTo(HttpStatus.BAD_REQUEST.name())));
+            case "/event/update/{id}" -> this.mockMvc.perform(MockMvcRequestBuilders.put(uri, invalidUUID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(UserRequestEntity.builder().build())))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message", equalTo("Invalid path variable's UUID")))
+                    .andExpect(jsonPath("$.responseCode", equalTo(HttpStatus.BAD_REQUEST.name())));
+            case "/event/delete/{id}" -> this.mockMvc.perform(MockMvcRequestBuilders.delete(uri, invalidUUID))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message", equalTo("Invalid path variable's UUID")))
+                    .andExpect(jsonPath("$.responseCode", equalTo(HttpStatus.BAD_REQUEST.name())));
+            case "/event/addUsers/{eventId}", "/event/removeUsers/{eventId}" ->
+                    this.mockMvc.perform(MockMvcRequestBuilders.patch(uri, invalidUUID)
+                            .content(objectMapper.writeValueAsString(Set.of(UUID.randomUUID(), UUID.randomUUID())))
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message", equalTo("Invalid path variable's UUID")))
+                    .andExpect(jsonPath("$.responseCode", equalTo(HttpStatus.BAD_REQUEST.name())));
+            case "/event/patchEventDetails/{eventId}" ->
+                    this.mockMvc.perform(MockMvcRequestBuilders.patch(uri, invalidUUID)
+                            .content(objectMapper.writeValueAsString(new HashMap<String, String>()))
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message", equalTo("Invalid path variable's UUID")))
+                    .andExpect(jsonPath("$.responseCode", equalTo(HttpStatus.BAD_REQUEST.name())));
+        }
+    }
+    @Test
+    @DisplayName("If patchEventDetails request map contains invalid fields to patch" +
+            "should return 400 and a response with error message and response status code")
+    void invalidFieldsPatchRequestShouldReturn400AndAResponseWithErrorMessageAndResponseStatusCode() throws Exception {
+        var invalidFieldsPatchRequest = "{" +
+                "\"invalidField1\":\"inv\"," +
+                "\"invalidField2\":\"invalid size event body\"," +
+                "\"invalidField3\":\"invalid date value\"" +
+                "}";
+        this.mockMvc.perform(MockMvcRequestBuilders.patch("/event/patchEventDetails/{eventId}",UUID.randomUUID())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidFieldsPatchRequest)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message.invalidField1",equalTo("Field value is not valid")))
+                .andExpect(jsonPath("$.message.invalidField2",equalTo("Field value is not valid")))
+                .andExpect(jsonPath("$.message.invalidField3",equalTo("Field value is not valid")))
+                .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
+    }
+
+    @Test
+    @DisplayName("If patchEventDetails request map contains invalid values" +
+            "should return 400 and a response with error message and response status code")
+    void invalidValuesPatchRequestShouldReturn400AndAResponseWithErrorMessageAndResponseStatusCode() throws Exception {
+        var invalidFieldsPatchRequest = "{" +
+                "\"eventDescription\":\"inv\"," +
+                "\"eventBody\":\"invalid size event body\"," +
+                "\"eventDateTime\":\"invalid date value\"," +
+                "\"eventExpiration\":\"invalid date value\"" +
+                "}";
+        this.mockMvc.perform(MockMvcRequestBuilders.patch("/event/patchEventDetails/{eventId}",UUID.randomUUID())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidFieldsPatchRequest)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message.eventDescription",equalTo("Event description should contain at least 5 and no many than 100 characters including spaces")))
+                .andExpect(jsonPath("$.message.eventBody",equalTo("Event body should contain at least 100 characters including spaces")))
+                .andExpect(jsonPath("$.message.eventDateTime",equalTo("Invalid event date and time format. The correct format is yyyy-MM-dd HH:mm:ss")))
+                .andExpect(jsonPath("$.message.eventExpiration",equalTo("Invalid event expiration format. The correct format is yyyy-MM-dd HH:mm:ss")))
+                .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
+    }
+
+
 
 
 }

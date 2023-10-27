@@ -9,28 +9,28 @@ VALUES ('7a62fbce-8677-4903-bc86-d1845600e8d9', 'group3', CURRENT_TIMESTAMP, NUL
 
 --create and insert into users
 INSERT INTO users(user_id,firstname,lastname,password,email,current_project,specialization,role_value,last_login,group_id,register_date,created_by)
-VALUES ('ca2d6dfd-8a5d-40f1-8b3b-b7b176ccdbf7','firstname1', 'lastname1', 'password1', 'firstname1@email.com', 'current_project1', 'specialization1', 'ADMIN', NULL, '19dd2267-8a90-47e5-9a2d-d9e767a109de', CURRENT_TIMESTAMP, NULL);
+VALUES ('ca2d6dfd-8a5d-40f1-8b3b-b7b176ccdbf7','firstname1', 'lastname1', '$2a$12$W97dA1nfN.QJnBK.yeHtq.aEW.GetsfZPI4IWWF4y/8gy5rEKRkwu', 'firstname1@email.com', 'current_project1', 'specialization1', 'ADMIN', NULL, '19dd2267-8a90-47e5-9a2d-d9e767a109de', CURRENT_TIMESTAMP, NULL);
 
 INSERT INTO users(user_id,firstname,lastname,password,email,current_project,specialization,role_value,last_login,group_id,register_date,created_by)
-VALUES ('e6e47100-2fe1-4413-89cf-2df47253a3af','firstname2', 'lastname2', 'password2', 'firstname2@email.com', 'current_project2', 'specialization2', 'ADMIN', NULL, '19dd2267-8a90-47e5-9a2d-d9e767a109de', CURRENT_TIMESTAMP, NULL);
+VALUES ('e6e47100-2fe1-4413-89cf-2df47253a3af','firstname2', 'lastname2', '$2a$12$un9ojQv354V0yQDH7qMFneGRg7wR2QJbVT/C/nukTn.JNwpszucry', 'firstname2@email.com', 'current_project2', 'specialization2', 'ADMIN', NULL, '19dd2267-8a90-47e5-9a2d-d9e767a109de', CURRENT_TIMESTAMP, NULL);
 
 INSERT INTO users(user_id,firstname,lastname,password,email,current_project,specialization,role_value,last_login,group_id,register_date,created_by)
-VALUES ('e48cf7a3-3427-41d1-b26f-604e74cf6b8a','firstname3', 'lastname3', 'password3', 'firstname3@email.com', 'current_project3', 'specialization3', 'MANAGER', NULL, 'f8eac3d0-dd4e-4527-90aa-8c1a9f5e7a8f', CURRENT_TIMESTAMP, NULL);
+VALUES ('e48cf7a3-3427-41d1-b26f-604e74cf6b8a','firstname3', 'lastname3', '$2a$12$PYtFU.a4/LHzIzd4fpuMeuapnKg3bMnlNm/QKmU8gN5jU6uFtik6q', 'firstname3@email.com', 'current_project3', 'specialization3', 'MANAGER', NULL, 'f8eac3d0-dd4e-4527-90aa-8c1a9f5e7a8f', CURRENT_TIMESTAMP, NULL);
 
 INSERT INTO users(user_id,firstname,lastname,password,email,current_project,specialization,role_value,last_login,group_id,register_date,created_by)
-VALUES ('45b3df4b-f5bf-49d1-b928-16bbdb8e323e','firstname4', 'lastname4', 'password4', 'firstname4@email.com', 'current_project4', 'specialization4', 'HR', NULL, 'f8eac3d0-dd4e-4527-90aa-8c1a9f5e7a8f', CURRENT_TIMESTAMP, NULL);
+VALUES ('45b3df4b-f5bf-49d1-b928-16bbdb8e323e','firstname4', 'lastname4', '$2a$12$l8//Scu2x6g.5z9gB3qlLewf9KvUxlj1CjKIlhRAYWLWckDDmQ/2y', 'firstname4@email.com', 'current_project4', 'specialization4', 'HR', NULL, 'f8eac3d0-dd4e-4527-90aa-8c1a9f5e7a8f', CURRENT_TIMESTAMP, NULL);
 
 INSERT INTO users(user_id,firstname,lastname,password,email,current_project,specialization,role_value,last_login,group_id,register_date,created_by)
-VALUES ('4d0dd9db-b777-4e8e-97ba-ef0b57534927','firstname5', 'lastname5', 'password5', 'firstname5@email.com', 'current_project5', 'specialization5', 'USER', NULL, '7a62fbce-8677-4903-bc86-d1845600e8d9', CURRENT_TIMESTAMP, NULL);
+VALUES ('4d0dd9db-b777-4e8e-97ba-ef0b57534927','firstname5', 'lastname5', '$2a$12$4IGXCetcItHndqiNudyFs.sMnQt43965ZP6irYQy1e/oRvbZmFsHy', 'firstname5@email.com', 'current_project5', 'specialization5', 'USER', NULL, '7a62fbce-8677-4903-bc86-d1845600e8d9', CURRENT_TIMESTAMP, NULL);
 
 INSERT INTO users(user_id,firstname,lastname,password,email,current_project,specialization,role_value,last_login,group_id,register_date,created_by)
-VALUES ('10762127-c6ec-41f7-a893-44529e7c6283','firstname6', 'lastname6', 'password6', 'firstname6@email.com', 'current_project6', 'specialization6', 'USER', NULL, '7a62fbce-8677-4903-bc86-d1845600e8d9', CURRENT_TIMESTAMP, NULL);
+VALUES ('10762127-c6ec-41f7-a893-44529e7c6283','firstname6', 'lastname6', '$2a$12$bnR1XwDC9DMaozZfnmn9nusLMc3.unQxBIXwr6NYrCRGXoGRHDOZa', 'firstname6@email.com', 'current_project6', 'specialization6', 'USER', NULL, '7a62fbce-8677-4903-bc86-d1845600e8d9', CURRENT_TIMESTAMP, NULL);
 
 INSERT INTO users(user_id,firstname,lastname,password,email,current_project,specialization,role_value,last_login,group_id,register_date,created_by)
-VALUES ('16beb8e8-5020-48a6-a4a5-4a4cdc014774','firstname7', 'lastname7', 'password7', 'firstname7@email.com', 'current_project7', 'specialization7', 'USER', NULL, NULL, CURRENT_TIMESTAMP, NULL);
+VALUES ('16beb8e8-5020-48a6-a4a5-4a4cdc014774','firstname7', 'lastname7', '$2a$12$RSZ992P0zkG7Y7zRzZW6au6YniDPKJKxiOCSe1Vu133WykKfPqAcC', 'firstname7@email.com', 'current_project7', 'specialization7', 'USER', NULL, NULL, CURRENT_TIMESTAMP, NULL);
 
 INSERT INTO users(user_id,firstname,lastname,password,email,current_project,specialization,role_value,last_login,group_id,register_date,created_by)
-VALUES ('9681dc09-75cb-43a0-b2cf-b59c65f142e2','firstname8', 'lastname8', 'password8', 'firstname8@email.com', 'current_project8', 'specialization8', 'USER', NULL, NULL, CURRENT_TIMESTAMP, NULL);
+VALUES ('9681dc09-75cb-43a0-b2cf-b59c65f142e2','firstname8', 'lastname8', '$2a$12$foXU1EoS2iOBZGFEoqDKSOoBRuScvmi4IiIDWcbA3dd3VF0fmFSQS', 'firstname8@email.com', 'current_project8', 'specialization8', 'USER', NULL, NULL, CURRENT_TIMESTAMP, NULL);
 --inserts into events
 
 INSERT INTO events(event_id, event_description, event_body, event_date_time, event_expiration, event_creator)

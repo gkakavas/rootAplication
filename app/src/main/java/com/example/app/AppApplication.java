@@ -20,14 +20,7 @@ import java.util.UUID;
 
 @SpringBootApplication
 public class AppApplication {
-//	FileStorageService storageService;
 	public static void main(String[] args) {
-
 		SpringApplication.run(AppApplication.class, args);
 	}
-//	@Override
-//	public void run(String... args) throws Exception {
-//		storageService.deleteAll();
-//		storageService.init();
-//	}
 }

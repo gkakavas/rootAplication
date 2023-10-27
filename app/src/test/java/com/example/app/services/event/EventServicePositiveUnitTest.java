@@ -102,7 +102,7 @@ public class EventServicePositiveUnitTest {
         when(userRepo.findAllById(anySet())).thenReturn(Instancio.createList(User.class));
         when(eventRepo.save(any(Event.class))).thenReturn(testEvent);
         when(eventConverter.fromEventToAdminHrMngEvent(testEvent)).thenReturn(expectedResponse);
-        var response = eventService.create(request, "testToken");
+        var response = eventService.create(request);
         Assertions.assertEquals(expectedResponse, response);
     }
 

@@ -24,29 +24,37 @@ public class EntityResponseLeaveConverterImpl implements EntityResponseLeaveConv
     private final UserRepository userRepo;
     @Override
     public LeaveResponseEntity fromLeaveToAdminHrMngLeave(Leave leave) {
-        return AdminHrMngLeaveResponse.builder()
+
+        var response =  AdminHrMngLeaveResponse.builder()
                 .leaveId(leave.getLeaveId())
                 .leaveType(leave.getLeaveType())
                 .leaveStarts(leave.getLeaveStarts())
                 .leaveEnds(leave.getLeaveEnds())
-                .approvedBy(userRepo.findById(leave.getApprovedBy()).map(User::getEmail).orElse(null))
+                .approvedBy(null)
                 .approvedOn(leave.getApprovedOn())
                 .approved(leave.isApproved())
                 .requestedBy(leave.getRequestedBy().getEmail())
                 .build();
-        //continuing
+        if(leave.getApprovedBy()!=null){
+            userRepo.findById(leave.getApprovedBy()).ifPresent(user->response.setApprovedBy(user.getEmail()));
+        }
+        return response;
     }
     @Override
     public LeaveResponseEntity fromLeaveToMyLeave(Leave leave) {
-        return MyLeaveResponse.builder()
+        var response = MyLeaveResponse.builder()
                 .leaveId(leave.getLeaveId())
                 .leaveType(leave.getLeaveType())
                 .leaveStarts(leave.getLeaveStarts())
                 .leaveEnds(leave.getLeaveEnds())
                 .approved(leave.isApproved())
-                .approvedBy(userRepo.findById(leave.getApprovedBy()).map(User::getEmail).orElse(null))
+                .approvedBy(null)
                 .approvedOn(leave.getApprovedOn())
                 .build();
+        if(leave.getApprovedBy()!=null){
+            userRepo.findById(leave.getApprovedBy()).ifPresent(user->response.setApprovedBy(user.getEmail()));
+        }
+        return response;
     }
 
     @Override

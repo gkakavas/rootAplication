@@ -23,14 +23,14 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class LeaveService implements CrudService<LeaveResponseEntity, LeaveRequestEntity, LeaveNotFoundException> {
+
     private final LeaveRepository leaveRepo;
-    private final JwtService jwtService;
     private final UserRepository userRepo;
     private final EntityResponseLeaveConverter leaveConverter;
     private final EntityResponseCommonConverter commonConverter;
 
     @Override
-    public LeaveResponseEntity create(LeaveRequestEntity request, String token) {
+    public LeaveResponseEntity create(LeaveRequestEntity request) {
         var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
                 .orElseThrow(() -> new AccessDeniedException("You have not authority to access this resource"));
         var newLeave = leaveRepo.save(leaveConverter.fromRequestToEntity(request, currentUser));

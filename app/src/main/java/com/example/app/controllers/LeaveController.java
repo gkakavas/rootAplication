@@ -21,8 +21,8 @@ public class LeaveController implements CrudController<LeaveResponseEntity, Leav
     private final LeaveService service;
 
     @Override
-    public ResponseEntity<LeaveResponseEntity> create(@Valid LeaveRequestEntity request, String token) throws UserNotFoundException {
-        return new ResponseEntity<>(service.create(request,token), HttpStatus.CREATED);
+    public ResponseEntity<LeaveResponseEntity> create(@Valid LeaveRequestEntity request) throws UserNotFoundException {
+        return new ResponseEntity<>(service.create(request), HttpStatus.CREATED);
     }
 
     @Override

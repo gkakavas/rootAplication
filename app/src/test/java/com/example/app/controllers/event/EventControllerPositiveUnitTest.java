@@ -64,7 +64,7 @@ public class EventControllerPositiveUnitTest {
     @Test
     @DisplayName("Should create a new event and return this")
     void shouldCreateANewEventAndReturnThisBack() throws Exception {
-        when(eventService.create(any(EventRequestEntity.class),any(String.class))).thenReturn(response);
+        when(eventService.create(any(EventRequestEntity.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.post("/event/create")
                         .header("Authorization",TEST_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)

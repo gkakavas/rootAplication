@@ -18,21 +18,19 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity(name = "Event")
-@Table(name="_event")
+@Table(name="events")
 
 public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID eventId;
     private String eventDescription;
-    @Lob
     private String eventBody;
     private UUID eventCreator;
     private LocalDateTime eventDateTime;
     private LocalDateTime eventExpiration;
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "userHasEvents", cascade ={CascadeType.PERSIST,CascadeType.MERGE}, fetch = FetchType.EAGER)
+    @ManyToMany(mappedBy = "userHasEvents", cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     @Builder.Default
     private Set<User> usersJoinInEvent = new HashSet<>();
 

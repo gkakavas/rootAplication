@@ -58,7 +58,7 @@ public class LeaveServicePositiveUnitTest {
     @BeforeEach
     void setUp(){
         MockitoAnnotations.openMocks(this);
-        leaveService = new LeaveService(leaveRepo, jwtService, userRepo, leaveConverter, commonConverter);
+        leaveService = new LeaveService(leaveRepo, userRepo, leaveConverter, commonConverter);
         this.securityContext.setAuthentication(new UsernamePasswordAuthenticationToken("username", "password", List.of()));
         SecurityContextHolder.setContext(securityContext);
     }
@@ -93,7 +93,7 @@ public class LeaveServicePositiveUnitTest {
         when(leaveConverter.fromRequestToEntity(request,currentUser)).thenReturn(leave);
         when(leaveRepo.save(leave)).thenReturn(leave);
         when(leaveConverter.fromLeaveToMyLeave(leave)).thenReturn(expectedResponse);
-        var response = leaveService.create(request,"testToken");
+        var response = leaveService.create(request);
         Assertions.assertEquals(expectedResponse,response);
     }
     @ParameterizedTest

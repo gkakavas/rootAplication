@@ -1,4 +1,4 @@
-package com.example.app.integration;
+package com.example.app.integration.positive;
 
 import com.example.app.entities.Event;
 import com.example.app.entities.Role;
