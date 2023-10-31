@@ -1,6 +1,7 @@
 package com.example.app.utils.leave;
 
 import com.example.app.entities.Leave;
+import com.example.app.entities.LeaveType;
 import com.example.app.entities.User;
 import com.example.app.models.requests.LeaveRequestEntity;
 import com.example.app.models.responses.leave.AdminHrMngLeaveResponse;
@@ -70,7 +71,7 @@ public class EntityResponseLeaveConverterImpl implements EntityResponseLeaveConv
     @Override
         public Leave fromRequestToEntity(LeaveRequestEntity request, User requestedBy) {
         return Leave.builder()
-                .leaveType(request.getLeaveType())
+                .leaveType(LeaveType.valueOf(request.getLeaveType()))
                 .leaveStarts(request.getLeaveStarts())
                 .leaveEnds(request.getLeaveEnds())
                 .approvedBy(null)
@@ -82,7 +83,7 @@ public class EntityResponseLeaveConverterImpl implements EntityResponseLeaveConv
 
     @Override
     public Leave updateLeave(LeaveRequestEntity request, Leave leave) {
-        leave.setLeaveType(request.getLeaveType());
+        leave.setLeaveType(LeaveType.valueOf(request.getLeaveType()));
         leave.setLeaveStarts(request.getLeaveStarts());
         leave.setLeaveEnds(request.getLeaveEnds());
         return leave;

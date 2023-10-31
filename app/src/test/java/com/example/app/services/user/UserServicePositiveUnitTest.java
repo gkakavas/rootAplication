@@ -29,6 +29,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -41,6 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+@ContextConfiguration(classes = BCryptPasswordEncoder.class)
 public class UserServicePositiveUnitTest {
 
     @InjectMocks
@@ -56,11 +59,14 @@ public class UserServicePositiveUnitTest {
     @Mock
     private EntityResponseUserConverterImpl userConverter;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     private final SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
     @BeforeEach
     void setUp(){
         MockitoAnnotations.openMocks(this);
-        userService = new UserService(userRepository, jwtService, groupRepository, userConverter, eventConverter);
+        userService = new UserService(userRepository, jwtService, groupRepository, userConverter, eventConverter,passwordEncoder);
         this.securityContext.setAuthentication(new UsernamePasswordAuthenticationToken("username", "password", List.of()));
         SecurityContextHolder.setContext(securityContext);
     }

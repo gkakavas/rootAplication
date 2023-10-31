@@ -147,4 +147,20 @@ public class ApplicationExceptionHandler {
                         .build());
     }
 
+    @ExceptionHandler(WrongOldPasswordProvidedException.class)
+    public ResponseEntity<ErrorResponse<String>> handleWrongOldPasswordException(WrongOldPasswordProvidedException ex){
+        return ResponseEntity.badRequest()
+                .body(ErrorResponse.<String>builder()
+                        .message(ex.getMessage())
+                        .build());
+    }
+    @ExceptionHandler(NewPasswordConfirmationNewPasswordNotMatchException.class)
+    public ResponseEntity<ErrorResponse<String>> handleNewAndConfirmationPasswordsNotMatchException
+            (NewPasswordConfirmationNewPasswordNotMatchException ex){
+        return ResponseEntity.badRequest()
+                .body(ErrorResponse.<String>builder()
+                        .message(ex.getMessage())
+                        .build());
+    }
+
 }

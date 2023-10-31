@@ -1,6 +1,7 @@
 package com.example.app.models.requests;
 
 import com.example.app.entities.LeaveType;
+import com.example.app.utils.validator.venum.ValueOfEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,7 +14,8 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 public class LeaveRequestEntity implements RequestEntity {
-    private LeaveType leaveType;
+    @ValueOfEnum(enumClass = LeaveType.class)
+    private String leaveType;
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate leaveStarts;
     @DateTimeFormat(pattern = "yyyy-MM-dd")

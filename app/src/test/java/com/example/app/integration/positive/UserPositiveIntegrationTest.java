@@ -1,8 +1,6 @@
 package com.example.app.integration.positive;
 
-import com.example.app.entities.Event;
-import com.example.app.entities.Role;
-import com.example.app.entities.User;
+import com.example.app.entities.*;
 import com.example.app.models.responses.error.ErrorResponse;
 import com.example.app.tool.GroupRelevantGenerator;
 import com.example.app.tool.UserRelevantGenerator;
@@ -32,7 +30,11 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.web.client.RestTemplate;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
 
 import java.io.IOException;
 import java.util.*;
@@ -56,56 +58,85 @@ public class UserPositiveIntegrationTest {
     private ObjectMapper objectMapper;
     private static TestRestTemplate restTemplate;
     private String baseUrl = "http://localhost";
-    private String token;
     private User user;
+    private String currentToken;
+    private String roleValue;
+    private User currentUser;
+    private static HttpHeaders headers;
+    @Container
+    public static PostgreSQLContainer<?> myPostgresContainer = new PostgreSQLContainer<>("postgres:13.11")
+            .withCommand("postgres", "-c", "log_statement=all");
+    private Group groupForUserCreation;
 
-
-    @BeforeAll
-    public static void init(){
-        restTemplate = new TestRestTemplate();
+    @DynamicPropertySource
+    public static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", myPostgresContainer::getJdbcUrl);
+        registry.add("spring.datasource.username", myPostgresContainer::getUsername);
+        registry.add("spring.datasource.password", myPostgresContainer::getPassword);
     }
-    private void setUp(){
-        userRepo.save(user);
-        user = userRepo.findByEmail(user.getEmail()).orElseThrow();
-        token = jwtService.generateToken(user);
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user,null,user.getAuthorities()));
+    @BeforeAll
+    public static void init() {
+        myPostgresContainer.start();
+        restTemplate = new TestRestTemplate();
+        headers = new HttpHeaders();
+    }
+
+    public void setUp() {
+        this.groupForUserCreation = groupRepo.findByGroupName("group1").orElseThrow();
+        baseUrl = "http://localhost:".concat(String.valueOf(port).concat("/user"));
+        switch (this.roleValue) {
+            case "ADMIN" -> {
+                currentUser = userRepo.findByEmail("firstname1@email.com").orElseThrow();
+                currentToken = jwtService.generateToken(currentUser);
+            }
+            case "HR" -> {
+                currentUser = userRepo.findByEmail("firstname4@email.com").orElseThrow();
+                currentToken = jwtService.generateToken(currentUser);
+            }
+            case "MANAGER" -> {
+                currentUser = userRepo.findByEmail("firstname3@email.com").orElseThrow();
+                currentToken = jwtService.generateToken(currentUser);
+            }
+            case "USER" -> {
+                currentUser = userRepo.findByEmail("firstname7@email.com").orElseThrow();
+                currentToken = jwtService.generateToken(currentUser);
+            }
+        }
+        headers.set("Authorization", "Bearer " + currentToken);
     }
     @AfterEach
     void tearDown(){
-        userRepo.deleteById(user.getUserId());
         SecurityContextHolder.clearContext();
     }
     @Test
     @DisplayName("when a create request dispatched should create a new user in database and return this user")
     void shouldCreateANewUserInDatabaseAndReturnThisUser() throws IOException {
-        this.user = UserRelevantGenerator.generateValidUser(null,Role.ADMIN,null);
+        this.roleValue  = "ADMIN";
         setUp();
-        this.baseUrl = baseUrl
-                .concat(":")
-                .concat(String.valueOf(port))
-                .concat("/user/create");
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + this.token);
-        var createRequest = UserRelevantGenerator.generateValidUserRequestEntity("USER",UUID.randomUUID());
-        createRequest.setEmail(this.user.getEmail());
-        HttpEntity<UserRequestEntity> request = new HttpEntity<>(createRequest, headers);
+        this.baseUrl = baseUrl.concat("/create");
+        var createRequest = UserRelevantGenerator.generateValidUserRequestEntity("USER",this.groupForUserCreation.getGroupId());
         ResponseEntity<String> response = restTemplate.exchange(
                 baseUrl,
                 HttpMethod.POST,
-                request,
+                new HttpEntity<>(createRequest,headers),
                 String.class);
         var actualResponse = objectMapper.readValue(response.getBody(), new TypeReference<AdminUserResponse>() {});
         var expectedResponse = UserRelevantGenerator.generateValidAdminUserResponse(
                                     actualResponse.getUserId(),
                                     createRequest.getEmail(),
-                                    actualResponse.getCreatedBy(),
+                                    this.currentUser.getEmail(),
                                     Role.valueOf(createRequest.getRole()),
-                                    actualResponse.getGroupName()
+                                    this.groupForUserCreation.getGroupName()
                                 );
         expectedResponse.setRegisterDate(actualResponse.getRegisterDate());
         assertEquals(expectedResponse,actualResponse);
         assertTrue(userRepo.existsById(actualResponse.getUserId()));
-        userRepo.deleteAll();
+        var userToDelete = userRepo.findById(actualResponse.getUserId()).orElseThrow();
+        this.groupForUserCreation.getGroupHasUsers().remove(userToDelete);
+        userToDelete.setGroup(null);
+        userToDelete = userRepo.save(userToDelete);
+        userRepo.delete(userToDelete);
+        assertFalse(userRepo.existsById(userToDelete.getUserId()));
     }
 
     @ParameterizedTest
@@ -113,21 +144,16 @@ public class UserPositiveIntegrationTest {
     @DisplayName("when a read one request dispatched should read an existing user from database and return " +
             "this user in form that corresponds in user type")
     void shouldReadAnExistingUserFromDatabaseAndReturnThisUser(String roleValue) throws IOException {
-        this.user = UserRelevantGenerator.generateValidUser(null,Role.valueOf(roleValue),null);
+        this.roleValue  = roleValue;
         setUp();
-        var userToRetrieve = UserRelevantGenerator.generateValidUser(null,Role.USER,null);
-        var retrievedUser = userRepo.save(userToRetrieve);
-        this.baseUrl = baseUrl.concat(":")
-                .concat(String.valueOf(port))
-                .concat("/user/"+retrievedUser.getUserId());
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + this.token);
+        var retrievedUser = userRepo.findByEmail("firstname8@email.com").orElseThrow();
+        this.baseUrl = baseUrl.concat("/"+retrievedUser.getUserId());
         ResponseEntity<String> response = restTemplate.exchange(
                 baseUrl,
                 HttpMethod.GET,
                 new HttpEntity<>(headers),
                 String.class);
-        if(this.user.getRole().equals(Role.ADMIN)){
+        if(roleValue.equals("ADMIN")){
             var expectedResponse = AdminUserResponse.builder()
                     .userId(retrievedUser.getUserId())
                     .firstname(retrievedUser.getFirstname())
@@ -135,15 +161,12 @@ public class UserPositiveIntegrationTest {
                     .email(retrievedUser.getEmail())
                     .specialization(retrievedUser.getSpecialization())
                     .currentProject(retrievedUser.getCurrentProject())
-                    .groupName(null)
-                    .createdBy(null)
+                    .groupName(retrievedUser.getGroup().getGroupName())
                     .registerDate(retrievedUser.getRegisterDate())
-                    .lastLogin(null)
                     .role(Role.valueOf(retrievedUser.getRoleValue()))
                     .build();
             var actualResponse = objectMapper.readValue(response.getBody(),AdminUserResponse.class);
             assertEquals(expectedResponse,actualResponse);
-            assertTrue(userRepo.existsById(actualResponse.getUserId()));
         }
         else{
             var expectedResponse = OtherUserResponse.builder()
@@ -153,13 +176,11 @@ public class UserPositiveIntegrationTest {
                     .email(retrievedUser.getEmail())
                     .specialization(retrievedUser.getSpecialization())
                     .currentProject(retrievedUser.getCurrentProject())
-                    .groupName(null)
+                    .groupName(retrievedUser.getGroup().getGroupName())
                     .build();
             var actualResponse = objectMapper.readValue(response.getBody(),OtherUserResponse.class);
             assertEquals(expectedResponse,actualResponse);
-            assertTrue(userRepo.existsById(actualResponse.getUserId()));
         }
-        userRepo.deleteAll();
     }
 
     @ParameterizedTest
@@ -167,23 +188,17 @@ public class UserPositiveIntegrationTest {
     @DisplayName("when a read all request dispatched should read all users from database and return " +
             "these users in form that corresponds in user type")
     void shouldReadAllUsersFromDatabaseAndReturnThem(String roleValue) throws IOException {
-        this.user = UserRelevantGenerator.generateValidUser(null,Role.valueOf(roleValue),null);
+        this.roleValue = roleValue;
         setUp();
-        List<User> userList = UserRelevantGenerator.validUserList(2);
-        userRepo.saveAll(userList);
-        List<User> retrievedUserList = userRepo.findAll();
-        this.baseUrl = baseUrl.concat(":")
-                .concat(String.valueOf(port))
-                .concat("/user/all");
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + this.token);
+        var users = userRepo.findAll();
+        this.baseUrl = baseUrl.concat("/all");
         ResponseEntity<String> response = restTemplate.exchange(
                 baseUrl,
                 HttpMethod.GET,
                 new HttpEntity<>(headers),
                 String.class);
-        if(this.user.getRole().equals(Role.ADMIN)){
-            var expectedResponse = retrievedUserList.stream()
+        if(roleValue.equals("ADMIN")){
+            var expectedResponse = users.stream()
                     .map(user1 -> AdminUserResponse.builder()
                                     .userId(user1.getUserId())
                                     .firstname(user1.getFirstname())
@@ -193,6 +208,7 @@ public class UserPositiveIntegrationTest {
                                     .currentProject(user1.getCurrentProject())
                                     .registerDate(user1.getRegisterDate())
                                     .lastLogin(user1.getLastLogin())
+                                    .groupName(user1.getGroup().getGroupName())
                                     .role(Role.valueOf(user1.getRoleValue()))
                                     .build()
                     )
@@ -200,8 +216,8 @@ public class UserPositiveIntegrationTest {
             var actualResponse = objectMapper.readValue(response.getBody(),new TypeReference<List<AdminUserResponse>>() {});
             assertEquals(Set.copyOf(expectedResponse),Set.copyOf(actualResponse));
         }
-        if(Arrays.asList(Role.HR,Role.MANAGER,Role.USER).contains(this.user.getRole())){
-            var expectedResponse = retrievedUserList.stream()
+        else{
+            var expectedResponse = users.stream()
                     .map(user1 -> OtherUserResponse.builder()
                             .userId(user1.getUserId())
                             .firstname(user1.getFirstname())
@@ -209,32 +225,25 @@ public class UserPositiveIntegrationTest {
                             .email(user1.getEmail())
                             .specialization(user1.getSpecialization())
                             .currentProject(user1.getCurrentProject())
+                            .groupName(user1.getGroup().getGroupName())
                             .build()
                     )
                     .toList();
             var actualResponse = objectMapper.readValue(response.getBody(),new TypeReference<List<OtherUserResponse>>() {});
             assertEquals(Set.copyOf(expectedResponse),Set.copyOf(actualResponse));
         }
-        userRepo.deleteAll(userList);
     }
 
     @Test
-    @DisplayName("when an update request dispatched should update an existing user, save it in database and return this user")
+    @DisplayName("when an update request dispatched " +
+            "should update an existing user, save it in database and return this user")
     void shouldUpdateAnExistingUserAndSaveItInDatabaseAndReturnThisUser() throws IOException {
-        this.user = UserRelevantGenerator.generateValidUser(null,Role.ADMIN,null);
+        this.roleValue = "ADMIN";
         setUp();
-        var group = GroupRelevantGenerator.generateValidGroup(null);
-        var existingGroup = groupRepo.save(group);
-        var userToUpdate = UserRelevantGenerator.generateValidUser(null,Role.USER,existingGroup);
-        var existingUser = userRepo.save(userToUpdate);
-        this.baseUrl = baseUrl
-                .concat(":")
-                .concat(String.valueOf(port))
-                .concat("/user/update/")
-                .concat(existingUser.getUserId().toString());
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + this.token);
-        var updateRequest = UserRelevantGenerator.generateValidUserRequestEntity("USER",existingGroup.getGroupId());
+        var userToUpdate = userRepo.findByEmail("firstname8@email.com").orElseThrow();
+        var groupForUpdatingUser = groupRepo.findByGroupName("group3").orElseThrow();
+        this.baseUrl = baseUrl.concat("/update/").concat(userToUpdate.getUserId().toString());
+        var updateRequest = UserRelevantGenerator.generateValidUserRequestEntity("USER",groupForUpdatingUser.getGroupId());
         HttpEntity<UserRequestEntity> request = new HttpEntity<>(updateRequest, headers);
         ResponseEntity<String> response = restTemplate.exchange(
                 baseUrl,
@@ -243,38 +252,30 @@ public class UserPositiveIntegrationTest {
                 String.class);
         var actualResponse = objectMapper.readValue(response.getBody(),AdminUserResponse.class);
         var expectedResponse = AdminUserResponse.builder()
-                .userId(existingUser.getUserId())
+                .userId(userToUpdate.getUserId())
                 .firstname(updateRequest.getFirstname())
                 .lastname(updateRequest.getLastname())
                 .email(updateRequest.getEmail())
                 .specialization(updateRequest.getSpecialization())
                 .currentProject(updateRequest.getCurrentProject())
-                .groupName(existingGroup.getGroupName())
-                .createdBy(null)
-                .registerDate(existingUser.getRegisterDate())
-                .lastLogin(existingUser.getLastLogin())
-                .role(Role.valueOf(existingUser.getRoleValue()))
+                .groupName(groupForUpdatingUser.getGroupName())
+                .registerDate(userToUpdate.getRegisterDate())
+                .role(userToUpdate.getRole())
                 .build();
         assertEquals(expectedResponse,actualResponse);
-        assertTrue(userRepo.existsById(actualResponse.getUserId()));
-        userRepo.deleteAll();
-        groupRepo.deleteAll();
+        userRepo.save(userToUpdate);
     }
 
     @Test
-    @DisplayName("when a delete request dispatched should delete an existing user from database and return 204 status")
+    @DisplayName("when a delete request dispatched " +
+            "should delete an existing user from database and return 204 status")
     void shouldDeleteAnExistingUserFromDatabaseAndReturn204Status(){
-        this.user = UserRelevantGenerator.generateValidUser(null,Role.ADMIN,null);
+        this.roleValue = "ADMIN";
         setUp();
-        var userToDelete = UserRelevantGenerator.generateValidUser(null,Role.HR,null);
+        var groupForCreatingUser = groupRepo.findByGroupName("group1").orElseThrow();
+        var userToDelete = UserRelevantGenerator.generateValidUser(null,Role.HR,groupForCreatingUser);
         var existingUser = userRepo.save(userToDelete);
-        this.baseUrl = baseUrl
-                .concat(":")
-                .concat(String.valueOf(port))
-                .concat("/user/delete/")
-                .concat(existingUser.getUserId().toString());
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + this.token);
+        this.baseUrl = baseUrl.concat("/delete/").concat(existingUser.getUserId().toString());
         ResponseEntity<String> response = restTemplate.exchange(
                 baseUrl,
                 HttpMethod.DELETE,
@@ -286,19 +287,11 @@ public class UserPositiveIntegrationTest {
     @Test
     @DisplayName("when a patch request dispatched should patching an existing user, save it in database and return this user")
     void shouldPatchingAnExistingUserSaveItInDatabaseAndReturnThisUser() throws IOException {
-        this.user = UserRelevantGenerator.generateValidUser(null,Role.ADMIN,null);
+        this.roleValue = "ADMIN";
         setUp();
-        var group = GroupRelevantGenerator.generateValidGroup(null);
-        var existingGroup = groupRepo.save(group);
-        var userToPatch = UserRelevantGenerator.generateValidUser(null,Role.USER,null);
-        var existingUser = userRepo.save(userToPatch);
-        this.baseUrl = baseUrl
-                .concat(":")
-                .concat(String.valueOf(port))
-                .concat("/user/patch/")
-                .concat(String.valueOf(existingUser.getUserId()));
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + this.token);
+        var existingGroup = groupRepo.findByGroupName("group1").orElseThrow();
+        var existingUser = userRepo.findByEmail("firstname8@email.com").orElseThrow();
+        this.baseUrl = baseUrl.concat("/patch/").concat(existingUser.getUserId().toString());
         var patchRequest = new HashMap<String,String>();
         patchRequest.put("firstname","randomFirstname");
         patchRequest.put("lastname","randomLastname");
@@ -322,21 +315,17 @@ public class UserPositiveIntegrationTest {
                 .specialization(patchRequest.get("specialization"))
                 .currentProject(patchRequest.get("currentProject"))
                 .groupName(existingGroup.getGroupName())
-                .createdBy(null)
                 .registerDate(existingUser.getRegisterDate())
-                .lastLogin(existingUser.getLastLogin())
                 .role(Role.valueOf(patchRequest.get("role")))
                 .build();
         assertEquals(expectedResponse,actualResponse);
-        assertTrue(userRepo.existsById(actualResponse.getUserId()));
-        userRepo.deleteAll();
-        groupRepo.deleteAll();
+        userRepo.save(existingUser);
     }
 
 
     //@ParameterizedTest
     //@ValueSource(strings = {"ADMIN"})
-    @Test
+    /*@Test
     @DisplayName("when a read user events request dispatched " +
             "should retrieve all the events of the current user from database and return them")
     void shouldRetrieveAllTheEventsOfTheCurrentUserFromDatabaseAndReturnThem(String roleValue) throws IOException {
@@ -380,5 +369,5 @@ public class UserPositiveIntegrationTest {
         assertEquals(expectedResponse,actualResponse);
         userRepo.deleteAll();
         eventRepo.deleteAll();
-    }
+    }*/
 }

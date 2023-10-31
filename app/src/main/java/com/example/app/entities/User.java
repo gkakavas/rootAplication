@@ -18,7 +18,7 @@ import java.util.UUID;
 
 @Getter
 @Setter
-@ToString(exclude = {"userHasEvents","userHasFiles"})
+@ToString(exclude = {"userHasEvents","userHasFiles","userRequestedLeaves"})
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -75,7 +75,7 @@ public class User implements UserDetails {
     @Builder.Default
     private Set<File> userHasFiles = new HashSet<>();
 
-    @OneToMany(mappedBy = "requestedBy",fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST})
+    @OneToMany(mappedBy = "requestedBy",fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     @Builder.Default
     private Set<Leave> userRequestedLeaves = new HashSet<>();
 

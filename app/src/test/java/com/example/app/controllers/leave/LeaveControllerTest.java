@@ -4,6 +4,7 @@ import com.example.app.advice.ApplicationExceptionHandler;
 import com.example.app.config.TestSecurityConfig;
 import com.example.app.controllers.LeaveController;
 import com.example.app.entities.Leave;
+import com.example.app.entities.LeaveType;
 import com.example.app.entities.User;
 import com.example.app.exception.LeaveNotFoundException;
 import com.example.app.exception.UserNotFoundException;
@@ -56,7 +57,7 @@ public class LeaveControllerTest {
         LeaveRequestEntity request = Instancio.create(LeaveRequestEntity.class);
         LeaveResponseEntity response = MyLeaveResponse.builder()
                 .leaveId(UUID.randomUUID())
-                .leaveType(request.getLeaveType())
+                .leaveType(LeaveType.valueOf(request.getLeaveType()))
                 .leaveStarts(request.getLeaveStarts())
                 .leaveEnds(request.getLeaveEnds())
                 .build();
@@ -98,7 +99,7 @@ public class LeaveControllerTest {
         var request = Instancio.create(LeaveRequestEntity.class);
         LeaveResponseEntity response = MyLeaveResponse.builder()
                 .leaveId(leaveToUpdate.getLeaveId())
-                .leaveType(request.getLeaveType())
+                .leaveType(LeaveType.valueOf(request.getLeaveType()))
                 .leaveStarts(request.getLeaveStarts())
                 .leaveEnds(request.getLeaveEnds())
                 .approvedBy("user with this id " + leaveToUpdate.getApprovedBy())

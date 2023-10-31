@@ -1,6 +1,7 @@
 package com.example.app.converters.leave;
 
 import com.example.app.entities.Leave;
+import com.example.app.entities.LeaveType;
 import com.example.app.entities.User;
 import com.example.app.models.requests.LeaveRequestEntity;
 import com.example.app.models.responses.leave.AdminHrMngLeaveResponse;
@@ -101,7 +102,7 @@ public class LeaveConverterPositiveUnitTest {
         var request = Instancio.create(LeaveRequestEntity.class);
         var currentUser = Instancio.create(User.class);
         var expectedResponse = Leave.builder()
-                .leaveType(request.getLeaveType())
+                .leaveType(LeaveType.valueOf(request.getLeaveType()))
                 .leaveStarts(request.getLeaveStarts())
                 .leaveEnds(request.getLeaveEnds())
                 .approvedBy(null)
@@ -120,7 +121,7 @@ public class LeaveConverterPositiveUnitTest {
         var request = Instancio.create(LeaveRequestEntity.class);
         var expectedResponse = Leave.builder()
                 .leaveId(leave.getLeaveId())
-                .leaveType(request.getLeaveType())
+                .leaveType(LeaveType.valueOf(request.getLeaveType()))
                 .leaveStarts(request.getLeaveStarts())
                 .leaveEnds(request.getLeaveEnds())
                 .approvedBy(leave.getApprovedBy())

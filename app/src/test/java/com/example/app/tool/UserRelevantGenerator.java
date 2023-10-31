@@ -40,7 +40,7 @@ public class UserRelevantGenerator {
     }
 
     public static UserRequestEntity generateValidUserRequestEntity(String role, UUID group){
-        var mockUserRequest = UserRequestEntity.builder()
+        var mockCreateUserRequest = UserRequestEntity.builder()
                 .password("TestPass123")
                 .firstname("testFirstname1")
                 .lastname("testLastname1")
@@ -49,8 +49,8 @@ public class UserRelevantGenerator {
                 .currentProject("testCurrentProject1")
                 .role(role)
                 .build();
-        if(group!=null) mockUserRequest.setGroup(group);
-        return mockUserRequest;
+        if(group!=null) mockCreateUserRequest.setGroup(group);
+        return mockCreateUserRequest;
     }
 
     public static AdminUserResponse generateValidAdminUserResponse (@Nullable UUID userId,String email, @Nullable String createdBy, Role role, String groupName){

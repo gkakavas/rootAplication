@@ -12,6 +12,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString(exclude = "requestedBy")
 @Entity(name = "Leave")
 @Table(name = "leaves")
 public class Leave {
@@ -27,7 +28,7 @@ public class Leave {
     private LocalDateTime approvedOn;
     private Boolean approved;
     @JsonIgnore
-    @ManyToOne(cascade = CascadeType.PERSIST,fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private User requestedBy;
 

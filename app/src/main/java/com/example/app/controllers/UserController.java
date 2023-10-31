@@ -1,8 +1,12 @@
 package com.example.app.controllers;
 
 import com.example.app.exception.GroupNotFoundException;
+import com.example.app.exception.NewPasswordConfirmationNewPasswordNotMatchException;
 import com.example.app.exception.UserNotFoundException;
+import com.example.app.exception.WrongOldPasswordProvidedException;
+import com.example.app.models.requests.ChangePasswordRequest;
 import com.example.app.models.requests.UserRequestEntity;
+import com.example.app.models.responses.ChangePasswordResponse;
 import com.example.app.models.responses.event.EventResponseEntity;
 import com.example.app.services.UserService;
 import com.example.app.models.responses.user.UserResponseEntity;
@@ -13,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,6 +67,13 @@ public class UserController implements CrudController<UserResponseEntity, UserRe
     public ResponseEntity<Set<EventResponseEntity>> readUserEvents(@PathVariable UUID id)
     throws UserNotFoundException{
         return new ResponseEntity<>(service.readUserEvents(id),HttpStatus.OK);
+    }
+
+    @PatchMapping("/changePassword")
+    public ResponseEntity<UserResponseEntity> changePassword(
+            @RequestBody ChangePasswordRequest request,
+            Principal principal) throws NewPasswordConfirmationNewPasswordNotMatchException, WrongOldPasswordProvidedException {
+        return new ResponseEntity<>(service.changePassword(request,principal),HttpStatus.OK);
     }
 }
 

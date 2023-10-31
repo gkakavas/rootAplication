@@ -1,6 +1,7 @@
 package com.example.app.config;
 
 import com.example.app.security.CustomAccessDeniedHandler;
+import com.example.app.security.IpAddressFilter;
 import com.example.app.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -25,6 +26,7 @@ public class SecurityConfig implements WebMvcConfigurer {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
+    private final IpAddressFilter ipAddressFilter;
     @Bean
     AccessDeniedHandler accessDeniedHandler() {
         return new CustomAccessDeniedHandler();
@@ -46,6 +48,7 @@ public class SecurityConfig implements WebMvcConfigurer {
                         .requestMatchers(DELETE,"/user/delete/{id}").hasAuthority("user::delete")
                         .requestMatchers(PATCH,"/user/patch/{id}").hasAuthority("user::patch")
                         .requestMatchers(GET,"/user/{id}/events").hasAuthority("user::readUserEvents")
+                        .requestMatchers(PATCH,"user/changePassword").authenticated()
 
                         .requestMatchers(POST,"/event/create").hasAuthority("event::create")
                         .requestMatchers(POST,"/event/createGroupEvent/{id}").hasAuthority("event::createByGroup")
@@ -81,6 +84,7 @@ public class SecurityConfig implements WebMvcConfigurer {
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(ipAddressFilter, JwtAuthenticationFilter.class)
                 .exceptionHandling(customizer -> customizer.accessDeniedHandler(accessDeniedHandler()));
         return httpSecurity.build();
     }

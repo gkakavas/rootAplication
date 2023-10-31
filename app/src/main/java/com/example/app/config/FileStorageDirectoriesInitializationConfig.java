@@ -26,7 +26,7 @@ public class FileStorageDirectoriesInitializationConfig {
     public void init() {
         try {
             if (!Files.exists(storageProperties.getTimesheet())) {
-                Files.createDirectory(storageProperties.getTimesheet());
+                Files.createDirectories(storageProperties.getTimesheet());
             }
             if (!Files.exists(storageProperties.getEvaluation())) {
                 Files.createDirectories(storageProperties.getEvaluation());

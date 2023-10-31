@@ -44,7 +44,7 @@ public class LeaveService implements CrudService<LeaveResponseEntity, LeaveReque
         if(currentUser.getRole().equals(Role.ADMIN)||currentUser.getRole().equals(Role.HR)){
             return leaveConverter.fromLeaveToAdminHrMngLeave(leave);
         }
-        else if(currentUser.getRole().equals(Role.MANAGER)&&currentUser.getGroup().equals(leave.getRequestedBy().getGroup())){
+        else if(currentUser.getRole().equals(Role.MANAGER) && currentUser.getGroup().equals(leave.getRequestedBy().getGroup())){
             return leaveConverter.fromLeaveToAdminHrMngLeave(leave);
         }
         else if(currentUser.getRole().equals(Role.USER)&&leave.getRequestedBy().equals(currentUser)){
@@ -57,18 +57,17 @@ public class LeaveService implements CrudService<LeaveResponseEntity, LeaveReque
     public List<LeaveResponseEntity> read() {
         var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow(()
                 -> new AccessDeniedException("You have not authority to access this resource"));
-        if (currentUser.getRole().equals(Role.HR)||currentUser.getRole().equals(Role.ADMIN)) {
-            var users = Set.copyOf(userRepo.findAll());
-            return List.copyOf(commonConverter.usersWithLeaves(users));
+        if (currentUser.getRole().equals(Role.ADMIN)||currentUser.getRole().equals(Role.HR)) {
+            var leaves = leaveRepo.findAll();
+            return List.copyOf(leaveConverter.fromLeaveListToAdminHrMngLeaveList(Set.copyOf(leaves)));
         }
         else if (currentUser.getRole().equals(Role.MANAGER) && currentUser.getGroup()!=null) {
-            var users = Set.copyOf(userRepo.findAllByGroup(currentUser.getGroup()));
-            return List.copyOf(commonConverter.usersWithLeaves(users));
+            var leaves = leaveRepo.findAllByRequestedBy_Group(currentUser.getGroup());
+            return List.copyOf(leaveConverter.fromLeaveListToAdminHrMngLeaveList(Set.copyOf(leaves)));
         }
-        else if(currentUser.getRole().equals(Role.USER)) {
+        else{
             return leaveConverter.fromLeaveListToMyLeaveList(currentUser.getUserRequestedLeaves());
         }
-        else throw new AccessDeniedException("You have not authority to access this resource");
     }
 
     @Override

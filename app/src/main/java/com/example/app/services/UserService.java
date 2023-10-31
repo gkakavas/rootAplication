@@ -2,8 +2,12 @@ package com.example.app.services;
 
 import com.example.app.entities.*;
 import com.example.app.exception.GroupNotFoundException;
+import com.example.app.exception.NewPasswordConfirmationNewPasswordNotMatchException;
 import com.example.app.exception.UserNotFoundException;
+import com.example.app.exception.WrongOldPasswordProvidedException;
+import com.example.app.models.requests.ChangePasswordRequest;
 import com.example.app.models.requests.UserRequestEntity;
+import com.example.app.models.responses.ChangePasswordResponse;
 import com.example.app.models.responses.event.EventResponseEntity;
 import com.example.app.models.responses.user.UserResponseEntity;
 import com.example.app.repositories.GroupRepository;
@@ -11,13 +15,14 @@ import com.example.app.repositories.UserRepository;
 import com.example.app.utils.event.EntityResponseEventConverter;
 import com.example.app.utils.user.EntityResponseUserConverter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
 import java.lang.reflect.Field;
+import java.security.Principal;
 import java.util.*;
 @Service
 @RequiredArgsConstructor
@@ -27,6 +32,7 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     private final GroupRepository groupRepo;
     private final EntityResponseUserConverter userConverter;
     private final EntityResponseEventConverter eventConverter;
+    private final PasswordEncoder passwordEncoder;
     @Override
     public UserResponseEntity create(UserRequestEntity request) throws UserNotFoundException {
             var userCreator = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
@@ -80,19 +86,18 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
             var response = userRepo.save(updatedUser);
             return userConverter.fromUserToAdminUser(response);
     }
+
     @Override
     public boolean delete(UUID id) throws UserNotFoundException {
-        if(id!=null){
-            var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
-            user.getUserHasEvents().clear();
-            user.setGroup(null);
-            userRepo.save(user);
-            userRepo.deleteById(id);
-         return true;
-        }
-        else{
-            throw new UserNotFoundException();
-        }
+        var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
+        user.setUserHasEvents(null);
+        user.setUserRequestedLeaves(null);
+        user.setUserHasFiles(null);
+        var group = user.getGroup();
+        group.getGroupHasUsers().remove(user);
+        groupRepo.save(group);
+        userRepo.delete(user);
+        return userRepo.existsById(user.getUserId());
     }
 
     public UserResponseEntity patch(UUID userId, Map<String, String> userFields) throws UserNotFoundException, GroupNotFoundException {
@@ -124,5 +129,20 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     public Set<EventResponseEntity> readUserEvents(UUID userId)throws UserNotFoundException {
         var user = userRepo.findById(userId).orElseThrow(UserNotFoundException::new);
         return eventConverter.fromEventListToMyList(user.getUserHasEvents());
+    }
+
+    public UserResponseEntity changePassword(ChangePasswordRequest request, Principal connectedUser) throws WrongOldPasswordProvidedException, NewPasswordConfirmationNewPasswordNotMatchException {
+        User currentUser = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+        if(!passwordEncoder.matches(request.getOldPassword(), currentUser.getPassword())){
+            throw new WrongOldPasswordProvidedException();
+        }
+        if(!request.getNewPassword().equals(request.getConfirmationNewPassword())){
+            throw new NewPasswordConfirmationNewPasswordNotMatchException();
+        }
+        currentUser.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepo.save(currentUser);
+        return ChangePasswordResponse.builder()
+                .message("Your password successfully was changed")
+                .build();
     }
 }

@@ -26,6 +26,9 @@ file-storage:
   root: uploads
   timesheet: ${file-storage.root}/timesheets
   evaluation: ${file-storage.root}/evaluations
+allowed-ips:
+  ips:
+    - 0:0:0:0:0:0:0:1
 Logging:
   level:
     com.example: TRACE
