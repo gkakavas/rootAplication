@@ -3,13 +3,17 @@ package com.example.app.controllers.event;
 import com.example.app.advice.ApplicationExceptionHandler;
 import com.example.app.config.TestSecurityConfig;
 import com.example.app.controllers.EventController;
+import com.example.app.entities.Role;
+import com.example.app.entities.User;
 import com.example.app.models.requests.EventRequestEntity;
 import com.example.app.models.responses.event.AdminHrMngEventResponse;
-import com.example.app.models.responses.event.EventResponseEntity;
 import com.example.app.services.EventService;
+import com.example.app.tool.EventRelevantGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.instancio.Instancio;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -17,15 +21,17 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.*;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.instancio.Select.field;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest
 @ContextConfiguration(classes = {TestSecurityConfig.class, EventController.class, ApplicationExceptionHandler.class})
@@ -36,199 +42,181 @@ public class EventControllerPositiveUnitTest {
     private MockMvc mockMvc;
     @Autowired
     private ObjectMapper objectMapper;
-    private static final String TEST_TOKEN = "testToken";
-    private static final String USERNAME1 = "test@user1.com";
-    private static final String USERNAME2 = "test@user2.com";
-    private static final LocalDateTime eventDateTime = LocalDateTime.of(2023,9,18,15,0,1);
-    private static final LocalDateTime eventExpiration = LocalDateTime.of(2023,9,18,16,0,1);
-    private static final Set<String> usernameSet = new HashSet<>(Arrays.asList(USERNAME1,USERNAME2));
-    private static final Set<UUID> uuidSet = new HashSet<>(Arrays.asList(UUID.randomUUID(),UUID.randomUUID()));
-    private static final EventRequestEntity request = EventRequestEntity.builder()
-            .eventBody("test_event_body")
-            .eventDescription("test_event_description")
-            .eventDateTime(eventDateTime.toString())
-            .eventExpiration(eventExpiration.toString())
-            .idsSet(uuidSet)
-            .build();
+    private User currentUser;
+    private String roleValue;
 
-    private static final AdminHrMngEventResponse response= AdminHrMngEventResponse.builder()
-            .eventId(UUID.randomUUID())
-            .eventBody("Test event Body")
-            .eventDescription("Test event Description")
-            .eventCreator("testEvent@creator.com")
-            .eventDateTime(eventDateTime)
-            .eventExpiration(eventExpiration)
-            .users(usernameSet)
-            .build();
-
-    @Test
+    void setUp() {
+        this.currentUser = Instancio.of(User.class)
+                .set(field(User::getRole), Role.valueOf(this.roleValue))
+                .create();
+    }
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN","HR"})
     @DisplayName("Should create a new event and return this")
-    void shouldCreateANewEventAndReturnThisBack() throws Exception {
-        when(eventService.create(any(EventRequestEntity.class))).thenReturn(response);
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/event/create")
-                        .header("Authorization",TEST_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.eventId",equalTo(response.getEventId().toString())))
-                .andExpect(jsonPath("$.eventBody",equalTo(response.getEventBody())))
-                .andExpect(jsonPath("$.eventDescription",equalTo(response.getEventDescription())))
-                .andExpect(jsonPath("$.eventCreator",equalTo(response.getEventCreator())))
-                .andExpect(jsonPath("$.eventDateTime",equalTo(response.getEventDateTime().toString())))
-                .andExpect(jsonPath("$.eventExpiration",equalTo(response.getEventExpiration().toString())))
-                .andExpect(jsonPath("$.users",containsInAnyOrder(response.getUsers().toArray())));
-    }
-
-    @Test
-    @DisplayName("Should create a new event by group and return this")
-    void shouldCreateANewEventByGroupAndReturnThisBack() throws Exception {
-        when(eventService.createForGroup(any(EventRequestEntity.class),any(UUID.class))).thenReturn(response);
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/event/createGroupEvent/{id}",UUID.randomUUID())
-                        .header("Authorization",TEST_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.eventId",equalTo(response.getEventId().toString())))
-                .andExpect(jsonPath("$.eventBody",equalTo(response.getEventBody())))
-                .andExpect(jsonPath("$.eventDescription",equalTo(response.getEventDescription())))
-                .andExpect(jsonPath("$.eventCreator",equalTo(response.getEventCreator())))
-                .andExpect(jsonPath("$.eventDateTime",equalTo(response.getEventDateTime().toString())))
-                .andExpect(jsonPath("$.eventExpiration",equalTo(response.getEventExpiration().toString())))
-                .andExpect(jsonPath("$.users",containsInAnyOrder(response.getUsers().toArray())));
-    }
-    @Test
-    @DisplayName("Should return a specified event")
-    void shouldReturnTheSpecifiedEvent() throws Exception {
-        when(eventService.read(any(UUID.class))).thenReturn(response);
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/event/{id}",UUID.randomUUID()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.eventId",equalTo(response.getEventId().toString())))
-                .andExpect(jsonPath("$.eventBody",equalTo(response.getEventBody())))
-                .andExpect(jsonPath("$.eventDescription",equalTo(response.getEventDescription())))
-                .andExpect(jsonPath("$.eventCreator",equalTo(response.getEventCreator())))
-                .andExpect(jsonPath("$.eventDateTime",equalTo(response.getEventDateTime().toString())))
-                .andExpect(jsonPath("$.eventExpiration",equalTo(response.getEventExpiration().toString())))
-                .andExpect(jsonPath("$.users", containsInAnyOrder(response.getUsers().toArray())));
-    }
-
-    @Test
-    @DisplayName("Should return all events")
-    void shouldReturnAllEvents() throws Exception {
-        EventResponseEntity response1 = AdminHrMngEventResponse.builder()
+    void shouldCreateANewEventAndReturnThisBack(String roleValue) throws Exception {
+        this.roleValue = roleValue;
+        setUp();
+        var request = EventRelevantGenerator.generateValidEventRequestEntity("test event description");
+        var response = AdminHrMngEventResponse.builder()
                 .eventId(UUID.randomUUID())
-                .eventBody("Event_Response_1_Body")
-                .eventDescription("Event_Response_1_Description")
-                .eventCreator("creator1@email.com")
-                .eventDateTime(eventDateTime)
-                .eventExpiration(eventExpiration)
-                .users(Set.of("test1@user.com","test2@user.com"))
-                .build();
-        EventResponseEntity response2 = AdminHrMngEventResponse.builder()
-                .eventId(UUID.randomUUID())
-                .eventBody("Event_Response_2_Body")
-                .eventDescription("Event_Response_2_Description")
-                .eventCreator("creator2@email.com")
-                .eventDateTime(eventDateTime)
-                .eventExpiration(eventExpiration)
-                .users(Set.of("test3@user.com","test4@user.com"))
-                .build();
-        List<EventResponseEntity> responseEntityList = List.of(response1,response2);
-        when(eventService.read()).thenReturn(responseEntityList);
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/event/"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()",equalTo(responseEntityList.size())));
-    }
-
-    @Test
-    @DisplayName("Should update an event and return updated event")
-    void shouldUpdateAnEventAndReturnThisBack() throws Exception {
-        request.setEventBody("test_updated_event_body");
-        request.setEventDescription("test_updated_event_description");
-        var updateResponse = AdminHrMngEventResponse.builder()
-                .eventId(UUID.randomUUID())
-                .eventBody(request.getEventBody())
                 .eventDescription(request.getEventDescription())
+                .eventBody(request.getEventBody())
+                .eventCreator(currentUser.getEmail())
                 .eventDateTime(LocalDateTime.parse(request.getEventDateTime()))
                 .eventExpiration(LocalDateTime.parse(request.getEventExpiration()))
-                .eventCreator(response.getEventCreator())
-                .users(response.getUsers())
+                .users(Instancio.ofSet(String.class).size(request.getIdsSet().size()).create())
                 .build();
-        when(eventService.update(any(UUID.class),any(EventRequestEntity.class))).thenReturn(updateResponse);
-        this.mockMvc.perform(MockMvcRequestBuilders.put("/event/update/{id}",updateResponse.getEventId())
-                        .header("Authorization",TEST_TOKEN)
+        when(eventService.create(request,any(Principal.class))).thenReturn(response);
+        this.mockMvc.perform(MockMvcRequestBuilders.post("/event/create")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(content().json(objectMapper.writeValueAsString(response)));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN","HR","MANAGER"})
+    @DisplayName("Should create a new event by group and return this")
+    void shouldCreateANewEventByGroupAndReturnThisBack(String roleValue) throws Exception {
+        this.roleValue = roleValue;
+        setUp();
+        var request = EventRelevantGenerator.generateValidEventRequestEntity("test event description");
+        var response = AdminHrMngEventResponse.builder()
+                .eventId(UUID.randomUUID())
+                .eventDescription(request.getEventDescription())
+                .eventBody(request.getEventBody())
+                .eventCreator(currentUser.getEmail())
+                .eventDateTime(LocalDateTime.parse(request.getEventDateTime()))
+                .eventExpiration(LocalDateTime.parse(request.getEventExpiration()))
+                .users(Instancio.ofSet(String.class).size(request.getIdsSet().size()).create())
+                .build();
+        when(eventService.createForGroup(request,currentUser.getGroup().getGroupId(),any(Principal.class)))
+                .thenReturn(response);
+        this.mockMvc.perform(MockMvcRequestBuilders.post("/event/createGroupEvent/{id}",currentUser.getGroup().getGroupId().toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(content().json(objectMapper.writeValueAsString(response)));
+    }
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN","HR","MANAGER"})
+    @DisplayName("Should return a specified event")
+    void shouldReturnTheSpecifiedEvent(String roleValue) throws Exception {
+        var adminHrMngResponse = Instancio.create(AdminHrMngEventResponse.class);
+        this.roleValue = roleValue;
+        setUp();
+        when(eventService.read(adminHrMngResponse.getEventId())).thenReturn(adminHrMngResponse);
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/event/{id}",adminHrMngResponse.getEventId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(adminHrMngResponse)));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN","HR","MANAGER"})
+    @DisplayName("Should return all events")
+    void shouldReturnAllEvents(String roleValue) throws Exception {
+        this.roleValue = roleValue;
+        setUp();
+        var adminHrResponse = Instancio.createList(AdminHrMngEventResponse.class);
+        when(eventService.read(any(Principal.class))).thenReturn(List.copyOf(adminHrResponse));
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/event/all"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(adminHrResponse)));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN","HR","USER"})
+    @DisplayName("Should update an event and return updated event")
+    void shouldUpdateAnEventAndReturnThisBack(String roleValue) throws Exception {
+        var request = Instancio.create(EventRequestEntity.class);
+        var response = AdminHrMngEventResponse.builder()
+                .eventId(UUID.randomUUID())
+                .eventDescription(request.getEventDescription())
+                .eventBody(request.getEventBody())
+                .eventCreator(currentUser.getEmail())
+                .eventDateTime(LocalDateTime.parse(request.getEventDateTime()))
+                .eventExpiration(LocalDateTime.parse(request.getEventExpiration()))
+                .users(Instancio.ofSet(String.class).size(request.getIdsSet().size()).create())
+                .build();
+        this.roleValue = roleValue;
+        setUp();
+        when(eventService.update(response.getEventId(),request)).thenReturn(response);
+        this.mockMvc.perform(MockMvcRequestBuilders.put("/event/update/{id}",response.getEventId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isAccepted())
-                .andExpect(jsonPath("$.eventId",equalTo(updateResponse.getEventId().toString())))
-                .andExpect(jsonPath("$.eventBody",equalTo(updateResponse.getEventBody())))
-                .andExpect(jsonPath("$.eventDescription",equalTo(updateResponse.getEventDescription())))
-                .andExpect(jsonPath("$.eventCreator",equalTo(updateResponse.getEventCreator())))
-                .andExpect(jsonPath("$.eventDateTime",equalTo(updateResponse.getEventDateTime().toString())))
-                .andExpect(jsonPath("$.eventExpiration",equalTo(updateResponse.getEventExpiration().toString())))
-                .andExpect(jsonPath("$.users",containsInAnyOrder(updateResponse.getUsers().toArray())));
+                .andExpect(content().json(objectMapper.writeValueAsString(request)));
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN","HR","MANAGER"})
     @DisplayName("Should delete a user")
-    void shouldDeleteAUser() throws Exception {
-        when(eventService.delete(any(UUID.class))).thenReturn(true);
-        this.mockMvc.perform(MockMvcRequestBuilders.delete("/event/delete/{id}",UUID.randomUUID())
-                .header("Authorization",TEST_TOKEN))
+    void shouldDeleteAUser(String roleValue) throws Exception {
+        this.roleValue = roleValue;
+        setUp();
+        var eventUUIDToDelete = UUID.randomUUID();
+        when(eventService.delete(eventUUIDToDelete)).thenReturn(true);
+        this.mockMvc.perform(MockMvcRequestBuilders.delete("/event/delete/{id}",eventUUIDToDelete.toString()))
                 .andExpect(status().isNoContent());
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN","HR","MANAGER"})
     @DisplayName("should add users to an existing event")
-    void shouldAddUsersToAnExistingEvent() throws Exception {
-        when(eventService.addUsersToEvent(anySet(),any(UUID.class))).thenReturn(response);
+    void shouldAddUsersToAnExistingEvent(String roleValue) throws Exception {
+        this.roleValue = roleValue;
+        setUp();
+        var request = Instancio.ofSet(UUID.class).create();
+        var response = Instancio.of(AdminHrMngEventResponse.class).ignore(field(AdminHrMngEventResponse::getUsers)).create();
+        response.getUsers().addAll(Instancio.ofSet(String.class).size(request.size()).create());
+        when(eventService.addUsersToEvent(request,response.getEventId())).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.patch("/event/addUsers/{eventId}",response.getEventId())
-                        .header("Authorization",TEST_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(uuidSet)))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isAccepted())
-                .andExpect(jsonPath("$.users",containsInAnyOrder(response.getUsers().toArray())));
+                .andExpect(content().json(objectMapper.writeValueAsString(response)));
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN","HR","MANAGER"})
     @DisplayName("should remove users from an existing event")
-    void shouldRemoveUsersFromAnExistingEvent() throws Exception {
-        when(eventService.removeUsersFromEvent(anySet(),any(UUID.class))).thenReturn(response);
+    void shouldRemoveUsersFromAnExistingEvent(String roleValue) throws Exception {
+        this.roleValue = roleValue;
+        setUp();
+        var request = Instancio.ofSet(UUID.class).create();
+        var response = Instancio.of(AdminHrMngEventResponse.class).ignore(field(AdminHrMngEventResponse::getUsers)).create();
+        response.getUsers().addAll(Instancio.ofSet(String.class).size(request.size()).create());
+        when(eventService.removeUsersFromEvent(request,response.getEventId())).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.patch("/event/removeUsers/{eventId}",response.getEventId())
-                        .header("Authorization",TEST_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(uuidSet)))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isAccepted())
-                .andExpect(jsonPath("$.users",containsInAnyOrder(response.getUsers().toArray())));
+                .andExpect(content().json(objectMapper.writeValueAsString(response)));
     }
-    @Test
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN","HR","MANAGER"})
     @DisplayName("should patch the details of an existing event")
-    void shouldPatchTheDetailsOfAnExistingEvent() throws Exception{
-        var patchedExpiration = LocalDateTime.of(2023,9,18,17,0,1);
-        var patchedDescription = "patched description";
-        var patchedResponse = AdminHrMngEventResponse.builder()
-                .eventId(response.getEventId())
-                .eventBody(response.getEventBody())
-                .eventDescription(patchedDescription)
-                .eventDateTime(response.getEventDateTime())
-                .eventExpiration(patchedExpiration)
-                .eventCreator(response.getEventCreator())
-                .users(response.getUsers())
+    void shouldPatchTheDetailsOfAnExistingEvent(String roleValue) throws Exception{
+        this.roleValue = roleValue;
+        setUp();
+        var eventRequestEntity = EventRelevantGenerator.generateValidEventRequestEntity("This is the event Description");
+        var request = new HashMap<String,String>();
+        request.put("eventDescription",eventRequestEntity.getEventDescription());
+        request.put("eventBody",eventRequestEntity.getEventBody());
+        request.put("eventDateTime",eventRequestEntity.getEventDateTime());
+        request.put("eventExpiration",eventRequestEntity.getEventExpiration());
+        var response = AdminHrMngEventResponse.builder()
+                .eventId(UUID.randomUUID()).eventDescription(request.get("eventDescription"))
+                .eventBody(request.get("eventBody")).eventCreator(currentUser.getEmail())
+                .eventDateTime(LocalDateTime.parse(request.get("eventDateTime")))
+                .eventExpiration(LocalDateTime.parse(request.get("eventExpiration"))).users(Instancio.createSet(String.class))
                 .build();
-        Map<String,String> requestMap = new HashMap<>();
-        requestMap.put("eventDescription",patchedDescription);
-        requestMap.put("eventExpiration",patchedExpiration.toString());
-        when(eventService.patchEventDetails(any(UUID.class),anyMap())).thenReturn(patchedResponse);
-        this.mockMvc.perform(MockMvcRequestBuilders.patch("/event/patchEventDetails/{eventId}",patchedResponse.getEventId())
-                        .header("Authorization",TEST_TOKEN)
+        when(eventService.patchEventDetails(response.getEventId(),request)).thenReturn(response);
+        this.mockMvc.perform(MockMvcRequestBuilders.patch("/event/patchEventDetails/{eventId}",response.getEventId().toString())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestMap)))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isAccepted())
-                .andExpect(jsonPath("$.eventId",equalTo(patchedResponse.getEventId().toString())))
-                .andExpect(jsonPath("$.eventBody",equalTo(patchedResponse.getEventBody())))
-                .andExpect(jsonPath("$.eventDescription",equalTo(patchedResponse.getEventDescription())))
-                .andExpect(jsonPath("$.eventCreator",equalTo(patchedResponse.getEventCreator())))
-                .andExpect(jsonPath("$.eventDateTime",equalTo(patchedResponse.getEventDateTime().toString())))
-                .andExpect(jsonPath("$.eventExpiration",equalTo(patchedResponse.getEventExpiration().toString())))
-                .andExpect(jsonPath("$.users",containsInAnyOrder(patchedResponse.getUsers().toArray())));
+                .andExpect(content().json(objectMapper.writeValueAsString(response)));
+
     }
 }

@@ -3,6 +3,7 @@ package com.example.app.controllers.file;
 import com.example.app.advice.ApplicationExceptionHandler;
 import com.example.app.config.TestSecurityConfig;
 import com.example.app.controllers.FileController;
+import com.example.app.controllers.utils.ExcelFileGenerator;
 import com.example.app.entities.FileKind;
 import com.example.app.models.responses.common.UserWithFiles;
 import com.example.app.models.responses.file.AdminHrManagerFileResponse;
@@ -13,7 +14,9 @@ import com.example.app.models.responses.user.AdminUserResponse;
 import com.example.app.services.FileStorageService;
 import com.example.app.utils.file.FileSizeConverter;
 import com.example.app.utils.file.FileContent;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
+import org.hamcrest.MatcherAssert;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,10 +28,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -48,6 +53,8 @@ public class FileControllerTest {
     private FileStorageService fileStorageService;
     @Autowired
     private MockMvc mockMvc;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Test
     @DisplayName("Should upload a multipart file")
@@ -57,30 +64,22 @@ public class FileControllerTest {
         String token = "testToken";
         byte[] contentBytes = fileContent.getBytes(StandardCharsets.UTF_8);
         var request = new MockMultipartFile("file", fileName, "text/plain", contentBytes);
-        var response = Instancio.of(UserFileResponse.class)
-                .set(field("filename"), request.getOriginalFilename())
-                .set(field("fileSize"), FileSizeConverter.convert(request.getSize()))
-                .ignore(field("approved"))
-                .ignore(field("approvedBy"))
-                .ignore(field("approvedDate"))
-                .set(field("fileKind"), FileKind.EVALUATION)
-                .create();
-        when(fileStorageService.upload(request)).thenReturn(response);
+        var response = UserFileResponse.builder()
+                .fileId(UUID.randomUUID())
+                .filename(request.getOriginalFilename())
+                .fileSize(FileSizeConverter.convert(request.getSize()))
+                .fileKind(FileKind.TIMESHEET)
+                .build();
+        when(fileStorageService.upload(request,any(Principal.class))).thenReturn(response);
         this.mockMvc.perform(multipart("/file/upload").file(request)
                         .header("Authorization", token))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.fileId", equalTo(response.getFileId().toString())))
-                .andExpect(jsonPath("$.filename", equalTo(response.getFilename())))
-                .andExpect(jsonPath("$.fileSize", equalTo(response.getFileSize())))
-                .andExpect(jsonPath("$.approved", equalTo(response.getApproved())))
-                .andExpect(jsonPath("$.approvedBy", equalTo(response.getApprovedBy())))
-                .andExpect(jsonPath("$.approvedDate", equalTo(response.getApprovedDate())))
-                .andExpect(jsonPath("$.fileKind", equalTo(response.getFileKind().name())));
+                .andExpect(content().json(objectMapper.writeValueAsString(response)));
     }
 
     @Test
-    @DisplayName("Should Download A Specified Evaluation")
-    void shouldDownloadASpecifiedEvaluation() throws Exception {
+    @DisplayName("Should Download A Specific Evaluation")
+    void shouldDownloadASpecificEvaluation() throws Exception {
         String fileContent = "this text is from a test .txt file";
         String fileName = "testFile";
         String testToken = "testToken";
@@ -92,8 +91,9 @@ public class FileControllerTest {
                 .fileType(FileContent.txt.getFileContent())
                 .resource(new FileSystemResource(testFile.getAbsolutePath()))
                 .build();
-        when(fileStorageService.download(any(UUID.class), eq(FileKind.EVALUATION))).thenReturn(response);
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/file/download/evaluation/{fileId}", UUID.randomUUID()).header("Authorization", testToken))
+        var uuidOfFile = UUID.randomUUID();
+        when(fileStorageService.download(uuidOfFile, FileKind.EVALUATION, any(Principal.class))).thenReturn(response);
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/file/download/evaluation/{fileId}",uuidOfFile))
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, equalTo("attachment; filename=" + response.getFileName())))
                 .andExpect(header().string(HttpHeaders.CONTENT_TYPE, equalTo(response.getFileType())))
@@ -106,30 +106,22 @@ public class FileControllerTest {
     void shouldDownloadASpecifiedTimesheet() throws Exception {
         String fileName = "testFile";
         String testToken = "testToken";
-        /*byte[] contentBytes = ExcelFileGenerator.generateExcelFile(fileName);
+        byte[] contentBytes = ExcelFileGenerator.generateExcelFile(fileName);
         File testFile = File.createTempFile(fileName, ".xls");
         assert contentBytes != null;
-        FileUtils.writeByteArrayToFile(testFile, contentBytes);*/
+        FileUtils.writeByteArrayToFile(testFile, contentBytes);
         var response = FileResourceResponse.builder()
-                .fileName(fileName)
+                .fileName(testFile.getName())
                 .fileType(FileContent.xls.getFileContent())
-                .resource(new FileSystemResource("C:\\Users\\georgios.kakavas\\Downloads\\rootAplication\\app\\src\\test\\testResources\\testExcelFile.xlsx"))
+                .resource(new FileSystemResource(testFile.getAbsolutePath()))
                 .build();
-        InputStream inputStream = response.getResource().getInputStream();
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-        when(fileStorageService.download(any(UUID.class), eq(FileKind.TIMESHEET))).thenReturn(response);
-        /*InputStream inputStream = response.getResource().getInputStream();
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));*/
+        var uuidOfFile = UUID.randomUUID();
+        when(fileStorageService.download(uuidOfFile,FileKind.TIMESHEET,any(Principal.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.get("/file/download/timesheet/{fileId}", UUID.randomUUID()).header("Authorization", testToken))
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, equalTo("attachment; filename=" + response.getFileName())))
                 .andExpect(header().string(HttpHeaders.CONTENT_TYPE, equalTo(response.getFileType())))
-        /*.andExpect(jsonPath("$".,equalTo(bufferedReader.readLine())))*/
-        /*.andExpect(content().json(bufferedReader.readLine()))*/
-        /*.andExpect(content().string(bufferedReader.readLine()))*/;
-        /*System.out.println(content().string(bufferedReader.readLine()));*/
-        /*System.out.println("response::" + jsonPath("$"));
-        System.out.println("expectedResponse::" + bufferedReader.readLine());*/
+                .andExpect(jsonPath("$.*",is(notNullValue())));
     }
 
 

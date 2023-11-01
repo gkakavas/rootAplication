@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,18 +23,18 @@ public class LeaveController implements CrudController<LeaveResponseEntity, Leav
     private final LeaveService service;
 
     @Override
-    public ResponseEntity<LeaveResponseEntity> create(@Valid LeaveRequestEntity request) throws UserNotFoundException {
-        return new ResponseEntity<>(service.create(request), HttpStatus.CREATED);
+    public ResponseEntity<LeaveResponseEntity> create(@Valid LeaveRequestEntity request, Principal connectedUser) throws UserNotFoundException {
+        return new ResponseEntity<>(service.create(request,connectedUser), HttpStatus.CREATED);
     }
 
     @Override
-    public ResponseEntity<LeaveResponseEntity> readOne(UUID id) throws LeaveNotFoundException {
-        return new ResponseEntity<>(service.read(id),HttpStatus.OK);
+    public ResponseEntity<LeaveResponseEntity> readOne(UUID id, Principal connectedUser) throws LeaveNotFoundException {
+        return new ResponseEntity<>(service.read(id,connectedUser),HttpStatus.OK);
     }
 
     @Override
-    public ResponseEntity<List<LeaveResponseEntity>> readAll() {
-        return new ResponseEntity<>(service.read(),HttpStatus.OK) ;
+    public ResponseEntity<List<LeaveResponseEntity>> readAll(Principal connectedUser) {
+        return new ResponseEntity<>(service.read(connectedUser),HttpStatus.OK) ;
     }
 
     @Override
@@ -50,8 +52,9 @@ public class LeaveController implements CrudController<LeaveResponseEntity, Leav
 
     @PatchMapping("/approval/{id}")
     public ResponseEntity<LeaveResponseEntity> approveLeave(
-            @PathVariable UUID id)
+            @PathVariable UUID id,
+            Principal connectedUser)
     throws LeaveNotFoundException,UserNotFoundException{
-        return new ResponseEntity<>(service.approveLeave(id),HttpStatus.OK);
+        return new ResponseEntity<>(service.approveLeave(id,connectedUser),HttpStatus.OK);
     }
 }

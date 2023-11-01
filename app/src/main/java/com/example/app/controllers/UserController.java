@@ -33,16 +33,18 @@ public class UserController implements CrudController<UserResponseEntity, UserRe
 
     @Override
     public ResponseEntity<UserResponseEntity> create
-            (@Validated UserRequestEntity request) throws UserNotFoundException{
-        return new ResponseEntity<>(service.create(request), HttpStatus.CREATED);
+            (@Validated UserRequestEntity request,
+             Principal connectedUser
+            ) throws UserNotFoundException{
+        return new ResponseEntity<>(service.create(request,connectedUser), HttpStatus.CREATED);
     }
     @Override
-    public ResponseEntity<UserResponseEntity> readOne(UUID id) throws UserNotFoundException {
-        return new ResponseEntity<>(service.read(id), HttpStatus.OK);
+    public ResponseEntity<UserResponseEntity> readOne(UUID id,Principal connectedUser) throws UserNotFoundException {
+        return new ResponseEntity<>(service.read(id,connectedUser), HttpStatus.OK);
     }
     @Override
-    public ResponseEntity<List<UserResponseEntity>> readAll() {
-        return new ResponseEntity<>(service.read(),HttpStatus.OK);
+    public ResponseEntity<List<UserResponseEntity>> readAll(Principal connectedUser) {
+        return new ResponseEntity<>(service.read(connectedUser),HttpStatus.OK);
     }
 
     @Override
@@ -57,21 +59,19 @@ public class UserController implements CrudController<UserResponseEntity, UserRe
     @PatchMapping("/patch/{id}")
     public ResponseEntity<UserResponseEntity> patch
             (@PathVariable UUID id,
-             @RequestBody
-             @UserPatchValue Map<String, String> request)
+             @RequestBody @UserPatchValue Map<String, String> request)
             throws UserNotFoundException, GroupNotFoundException {
         return new ResponseEntity<>(service.patch(id,request),HttpStatus.OK);
     }
     @PreAuthorize("#id == authentication.principal.userId")
     @GetMapping("/{id}/events")
-    public ResponseEntity<Set<EventResponseEntity>> readUserEvents(@PathVariable UUID id)
-    throws UserNotFoundException{
+    public ResponseEntity<Set<EventResponseEntity>> readUserEvents(@PathVariable UUID id) throws UserNotFoundException {
         return new ResponseEntity<>(service.readUserEvents(id),HttpStatus.OK);
     }
 
     @PatchMapping("/changePassword")
     public ResponseEntity<UserResponseEntity> changePassword(
-            @RequestBody ChangePasswordRequest request,
+            @RequestBody @Validated ChangePasswordRequest request,
             Principal principal) throws NewPasswordConfirmationNewPasswordNotMatchException, WrongOldPasswordProvidedException {
         return new ResponseEntity<>(service.changePassword(request,principal),HttpStatus.OK);
     }

@@ -28,55 +28,45 @@ import java.util.*;
 @RequiredArgsConstructor
 public class UserService implements CrudService<UserResponseEntity, UserRequestEntity,UserNotFoundException>{
     private final UserRepository userRepo;
-    private final JwtService jwtService;
     private final GroupRepository groupRepo;
     private final EntityResponseUserConverter userConverter;
     private final EntityResponseEventConverter eventConverter;
     private final PasswordEncoder passwordEncoder;
     @Override
-    public UserResponseEntity create(UserRequestEntity request) throws UserNotFoundException {
-            var userCreator = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
-                    .orElseThrow(UserNotFoundException::new);
-            var group = groupRepo.findById(request.getGroup()).orElse(null);
-            var user =  userRepo.save(userConverter.fromRequestToEntity(
-                    request,userCreator.getUserId(), group));
-            return userConverter.fromUserToAdminUser(user);
+    public UserResponseEntity create(UserRequestEntity request,Principal connectedUser) throws UserNotFoundException {
+        User userCreator = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+        var group = groupRepo.findById(request.getGroup()).orElse(null);
+        var user =  userRepo.save(userConverter.fromRequestToEntity(
+                request,userCreator.getUserId(), group));
+        return userConverter.fromUserToAdminUser(user);
     }
 
     public User read(String email) throws UserNotFoundException {
         return userRepo.findByEmail(email).orElseThrow(UserNotFoundException::new);
     }
     @Override
-    public UserResponseEntity read(UUID id) throws UserNotFoundException {
+    public UserResponseEntity read(UUID id,Principal connectedUser) throws UserNotFoundException {
         var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
-        var currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepo.findByEmail(currentUserEmail).orElseThrow(UserNotFoundException::new);
+        User currentUser = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
         if(currentUser.getRole().equals(Role.ADMIN)) {
             return userConverter.fromUserToAdminUser(user);
         }
-        else if(currentUser.getRole().equals(Role.USER)|| currentUser.getRole().equals(Role.HR)
-                ||currentUser.getRole().equals(Role.MANAGER)){
+        else if(List.of(Role.HR,Role.MANAGER,Role.USER).contains(currentUser.getRole())){
             return userConverter.fromUserToOtherUser(user);
         }
         else throw new AccessDeniedException("Unauthorized request");
     }
     @Override
-    public List<UserResponseEntity> read() {
+    public List<UserResponseEntity> read(Principal connectedUser) {
         Set<User> users = Set.copyOf(userRepo.findAll());
-        var currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-        try {
-            User currentUser = userRepo.findByEmail(currentUserEmail).orElseThrow(UserNotFoundException::new);
-            if (currentUser.getRole().name().equals("ADMIN")) {
+        User currentUser = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+            if (currentUser.getRole().equals(Role.ADMIN)) {
                 return List.copyOf(userConverter.fromUserListToAdminList(users));
             }
-            else if (currentUser.getRole().name().equals("USER")||currentUser.getRole().name().equals("HR")
-                    ||currentUser.getRole().name().equals("MANAGER")) {
+            else if (List.of(Role.HR,Role.MANAGER,Role.USER).contains(currentUser.getRole())) {
                 return List.copyOf(userConverter.fromUserListToOtherList(users));
             } else
                 throw new AccessDeniedException("Unauthorized request");
-        }catch (UserNotFoundException e){
-            throw new AccessDeniedException("Unauthorized request");
-        }
     }
     @Override
     public UserResponseEntity update(UUID id, UserRequestEntity request) throws UserNotFoundException {

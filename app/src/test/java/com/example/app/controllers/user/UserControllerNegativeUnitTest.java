@@ -18,6 +18,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -48,14 +49,8 @@ public class UserControllerNegativeUnitTest {
             "should return 400 and the incorrect values error messages")
     void createRequestShouldReturn400AndTheIncorrectValuesErrorMessages() throws Exception {
         var createRequest = UserRequestEntity.builder()
-                .firstname("te")
-                .lastname("st")
-                .password("invalid_password")
-                .email("invalid_email")
-                .specialization("specialization")
-                .group(UUID.randomUUID())
-                .currentProject("current_project")
-                .role("invalid_role")
+                .firstname("te").lastname("st").password("invalid_password").email("invalid_email")
+                .specialization("specialization").group(UUID.randomUUID()).currentProject("current_project").role("invalid_role")
                 .build();
         this.mockMvc.perform(MockMvcRequestBuilders.post("/user/create")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -80,7 +75,6 @@ public class UserControllerNegativeUnitTest {
                 .password(null)
                 .email(null)
                 .specialization(null)
-                .group(null)
                 .currentProject(null)
                 .role(null)
                 .build();
@@ -155,7 +149,7 @@ public class UserControllerNegativeUnitTest {
             "should return 404 and a response with error message and response status code")
     void readOneShouldReturn404AndAResponseWithErrorMessageAndResponseStatusCode() throws Exception {
         var nonExistingUUID = UUID.randomUUID();
-        when(userService.read(nonExistingUUID)).thenThrow(new UserNotFoundException());
+        when(userService.read(nonExistingUUID,any(Principal.class))).thenThrow(new UserNotFoundException());
         this.mockMvc.perform(MockMvcRequestBuilders.get("/user/{id}",nonExistingUUID)
                 )
                 .andExpect(status().isNotFound())
@@ -172,14 +166,8 @@ public class UserControllerNegativeUnitTest {
                     "should return 400 and the incorrect values error messages")
     void userUpdateShouldReturn400AndTheIncorrectValuesErrorMessages() throws Exception {
         var updateRequest = UserRequestEntity.builder()
-                .firstname("te")
-                .lastname("st")
-                .password("invalid_password")
-                .email("invalid_email")
-                .specialization("specialization")
-                .group(UUID.randomUUID())
-                .currentProject("current_project")
-                .role("invalid_role")
+                .firstname("te").lastname("st").password("invalid_password").email("invalid_email")
+                .specialization("specialization").group(UUID.randomUUID()).currentProject("current_project").role("invalid_role")
                 .build();
         this.mockMvc.perform(MockMvcRequestBuilders.put("/user/update/{id}", UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -204,7 +192,6 @@ public class UserControllerNegativeUnitTest {
                 .password(null)
                 .email(null)
                 .specialization(null)
-                .group(null)
                 .currentProject(null)
                 .role(null)
                 .build();

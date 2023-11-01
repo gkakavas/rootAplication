@@ -48,7 +48,7 @@ public class SecurityConfig implements WebMvcConfigurer {
                         .requestMatchers(DELETE,"/user/delete/{id}").hasAuthority("user::delete")
                         .requestMatchers(PATCH,"/user/patch/{id}").hasAuthority("user::patch")
                         .requestMatchers(GET,"/user/{id}/events").hasAuthority("user::readUserEvents")
-                        .requestMatchers(PATCH,"user/changePassword").authenticated()
+                        .requestMatchers(PATCH,"/user/changePassword").authenticated()
 
                         .requestMatchers(POST,"/event/create").hasAuthority("event::create")
                         .requestMatchers(POST,"/event/createGroupEvent/{id}").hasAuthority("event::createByGroup")

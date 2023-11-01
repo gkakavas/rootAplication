@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,18 +22,18 @@ public class GroupController implements CrudController<GroupResponseEntity,Group
     private final GroupService service;
 
     @Override
-    public ResponseEntity<GroupResponseEntity> create(@Valid GroupRequestEntity request)
+    public ResponseEntity<GroupResponseEntity> create(@Valid GroupRequestEntity request, Principal connectedUser)
     throws UserNotFoundException {
-        return new ResponseEntity<>(service.create(request),HttpStatus.CREATED);
+        return new ResponseEntity<>(service.create(request,connectedUser),HttpStatus.CREATED);
     }
     @Override
-    public ResponseEntity<GroupResponseEntity> readOne(UUID id)
+    public ResponseEntity<GroupResponseEntity> readOne(UUID id,Principal connectedUser)
     throws GroupNotFoundException{
-        return new ResponseEntity<>(service.read(id),HttpStatus.OK);
+        return new ResponseEntity<>(service.read(id,connectedUser),HttpStatus.OK);
     }
     @Override
-    public ResponseEntity<List<GroupResponseEntity>> readAll() {
-       return new ResponseEntity<>((service.read()),HttpStatus.OK);
+    public ResponseEntity<List<GroupResponseEntity>> readAll(Principal connectedUser) {
+       return new ResponseEntity<>((service.read(connectedUser)),HttpStatus.OK);
     }
     @Override
     public ResponseEntity<GroupResponseEntity> update(UUID id, GroupRequestEntity request)
@@ -45,8 +46,4 @@ public class GroupController implements CrudController<GroupResponseEntity,Group
         service.delete(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
-
-//    these methods will be accessible in ROLE_ADMIN or ROLE_USER
-//    @PatchMapping("{groupId}/addUser?userId=...")
-//    @PatchMapping("{groupId}/removeUser?userId=...")
 }

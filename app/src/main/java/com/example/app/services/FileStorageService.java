@@ -29,6 +29,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -46,17 +47,13 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class FileStorageService {
-    private final UserRepository userRepo;
     private final FileRepository fileRepo;
-    private final EntityResponseCommonConverter commonConverter;
-    private final EntityResponseUserConverter userConverter;
     private final EntityResponseFileConverter fileConverter;
     private final FileStorageProperties storageProperties;
 
-    public FileResponseEntity upload(MultipartFile file)
-            throws UserNotFoundException, IllegalTypeOfFileException, IOException {
-            var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication()
-                    .getName()).orElseThrow(UserNotFoundException::new);
+    public FileResponseEntity upload(MultipartFile file,Principal connectedUser)
+            throws IllegalTypeOfFileException, IOException {
+            var currentUser = (User)((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
             Path userPath = null;
             try {
                 FileKind fileKind;
@@ -94,11 +91,10 @@ public class FileStorageService {
     }
 
 
-    public FileResponseEntity download(UUID fileId,FileKind fileKind) throws UserNotFoundException, FileNotFoundException {
+    public FileResponseEntity download(UUID fileId,FileKind fileKind,Principal connectedUser) throws UserNotFoundException, FileNotFoundException {
         if (fileRepo.existsByFileIdAndFileKind(fileId, fileKind)) {
             var file = fileRepo.findById(fileId).orElseThrow(FileNotFoundException::new);
-                var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext()
-                        .getAuthentication().getName()).orElseThrow(UserNotFoundException::new);
+                var currentUser = (User)((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();;
                 if(currentUser.getRole().equals(Role.ADMIN)){
                     return fileConverter.fromFileToResource(file);
                 }
@@ -118,23 +114,22 @@ public class FileStorageService {
         else throw new FileNotFoundException();
     }
 
-    public Set<FileResponseEntity> readAll(FileKind fileKind) throws UserNotFoundException {
-        var user = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
-                .orElseThrow(UserNotFoundException::new);
-        if(user.getRole().equals(Role.ADMIN)){
+    public Set<FileResponseEntity> readAll(FileKind fileKind,Principal connectedUser) throws UserNotFoundException {
+        var currentUser = (User)((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+        if(currentUser.getRole().equals(Role.ADMIN)){
             var files = fileRepo.findAllByFileKind(fileKind);
             return Set.copyOf(fileConverter.fromFileListToAdminList(Set.copyOf(files)));
         }
-        else if(user.getRole().equals(Role.HR) && fileKind.equals(FileKind.TIMESHEET)){
+        else if(currentUser.getRole().equals(Role.HR) && fileKind.equals(FileKind.TIMESHEET)){
             var files = fileRepo.findAllByFileKind(FileKind.TIMESHEET);
             return Set.copyOf(fileConverter.fromFileListToAdminList(Set.copyOf(files)));
         }
-        else if(user.getRole().equals(Role.MANAGER) && fileKind.equals(FileKind.EVALUATION)){
-            var files = fileRepo.findAllByFileKindAndUploadedBy_Group(FileKind.EVALUATION,user.getGroup());
+        else if(currentUser.getRole().equals(Role.MANAGER) && fileKind.equals(FileKind.EVALUATION)){
+            var files = fileRepo.findAllByFileKindAndUploadedBy_Group(FileKind.EVALUATION,currentUser.getGroup());
             return Set.copyOf(fileConverter.fromFileListToAdminList(Set.copyOf(files)));
         }
-        else if(user.getRole().equals(Role.USER)){
-            var files = new HashSet<>(fileRepo.findAllByFileKindAndUploadedBy(fileKind, user));
+        else if(currentUser.getRole().equals(Role.USER)){
+            var files = new HashSet<>(fileRepo.findAllByFileKindAndUploadedBy(fileKind, currentUser));
             return Set.copyOf(fileConverter.fromFileListToUserFileList(files));
         }
        else throw new AccessDeniedException("You have not authority to access this resource");
@@ -142,9 +137,6 @@ public class FileStorageService {
 
     public boolean delete(UUID fileId) throws FileNotFoundException, UserNotFoundException {
         var file = fileRepo.findById(fileId).orElseThrow(FileNotFoundException::new);
-        var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
-                .orElseThrow(UserNotFoundException::new);
-        if (currentUser.getRole().equals(Role.ADMIN)||file.getUploadedBy().getEmail().equals(currentUser.getEmail())) {
             Path pathOfFile = Path.of(file.getAccessUrl());
             try {
                 Files.delete(pathOfFile);
@@ -155,12 +147,10 @@ public class FileStorageService {
                 e.printStackTrace();
                 return false;
             }
-        }
-        else throw new AccessDeniedException("You have not authority to execute this operation");
     }
 
-    public FileResponseEntity approveEvaluation(UUID fileId) throws UserNotFoundException, FileNotFoundException {
-        var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow(UserNotFoundException::new);
+    public FileResponseEntity approveEvaluation(UUID fileId,Principal connectedUser) throws FileNotFoundException {
+        var currentUser = (User)((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
         var file = fileRepo.findById(fileId).orElseThrow(FileNotFoundException::new);
         if(currentUser.getRole().equals(Role.ADMIN)
                 || (currentUser.getGroup().equals(file.getUploadedBy().getGroup())

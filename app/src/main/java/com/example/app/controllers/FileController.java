@@ -34,14 +34,14 @@ public class FileController {
     private final FileStorageService fileStorageService;
 
     @PostMapping("/upload")
-    public ResponseEntity<FileResponseEntity> upload(@RequestBody MultipartFile file) throws UserNotFoundException,
+    public ResponseEntity<FileResponseEntity> upload(@RequestBody MultipartFile file,Principal connectedUser) throws UserNotFoundException,
             IllegalTypeOfFileException, IOException {
-            return new ResponseEntity<>(fileStorageService.upload(file), HttpStatus.CREATED);
+            return new ResponseEntity<>(fileStorageService.upload(file,connectedUser), HttpStatus.CREATED);
     }
 
     @GetMapping("/download/evaluation/{fileId}")
-    public ResponseEntity<Resource> downloadEvaluation(@PathVariable UUID fileId) throws UserNotFoundException, FileNotFoundException, IOException {
-        FileResourceResponse response = (FileResourceResponse) fileStorageService.download(fileId,FileKind.EVALUATION);
+    public ResponseEntity<Resource> downloadEvaluation(@PathVariable UUID fileId,Principal connectedUser) throws UserNotFoundException, FileNotFoundException, IOException {
+        FileResourceResponse response = (FileResourceResponse) fileStorageService.download(fileId,FileKind.EVALUATION,connectedUser);
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + response.getFileName());
         headers.add(HttpHeaders.CONTENT_TYPE, response.getFileType());
@@ -52,8 +52,8 @@ public class FileController {
     }
 
     @GetMapping("/download/timesheet/{fileId}")
-    public ResponseEntity<Resource> downloadTimesheet(@PathVariable UUID fileId) throws UserNotFoundException, FileNotFoundException, IOException {
-        FileResourceResponse response = (FileResourceResponse) fileStorageService.download(fileId,FileKind.TIMESHEET);
+    public ResponseEntity<Resource> downloadTimesheet(@PathVariable UUID fileId,Principal connectedUser) throws UserNotFoundException, FileNotFoundException, IOException {
+        FileResourceResponse response = (FileResourceResponse) fileStorageService.download(fileId,FileKind.TIMESHEET,connectedUser);
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + response.getFileName());
@@ -66,13 +66,13 @@ public class FileController {
     }
 
     @GetMapping("/evaluation/all")
-    public ResponseEntity<Set<FileResponseEntity>> readAllEvaluation() throws UserNotFoundException {
-        return new ResponseEntity<>(fileStorageService.readAll(FileKind.EVALUATION),HttpStatus.OK);
+    public ResponseEntity<Set<FileResponseEntity>> readAllEvaluation(Principal connectedUser) throws UserNotFoundException {
+        return new ResponseEntity<>(fileStorageService.readAll(FileKind.EVALUATION,connectedUser),HttpStatus.OK);
     }
 
     @GetMapping("/timesheet/all")
-    public ResponseEntity<Set<FileResponseEntity>> readAllTimesheet() throws UserNotFoundException {
-        return new ResponseEntity<>(fileStorageService.readAll(FileKind.TIMESHEET),HttpStatus.OK);
+    public ResponseEntity<Set<FileResponseEntity>> readAllTimesheet(Principal connectedUser) throws UserNotFoundException {
+        return new ResponseEntity<>(fileStorageService.readAll(FileKind.TIMESHEET,connectedUser),HttpStatus.OK);
     }
 
     @DeleteMapping("/delete/{fileId}")
@@ -84,7 +84,8 @@ public class FileController {
 
     @PatchMapping("/approveEvaluation/{fileId}")
     public ResponseEntity<FileResponseEntity> approveEvaluation(
-    @PathVariable("fileId") UUID fileId) throws FileNotFoundException, UserNotFoundException {
-        return new ResponseEntity<>(fileStorageService.approveEvaluation(fileId),HttpStatus.OK);
+    @PathVariable("fileId") UUID fileId,
+    Principal connectedUser) throws FileNotFoundException {
+        return new ResponseEntity<>(fileStorageService.approveEvaluation(fileId,connectedUser),HttpStatus.OK);
     }
 }

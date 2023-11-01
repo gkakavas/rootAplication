@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,8 +27,8 @@ public class EventController {
     private final EventService service;
     @PostMapping("/create")
     public ResponseEntity<EventResponseEntity> create
-            (@Validated @RequestBody EventRequestEntity request) throws UserNotFoundException {
-        return new ResponseEntity<>(service.create(request),HttpStatus.CREATED);
+            (@Validated @RequestBody EventRequestEntity request, Principal connectedUser) throws UserNotFoundException {
+        return new ResponseEntity<>(service.create(request,connectedUser),HttpStatus.CREATED);
     }
     @GetMapping("/{id}")
     public ResponseEntity<EventResponseEntity> readOne(@PathVariable UUID id)
@@ -35,8 +36,8 @@ public class EventController {
         return new ResponseEntity<>((service.read(id)),HttpStatus.OK);
     }
     @GetMapping("/all")
-    public ResponseEntity<List<EventResponseEntity>> readAll() {
-        return new ResponseEntity<>((service.read()),HttpStatus.OK);
+    public ResponseEntity<List<EventResponseEntity>> readAll(Principal connectedUser) {
+        return new ResponseEntity<>((service.read(connectedUser)),HttpStatus.OK);
     }
 
     @PutMapping("/update/{id}")
@@ -54,10 +55,11 @@ public class EventController {
     @PostMapping("/createGroupEvent/{id}")
     public ResponseEntity<EventResponseEntity> createByGroup
             (@PathVariable UUID id,
-             @Validated @RequestBody EventRequestEntity request
+             @Validated @RequestBody EventRequestEntity request,
+             Principal connectedUser
             )
-            throws UserNotFoundException, GroupNotFoundException {
-        return new ResponseEntity<>(service.createForGroup(request,id),HttpStatus.CREATED);
+            throws GroupNotFoundException {
+        return new ResponseEntity<>(service.createForGroup(request,id,connectedUser),HttpStatus.CREATED);
     }
     @PatchMapping("/addUsers/{eventId}")
     public ResponseEntity<EventResponseEntity> addUsersToEvent(

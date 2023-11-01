@@ -12,25 +12,26 @@ import com.example.app.repositories.UserRepository;
 import com.example.app.utils.group.EntityResponseGroupConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
+import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class GroupService implements CrudService<GroupResponseEntity, GroupRequestEntity, GroupNotFoundException>{
+public class GroupService {
     private final UserRepository userRepo;
     private final GroupRepository groupRepo;
     private final EntityResponseGroupConverter groupConverter;
 
 
-    @Override
-    public GroupResponseEntity create(GroupRequestEntity request) throws UserNotFoundException {
+    public GroupResponseEntity create(GroupRequestEntity request, Principal connectedUser) throws UserNotFoundException {
         var users = userRepo.findAllById(request.getIdsSet());
-        var groupCreator = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
-                .orElseThrow(UserNotFoundException::new);
+        var groupCreator = (User)((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
         var group = groupConverter.fromRequestToGroup(request,groupCreator.getUserId());
         group.getGroupHasUsers().addAll(users);
         var newGroup = groupRepo.save(group);
@@ -41,11 +42,10 @@ public class GroupService implements CrudService<GroupResponseEntity, GroupReque
         //must return only one the users and no the group inside users
         return groupConverter.fromGroupToAdminGroup(newGroup);
     }
-    @Override
-    public GroupResponseEntity read(UUID id) throws GroupNotFoundException{
+
+    public GroupResponseEntity read(UUID id,Principal connectedUser) throws GroupNotFoundException{
         var group = groupRepo.findById(id).orElseThrow(GroupNotFoundException::new);
-        var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
-                .orElseThrow(() -> new UsernameNotFoundException(""));
+        var currentUser = (User)((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
         if(currentUser.getRole().equals(Role.ADMIN)){
             return groupConverter.fromGroupToAdminGroup(group);
         }
@@ -55,12 +55,9 @@ public class GroupService implements CrudService<GroupResponseEntity, GroupReque
         else
             throw new AccessDeniedException("You have not authority to access this resource");
     }
-    @Override
-    public List<GroupResponseEntity> read() {
+    public List<GroupResponseEntity> read(Principal connectedUser) {
         List<Group> groups = groupRepo.findAll();
-        var currentUser = userRepo.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
-
-                .orElseThrow(() -> new UsernameNotFoundException(""));
+        var currentUser = (User)((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
         if (currentUser.getRole().equals(Role.ADMIN)) {
             return groupConverter.fromGroupListToAdminGroupList(groups);
         } else if (currentUser.getRole().equals(Role.MANAGER)) {
@@ -69,7 +66,7 @@ public class GroupService implements CrudService<GroupResponseEntity, GroupReque
             throw new AccessDeniedException("You have not authority to access this resource");
         }
     }
-    @Override
+
     public GroupResponseEntity update(UUID id, GroupRequestEntity request) throws GroupNotFoundException {
         var group = groupRepo.findById(id).orElseThrow(GroupNotFoundException::new);
         group.setGroupName(request.getGroupName());
@@ -85,7 +82,6 @@ public class GroupService implements CrudService<GroupResponseEntity, GroupReque
             throw new AccessDeniedException("You have not the authority to access this resource");
 
     }
-    @Override
     public boolean delete(UUID id) throws GroupNotFoundException{
         var group = groupRepo.findById(id).orElseThrow(GroupNotFoundException::new);
         for(User user:group.getGroupHasUsers()){
