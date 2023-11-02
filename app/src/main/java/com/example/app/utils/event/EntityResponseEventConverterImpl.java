@@ -12,9 +12,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -90,9 +91,8 @@ public class EntityResponseEventConverterImpl implements EntityResponseEventConv
                 event.getUsersJoinInEvent().clear();
                 event.getUsersJoinInEvent().addAll(users);
             }catch (Exception e){
-                throw new RuntimeException("error during retrieving the users");
+                throw new RuntimeException("error during retrieving the users"); //to be implementing custom exception
             }
-
         }
         return event;
     }

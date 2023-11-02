@@ -1,6 +1,7 @@
 package com.example.app.services;
 
-import com.example.app.entities.*;
+import com.example.app.entities.Role;
+import com.example.app.entities.User;
 import com.example.app.exception.GroupNotFoundException;
 import com.example.app.exception.NewPasswordConfirmationNewPasswordNotMatchException;
 import com.example.app.exception.UserNotFoundException;
@@ -17,13 +18,16 @@ import com.example.app.utils.user.EntityResponseUserConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
+
 import java.lang.reflect.Field;
 import java.security.Principal;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class UserService implements CrudService<UserResponseEntity, UserRequestEntity,UserNotFoundException>{
@@ -35,7 +39,7 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     @Override
     public UserResponseEntity create(UserRequestEntity request,Principal connectedUser) throws UserNotFoundException {
         User userCreator = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
-        var group = groupRepo.findById(request.getGroup()).orElse(null);
+        var group = groupRepo.findById(request.getGroup()).orElse(null); //to be implemented  custom exception
         var user =  userRepo.save(userConverter.fromRequestToEntity(
                 request,userCreator.getUserId(), group));
         return userConverter.fromUserToAdminUser(user);
@@ -46,27 +50,29 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     }
     @Override
     public UserResponseEntity read(UUID id,Principal connectedUser) throws UserNotFoundException {
-        var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
         User currentUser = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
         if(currentUser.getRole().equals(Role.ADMIN)) {
+            var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
             return userConverter.fromUserToAdminUser(user);
         }
         else if(List.of(Role.HR,Role.MANAGER,Role.USER).contains(currentUser.getRole())){
+            var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
             return userConverter.fromUserToOtherUser(user);
         }
         else throw new AccessDeniedException("Unauthorized request");
     }
     @Override
     public List<UserResponseEntity> read(Principal connectedUser) {
-        Set<User> users = Set.copyOf(userRepo.findAll());
         User currentUser = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
-            if (currentUser.getRole().equals(Role.ADMIN)) {
-                return List.copyOf(userConverter.fromUserListToAdminList(users));
-            }
-            else if (List.of(Role.HR,Role.MANAGER,Role.USER).contains(currentUser.getRole())) {
-                return List.copyOf(userConverter.fromUserListToOtherList(users));
-            } else
-                throw new AccessDeniedException("Unauthorized request");
+        if (currentUser.getRole().equals(Role.ADMIN)) {
+            Set<User> users = Set.copyOf(userRepo.findAll());
+            return List.copyOf(userConverter.fromUserListToAdminList(users));
+        }
+        else if (List.of(Role.HR,Role.MANAGER,Role.USER).contains(currentUser.getRole())) {
+            Set<User> users = Set.copyOf(userRepo.findAll());
+            return List.copyOf(userConverter.fromUserListToOtherList(users));
+        } else
+            throw new AccessDeniedException("Unauthorized request");
     }
     @Override
     public UserResponseEntity update(UUID id, UserRequestEntity request) throws UserNotFoundException {
@@ -111,8 +117,7 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
                 ReflectionUtils.setField(field, user, value);
             }
         }
-        userRepo.save(user);
-        var patchedUser = userRepo.findById(user.getUserId()).orElseThrow(UserNotFoundException::new);
+        var patchedUser = userRepo.save(user);
         return userConverter.fromUserToAdminUser(patchedUser);
     }
 

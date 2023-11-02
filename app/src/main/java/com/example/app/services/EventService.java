@@ -12,17 +12,15 @@ import com.example.app.repositories.EventRepository;
 import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.utils.event.EntityResponseEventConverter;
-import lombok.*;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
+
 import java.lang.reflect.Field;
 import java.security.Principal;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Slf4j
@@ -52,26 +50,21 @@ public class EventService {
     public EventResponseEntity createForGroup(EventRequestEntity request, UUID groupId,Principal connectedUser)
             throws GroupNotFoundException{
         var currentUser = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+        var event = eventConverter.fromRequestToEvent(request,currentUser.getUserId());
+        Set<User> usersToAdd = new HashSet<>();
         if(List.of(Role.ADMIN,Role.HR).contains(currentUser.getRole())){
             var group = groupRepo.findById(groupId).orElseThrow(GroupNotFoundException::new);
-            var event = eventConverter.fromRequestToEvent(request,currentUser.getUserId());
-            event.getUsersJoinInEvent().addAll(group.getGroupHasUsers());
-            for(User user: group.getGroupHasUsers()){
-                user.getUserHasEvents().add(event);
-            }
-            var newEvent = eventRepo.save(event);
-            return eventConverter.fromEventToAdminHrMngEvent(newEvent);
+            usersToAdd = group.getGroupHasUsers();
         }
         else if (currentUser.getRole().equals(Role.MANAGER) && currentUser.getGroup().getGroupId().equals(groupId)) {
-            var event = eventConverter.fromRequestToEvent(request,currentUser.getUserId());
-            event.getUsersJoinInEvent().addAll(currentUser.getGroup().getGroupHasUsers());
-            for(User user: currentUser.getGroup().getGroupHasUsers()){
-                user.getUserHasEvents().add(event);
-            }
-            var newEvent = eventRepo.save(event);
-            return eventConverter.fromEventToAdminHrMngEvent(newEvent);
+            usersToAdd = currentUser.getGroup().getGroupHasUsers();
         }
-        else throw new AccessDeniedException("You have not authority to access this resource");
+        event.getUsersJoinInEvent().addAll(usersToAdd);
+        for(User user : usersToAdd){
+            user.getUserHasEvents().add(event);
+        }
+        var newEvent = eventRepo.save(event);
+        return eventConverter.fromEventToAdminHrMngEvent(newEvent);
     }
     public EventResponseEntity read(UUID id)
     throws EventNotFoundException{
@@ -79,16 +72,9 @@ public class EventService {
             return eventConverter.fromEventToAdminHrMngEvent(event);
     }
 
-
-    public List<EventResponseEntity> read(Principal connectedUser) {
-        var currentUser = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
-        if(List.of(Role.ADMIN,Role.HR,Role.MANAGER).contains(currentUser.getRole())){
-                var events = Set.copyOf(eventRepo.findAll());
-                return List.copyOf(eventConverter.fromEventListToAdminHrMngList(events));
-            } else if (currentUser.getRole().equals(Role.USER)) {
-                return List.copyOf(eventConverter.fromEventListToMyList(currentUser.getUserHasEvents()));
-            }
-            else throw new AccessDeniedException("You have not authority to access this resource");
+    public List<EventResponseEntity> read() {
+        var events = Set.copyOf(eventRepo.findAll());
+        return List.copyOf(eventConverter.fromEventListToAdminHrMngList(events));
     }
 
     public EventResponseEntity update(UUID id, EventRequestEntity request)
@@ -101,17 +87,12 @@ public class EventService {
 
     public boolean delete(UUID id)
     throws EventNotFoundException{
-        if(id!=null){
             var event = eventRepo.findById(id).orElseThrow(EventNotFoundException::new);
             event.getUsersJoinInEvent().forEach((user)-> user.getUserHasEvents().remove(event));
             event.getUsersJoinInEvent().clear();
             eventRepo.save(event);
-            eventRepo.deleteById(id);
-            return true;
-        }
-        else{
-            throw new EventNotFoundException();
-        }
+            eventRepo.delete(event);
+            return eventRepo.existsById(event.getEventId());
     }
 
     public EventResponseEntity addUsersToEvent(Set<UUID> idsSet, UUID eventId) throws EventNotFoundException{

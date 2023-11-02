@@ -8,15 +8,15 @@ import com.example.app.models.responses.user.AdminUserResponse;
 import com.example.app.models.responses.user.OtherUserResponse;
 import com.example.app.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ReflectionUtils;
-import org.springframework.validation.Validator;
 
-import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -24,6 +24,8 @@ public class EntityResponseUserConverterImpl implements EntityResponseUserConver
 
     private final UserRepository userRepo;
     private final PasswordEncoder passwordEncoder;
+    @Value("${default.password}")
+    private String defaultPasswordForUserCreation;
 
     @Override
     public AdminUserResponse fromUserToAdminUser(User user) {
@@ -85,7 +87,7 @@ public class EntityResponseUserConverterImpl implements EntityResponseUserConver
     @Override
     public User fromRequestToEntity(UserRequestEntity request, UUID userCreator, Group userGroup) {
         return User.builder()
-                .password(passwordEncoder.encode("Cdb3zgy2"))
+                .password(passwordEncoder.encode(defaultPasswordForUserCreation))
                 .firstname(request.getFirstname())
                 .lastname(request.getLastname())
                 .email(request.getEmail())
@@ -93,13 +95,9 @@ public class EntityResponseUserConverterImpl implements EntityResponseUserConver
                 .currentProject(request.getCurrentProject())
                 .createdBy(userCreator)
                 .registerDate(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .lastLogin(null)
                 .roleValue(request.getRole())
                 .role(Role.valueOf(request.getRole()))
                 .group(userGroup)
-                .userHasEvents(null)
-                .userHasFiles(null)
-                .userRequestedLeaves(null)
                 .build();
     }
 

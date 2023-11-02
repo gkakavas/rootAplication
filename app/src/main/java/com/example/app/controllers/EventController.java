@@ -36,8 +36,8 @@ public class EventController {
         return new ResponseEntity<>((service.read(id)),HttpStatus.OK);
     }
     @GetMapping("/all")
-    public ResponseEntity<List<EventResponseEntity>> readAll(Principal connectedUser) {
-        return new ResponseEntity<>((service.read(connectedUser)),HttpStatus.OK);
+    public ResponseEntity<List<EventResponseEntity>> readAll() {
+        return new ResponseEntity<>((service.read()),HttpStatus.OK);
     }
 
     @PutMapping("/update/{id}")
