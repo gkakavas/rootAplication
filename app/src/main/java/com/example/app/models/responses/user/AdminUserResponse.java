@@ -17,7 +17,6 @@ public class AdminUserResponse implements UserResponseEntity {
     private String groupName;
     private String createdBy;
     private LocalDateTime registerDate;
-    //last login must be removed
     private LocalDateTime lastLogin;
     private Role role;
 }

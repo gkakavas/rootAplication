@@ -93,7 +93,7 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
         group.getGroupHasUsers().remove(user);
         groupRepo.save(group);
         userRepo.delete(user);
-        return userRepo.existsById(user.getUserId());
+        return !userRepo.existsById(user.getUserId());
     }
 
     public UserResponseEntity patch(UUID userId, Map<String, String> userFields) throws UserNotFoundException, GroupNotFoundException {

@@ -17,11 +17,13 @@ import com.example.app.repositories.FileRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.services.FileStorageService;
 import com.example.app.services.JwtService;
+import com.example.app.tool.utils.ExcelFileGenerator;
 import com.example.app.utils.file.FileSizeConverter;
 import com.example.app.utils.common.EntityResponseCommonConverterImpl;
 import com.example.app.utils.file.EntityResponseFileConverterImp;
 import com.example.app.utils.file.FileContent;
 import com.example.app.utils.user.EntityResponseUserConverterImpl;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -43,6 +45,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -57,8 +60,6 @@ public class FileStorageServicePositiveUnitTest {
     @InjectMocks
     private FileStorageService fileStorageService;
     @Mock
-    private JwtService jwtService;
-    @Mock
     private UserRepository userRepo;
     @Mock
     private FileRepository fileRepo;
@@ -68,46 +69,49 @@ public class FileStorageServicePositiveUnitTest {
     private EntityResponseUserConverterImpl userConverter;
     @Mock
     private EntityResponseFileConverterImp fileConverter;
-    @Autowired
-    private FileStorageProperties storageProperties;
-    private java.io.File tempTestFile;
+    private static final FileStorageProperties storageProperties = new FileStorageProperties();
+    private User currentUser;
+    private Object roleValue;
+    private Principal principal;
 
-    private Path tempTestPath;
-    private final SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
     @BeforeEach
     void setUp() throws IOException {
         MockitoAnnotations.openMocks(this);
-        fileStorageService = new FileStorageService(userRepo, fileRepo, commonConverter, userConverter, fileConverter,storageProperties);
-        this.securityContext.setAuthentication(new UsernamePasswordAuthenticationToken("test@email.com", "password", List.of()));
-        SecurityContextHolder.setContext(securityContext);
-        tempTestFile = java.io.File.createTempFile("testFile", ".txt");
-        tempTestPath = Files.createDirectories(Paths.get("testDirectory"));
+        fileStorageService = new FileStorageService( fileRepo,fileConverter,storageProperties);
     }
     @AfterEach
-    void tearDown() throws IOException {
-        if (tempTestFile != null && tempTestFile.exists()) {
-            tempTestFile.delete();
-        }
-        if (tempTestPath!=null){
-            FileSystemUtils.deleteRecursively(tempTestPath);
-        }
-        SecurityContextHolder.clearContext();
+    void tearDown() {
 
     }
-    @Test
-    @DisplayName("Should init the directories")
-    void init() throws IOException {
-        Files.createDirectory(storageProperties.getTimesheet());
-        Files.createDirectory(storageProperties.getEvaluation());
+
+    @BeforeAll
+    static void init() throws IOException {
+        Files.createDirectories(storageProperties.getTimesheet());
+        Files.createDirectories(storageProperties.getEvaluation());
         Assertions.assertTrue(Files.exists(storageProperties.getRoot()));
         Assertions.assertTrue(Files.exists(storageProperties.getTimesheet()));
         Assertions.assertTrue(Files.exists(storageProperties.getEvaluation()));
     }
+    @AfterAll
+    static void tearDownAfterAll() throws IOException {
+        FileSystemUtils.deleteRecursively(storageProperties.getRoot());
+        Assertions.assertFalse(Files.exists(storageProperties.getRoot()));
+    }
+
+    void setUpPrincipal(){
+        currentUser = Instancio.of(User.class)
+                .set(field(User::getRole),roleValue)
+                .create();
+        principal = (Principal) currentUser;
+    }
     @Test
     @DisplayName("Should save a file both filesystem and database")
-    void upload() throws IOException, UserNotFoundException, IllegalTypeOfFileException {
-        var currentUser = Instancio.create(User.class);
-        MultipartFile multipartFile = new MockMultipartFile("testExcelFile", "testExcelFile.xlsx",FileContent.xlsx.getFileContent(), new FileInputStream("C:\\Users\\georgios.kakavas\\Downloads\\rootAplication\\app\\src\\test\\testResources\\testExcelFile.xlsx"));
+    void upload() throws IOException, IllegalTypeOfFileException {
+        this.roleValue = "USER";
+        setUpPrincipal();
+        var testExcelFile = ExcelFileGenerator.generateExcelFile();
+        byte[] content = Files.readAllBytes(testExcelFile.toPath());
+        MultipartFile multipartFile = new MockMultipartFile();
         var file = Instancio.of(File.class)
                 .set(field("filename"),multipartFile.getOriginalFilename())
                 .set(field("fileType"),multipartFile.getContentType())
@@ -150,7 +154,7 @@ public class FileStorageServicePositiveUnitTest {
         }
     }
     @Test
-    @DisplayName("Should retrieve a specified file both filesystem and database")
+    @DisplayName("Should retrieve a specific file both filesystem and database")
     void download() throws UserNotFoundException, FileNotFoundException {
         var file = File.builder()
                 .fileId(UUID.randomUUID())

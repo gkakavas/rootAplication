@@ -1,44 +1,28 @@
 package com.example.app.services;
 
 import com.example.app.config.FileStorageProperties;
-import com.example.app.entities.File;
 import com.example.app.entities.FileKind;
 import com.example.app.entities.Role;
 import com.example.app.entities.User;
 import com.example.app.exception.FileNotFoundException;
 import com.example.app.exception.IllegalTypeOfFileException;
 import com.example.app.exception.UserNotFoundException;
-import com.example.app.models.responses.common.UserWithFiles;
-import com.example.app.models.responses.file.AdminHrManagerFileResponse;
 import com.example.app.models.responses.file.FileResponseEntity;
-import com.example.app.models.responses.file.UserFileResponse;
 import com.example.app.repositories.FileRepository;
-import com.example.app.repositories.UserRepository;
-import com.example.app.utils.common.EntityResponseCommonConverter;
 import com.example.app.utils.file.EntityResponseFileConverter;
-import com.example.app.utils.file.EntityResponseFileConverterImp;
 import com.example.app.utils.file.FileContent;
-import com.example.app.utils.user.EntityResponseUserConverter;
-import com.example.app.utils.user.EntityResponseUserConverterImpl;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import org.apache.commons.io.FileUtils;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
-import java.lang.reflect.Array;
-import java.net.MalformedURLException;
-import java.nio.file.*;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -57,16 +41,14 @@ public class FileStorageService {
             Path userPath = null;
             try {
                 FileKind fileKind;
-                if(Objects.equals(file.getContentType(),FileContent.docx.getFileContent())
-                        ||Objects.equals(file.getContentType(), FileContent.txt.getFileContent())
-                        ||Objects.equals(file.getContentType(),FileContent.rtf.getFileContent())){
+                if(List.of(FileContent.docx.name(),FileContent.txt.name(),FileContent.rtf.name())
+                        .contains(file.getContentType())){
                     userPath = storageProperties.getEvaluation().resolve(currentUser.getUserId().toString());
                     Files.createDirectory(userPath);
                     fileKind = FileKind.EVALUATION;
                 }
-                else if(Objects.equals(file.getContentType(), FileContent.xls.getFileContent())
-                        ||Objects.equals(file.getContentType(), FileContent.xlsx.getFileContent())){
-                    userPath = storageProperties.getEvaluation().resolve(currentUser.getUserId().toString());
+                else if(List.of(FileContent.xlsx.name(),FileContent.xls.name()).contains(file.getContentType())){
+                    userPath = storageProperties.getTimesheet().resolve(currentUser.getUserId().toString());
                     Files.createDirectory(userPath);
                     fileKind = FileKind.TIMESHEET;
                 }

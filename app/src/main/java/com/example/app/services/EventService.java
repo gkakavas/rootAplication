@@ -92,7 +92,7 @@ public class EventService {
             event.getUsersJoinInEvent().clear();
             eventRepo.save(event);
             eventRepo.delete(event);
-            return eventRepo.existsById(event.getEventId());
+            return !eventRepo.existsById(event.getEventId());
     }
 
     public EventResponseEntity addUsersToEvent(Set<UUID> idsSet, UUID eventId) throws EventNotFoundException{

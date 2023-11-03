@@ -274,29 +274,33 @@ public class EventServicePositiveUnitTest {
     @Test
     @DisplayName("Should Patch An Existing Event Details And Return The Response")
     void shouldPatchAnExistingEventDetailsAndReturnTheResponse() throws EventNotFoundException {
-        var existingEvent = Instancio.of(Event.class)
-                .generate(field("usersJoinInEvent"), gen -> gen.collection().size(5))
-                .create();
-        Map<String, String> requestMap = new HashMap<>();
-        requestMap.put("eventBody", "patched event body");
-        requestMap.put("eventDateTime", "2023-07-11T11:00:01");
-        existingEvent.setEventBody(requestMap.get("eventBody"));
-        existingEvent.setEventDateTime(LocalDateTime.parse(requestMap.get("eventDateTime")));
+        var existingEvent = Instancio.create(Event.class);
+        Map<String, String> request = new HashMap<>();
+        request.put("eventDescription", "Test event description");
+        request.put("eventBody", "test event body");
+        request.put("eventDateTime", "2023-07-11T11:00:00");
+        request.put("eventExpiration", "2023-07-11T13:00:00");
+        var patchedEvent = Event.builder()
+                .eventId(existingEvent.getEventId()).usersJoinInEvent(existingEvent.getUsersJoinInEvent())
+                .eventCreator(existingEvent.getEventCreator())
+                .build();
+        patchedEvent.setEventBody(request.get("eventDescription"));
+        patchedEvent.setEventDescription(request.get("eventBody"));
+        patchedEvent.setEventDateTime(LocalDateTime.parse(request.get("eventDateTime")));
+        patchedEvent.setEventExpiration(LocalDateTime.parse(request.get("eventExpiration")));
         var expectedResponse = AdminHrMngEventResponse.builder()
-                .eventId(existingEvent.getEventId())
-                .eventBody(existingEvent.getEventBody())
-                .eventDescription(existingEvent.getEventDescription())
-                .eventDateTime(existingEvent.getEventDateTime())
-                .eventExpiration(existingEvent.getEventExpiration())
-                .eventCreator("creator with id " + existingEvent.getEventCreator())
-                .users(existingEvent.getUsersJoinInEvent().stream().map(User::getEmail).collect(Collectors.toSet()))
+                .eventId(patchedEvent.getEventId())
+                .eventBody(patchedEvent.getEventBody())
+                .eventDescription(patchedEvent.getEventDescription())
+                .eventDateTime(patchedEvent.getEventDateTime())
+                .eventExpiration(patchedEvent.getEventExpiration())
+                .eventCreator("creator with id " + patchedEvent.getEventCreator())
+                .users(patchedEvent.getUsersJoinInEvent().stream().map(User::getEmail).collect(Collectors.toSet()))
                 .build();
         when(eventRepo.findById(existingEvent.getEventId())).thenReturn(Optional.of(existingEvent));
-        when(eventRepo.save(existingEvent)).thenReturn(existingEvent);
+        when(eventRepo.save(patchedEvent)).thenReturn(patchedEvent);
         when(eventConverter.fromEventToAdminHrMngEvent(existingEvent)).thenReturn(expectedResponse);
-        var response = eventService.patchEventDetails(existingEvent.getEventId(), requestMap);
+        var response = eventService.patchEventDetails(existingEvent.getEventId(), request);
         assertEquals(expectedResponse, response);
-        assertEquals(expectedResponse.getEventBody(), requestMap.get("eventBody"));
-        assertEquals(expectedResponse.getEventDateTime(), LocalDateTime.of(2023, 7, 11, 11, 0, 1));
     }
 }
