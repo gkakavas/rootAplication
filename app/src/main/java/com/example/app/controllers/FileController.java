@@ -1,30 +1,23 @@
 package com.example.app.controllers;
 
-import com.example.app.entities.File;
 import com.example.app.entities.FileKind;
-import com.example.app.entities.User;
 import com.example.app.exception.FileNotFoundException;
 import com.example.app.exception.IllegalTypeOfFileException;
 import com.example.app.exception.UserNotFoundException;
-import com.example.app.models.responses.common.UserWithFiles;
 import com.example.app.models.responses.file.FileResourceResponse;
 import com.example.app.models.responses.file.FileResponseEntity;
-import com.example.app.models.responses.file.FileStorageProperties;
 import com.example.app.services.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -66,12 +59,12 @@ public class FileController {
     }
 
     @GetMapping("/evaluation/all")
-    public ResponseEntity<Set<FileResponseEntity>> readAllEvaluation(Principal connectedUser) throws UserNotFoundException {
+    public ResponseEntity<List<FileResponseEntity>> readAllEvaluation(Principal connectedUser) throws UserNotFoundException {
         return new ResponseEntity<>(fileStorageService.readAll(FileKind.EVALUATION,connectedUser),HttpStatus.OK);
     }
 
     @GetMapping("/timesheet/all")
-    public ResponseEntity<Set<FileResponseEntity>> readAllTimesheet(Principal connectedUser) throws UserNotFoundException {
+    public ResponseEntity<List<FileResponseEntity>> readAllTimesheet(Principal connectedUser) throws UserNotFoundException {
         return new ResponseEntity<>(fileStorageService.readAll(FileKind.TIMESHEET,connectedUser),HttpStatus.OK);
     }
 

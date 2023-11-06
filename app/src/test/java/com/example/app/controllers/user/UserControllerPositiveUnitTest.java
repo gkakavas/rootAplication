@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -36,11 +37,12 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.instancio.Select.field;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ActiveProfiles("unit")
 @WebMvcTest
 @ContextConfiguration(classes = {TestSecurityConfig.class, UserController.class, ApplicationExceptionHandler.class})
 public class UserControllerPositiveUnitTest {
@@ -65,18 +67,18 @@ public class UserControllerPositiveUnitTest {
         var request = UserRelevantGenerator.generateValidUserRequestEntity("USER", UUID.randomUUID());
         this.roleValue = "ADMIN";
         setUp();
-        var response = AdminUserResponse.builder()
+        var expectedResponse = AdminUserResponse.builder()
                 .userId(UUID.randomUUID()).firstname(request.getFirstname()).lastname(request.getLastname())
                 .email(request.getEmail()).specialization(request.getSpecialization()).currentProject(request.getCurrentProject())
                 .groupName("group with id " + request.getGroup()).createdBy(currentUser.getEmail())
                 .registerDate(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS)).lastLogin(null).role(Role.valueOf(request.getRole()))
                 .build();
-        when(userService.create(request, any(Principal.class))).thenReturn(response);
+        when(userService.create(eq(request), nullable(Principal.class))).thenReturn(expectedResponse);
         this.mockMvc.perform(MockMvcRequestBuilders.post("/user/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(content().json(objectMapper.writeValueAsString(response)));
+                .andExpect(content().json(objectMapper.writeValueAsString(expectedResponse)));
     }
 
     @ParameterizedTest
@@ -88,12 +90,12 @@ public class UserControllerPositiveUnitTest {
         var adminResponse = Instancio.create(AdminUserResponse.class);
         var otherUserResponse = Instancio.create(OtherUserResponse.class);
         if (roleValue.equals("ADMIN")) {
-            when(userService.read(adminResponse.getUserId(), any(Principal.class))).thenReturn(adminResponse);
+            when(userService.read(eq(adminResponse.getUserId()), nullable(Principal.class))).thenReturn(adminResponse);
             this.mockMvc.perform(MockMvcRequestBuilders.get("/user/{id}", adminResponse.getUserId().toString()))
                     .andExpect(status().isOk())
                     .andExpect(content().json(objectMapper.writeValueAsString(adminResponse)));
         } else {
-            when(userService.read(otherUserResponse.getUserId(), any(Principal.class))).thenReturn(otherUserResponse);
+            when(userService.read(eq(otherUserResponse.getUserId()), nullable(Principal.class))).thenReturn(otherUserResponse);
             this.mockMvc.perform(MockMvcRequestBuilders.get("/user/{id}", otherUserResponse.getUserId().toString()))
                     .andExpect(status().isOk())
                     .andExpect(content().json(objectMapper.writeValueAsString(otherUserResponse)));
@@ -109,12 +111,12 @@ public class UserControllerPositiveUnitTest {
         var adminResponse = Instancio.createList(AdminUserResponse.class);
         var otherUserResponse = Instancio.createList(OtherUserResponse.class);
         if (roleValue.equals("ADMIN")) {
-            when(userService.read(any(Principal.class))).thenReturn(List.copyOf(adminResponse));
+            when(userService.read(nullable(Principal.class))).thenReturn(List.copyOf(adminResponse));
             this.mockMvc.perform(MockMvcRequestBuilders.get("/user/all"))
                     .andExpect(status().isOk())
                     .andExpect(content().json(objectMapper.writeValueAsString(adminResponse)));
         } else {
-            when(userService.read(any(Principal.class))).thenReturn(List.copyOf(otherUserResponse));
+            when(userService.read(nullable(Principal.class))).thenReturn(List.copyOf(otherUserResponse));
             this.mockMvc.perform(MockMvcRequestBuilders.get("/user/all"))
                     .andExpect(status().isOk())
                     .andExpect(content().json(objectMapper.writeValueAsString(otherUserResponse)));
@@ -209,8 +211,10 @@ public class UserControllerPositiveUnitTest {
                 .confirmationNewPassword("newTestPassword123")
                 .build();
         var response = Instancio.create(ChangePasswordResponse.class);
-        when(userService.changePassword(request,any(Principal.class))).thenReturn(response);
-        this.mockMvc.perform(MockMvcRequestBuilders.patch("/user/changePassword"))
+        when(userService.changePassword(eq(request),nullable(Principal.class))).thenReturn(response);
+        this.mockMvc.perform(MockMvcRequestBuilders.patch("/user/changePassword")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
                     .andExpect(content().json(objectMapper.writeValueAsString(response)));
     }

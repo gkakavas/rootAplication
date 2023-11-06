@@ -1,14 +1,13 @@
 package com.example.app.services;
 
 import com.example.app.entities.Role;
+import com.example.app.entities.User;
 import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.AuthenticationRequest;
-import com.example.app.models.responses.AuthenticationResponse;
 import com.example.app.models.requests.RegisterRequest;
-import com.example.app.entities.User;
+import com.example.app.models.responses.AuthenticationResponse;
 import com.example.app.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,10 +35,8 @@ public class AuthenticationService {
                 .specialization(request.getSpecialization())
                 .registerDate(LocalDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS))
                 .build();
-        repository.save(user);
-
-        var jwtToken = jwtService.generateToken(user);
-
+        var createdUser = repository.save(user);
+        var jwtToken = jwtService.generateToken(createdUser);
         return AuthenticationResponse.builder()
                 .token(jwtToken)
                 .build();

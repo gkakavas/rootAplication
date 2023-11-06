@@ -3,7 +3,6 @@ package com.example.app.controllers.file;
 import com.example.app.advice.ApplicationExceptionHandler;
 import com.example.app.config.TestSecurityConfig;
 import com.example.app.controllers.FileController;
-import com.example.app.tool.utils.ExcelFileGenerator;
 import com.example.app.entities.FileKind;
 import com.example.app.entities.Role;
 import com.example.app.entities.User;
@@ -11,6 +10,7 @@ import com.example.app.models.responses.file.AdminHrManagerFileResponse;
 import com.example.app.models.responses.file.FileResourceResponse;
 import com.example.app.models.responses.file.UserFileResponse;
 import com.example.app.services.FileStorageService;
+import com.example.app.tool.utils.ExcelFileGenerator;
 import com.example.app.utils.file.FileContent;
 import com.example.app.utils.file.FileSizeConverter;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,6 +26,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -34,16 +35,15 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.*;
 import static org.instancio.Select.field;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
+@ActiveProfiles("unit")
 @WebMvcTest
 @ContextConfiguration(classes = {FileController.class,TestSecurityConfig.class, ApplicationExceptionHandler.class})
 public class FileControllerTest {
@@ -75,7 +75,7 @@ public class FileControllerTest {
                 .fileSize(FileSizeConverter.convert(request.getSize()))
                 .fileKind(FileKind.TIMESHEET)
                 .build();
-        when(fileStorageService.upload(request,any(Principal.class))).thenReturn(response);
+        when(fileStorageService.upload(eq(request),nullable(Principal.class))).thenReturn(response);
         this.mockMvc.perform(multipart("/file/upload").file(request))
                 .andExpect(status().isCreated())
                 .andExpect(content().json(objectMapper.writeValueAsString(response)));
@@ -95,17 +95,16 @@ public class FileControllerTest {
                 .resource(new FileSystemResource(testFile.getAbsolutePath()))
                 .build();
         var uuidOfFile = UUID.randomUUID();
-        when(fileStorageService.download(uuidOfFile, FileKind.EVALUATION, any(Principal.class))).thenReturn(response);
+        when(fileStorageService.download(eq(uuidOfFile),eq(FileKind.EVALUATION), nullable(Principal.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.get("/file/download/evaluation/{fileId}",uuidOfFile))
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, equalTo("attachment; filename=" + response.getFileName())))
                 .andExpect(header().string(HttpHeaders.CONTENT_TYPE, equalTo(response.getFileType())))
                 .andExpect(jsonPath("$", equalTo(response.getResource().getContentAsString(StandardCharsets.UTF_8))));
-
     }
 
     @Test
-    @DisplayName("Should Download A Specified Timesheet")
+    @DisplayName("Should Download A Specific Timesheet")
     void shouldDownloadASpecifiedTimesheet() throws Exception {
         String fileName = "testFile";
         byte[] contentBytes = ExcelFileGenerator.generateExcelFile(fileName);
@@ -118,15 +117,13 @@ public class FileControllerTest {
                 .resource(new FileSystemResource(testFile.getAbsolutePath()))
                 .build();
         var uuidOfFile = UUID.randomUUID();
-        when(fileStorageService.download(uuidOfFile,FileKind.TIMESHEET,any(Principal.class))).thenReturn(response);
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/file/download/timesheet/{fileId}", UUID.randomUUID()))
+        when(fileStorageService.download(eq(uuidOfFile),eq(FileKind.TIMESHEET),nullable(Principal.class))).thenReturn(response);
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/file/download/timesheet/{fileId}", uuidOfFile.toString()))
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, equalTo("attachment; filename=" + response.getFileName())))
                 .andExpect(header().string(HttpHeaders.CONTENT_TYPE, equalTo(response.getFileType())))
                 .andExpect(jsonPath("$.*",is(notNullValue())));
     }
-
-
     @ParameterizedTest
     @ValueSource(strings = {"ADMIN","MANAGER","USER"})
     @DisplayName("Should return all evaluations")
@@ -134,10 +131,10 @@ public class FileControllerTest {
         this.roleValue = roleValue;
         setUp();
         var adminHrMngResponse = Instancio.ofSet(
-                        AdminHrManagerFileResponse.class)
+                    AdminHrManagerFileResponse.class)
                 .generate(field(AdminHrManagerFileResponse::getFileType), gen -> gen
                         .enumOf(FileContent.class)
-                        .excluding(FileContent.xls, FileContent.xlsx))
+                        .excluding(FileContent.xls, FileContent.xlsx).asString())
                 .generate(field(AdminHrManagerFileResponse::getFileKind), gen -> gen
                         .enumOf(FileKind.class)
                         .excluding(FileKind.TIMESHEET)
@@ -149,13 +146,13 @@ public class FileControllerTest {
                         .excluding(FileKind.TIMESHEET)
                 ).create();
         if(List.of("ADMIN","MANAGER").contains(roleValue)) {
-            when(fileStorageService.readAll(FileKind.EVALUATION, any(Principal.class))).thenReturn(Set.copyOf(adminHrMngResponse));
+            when(fileStorageService.readAll(eq(FileKind.EVALUATION), nullable(Principal.class))).thenReturn(List.copyOf(adminHrMngResponse));
             this.mockMvc.perform(MockMvcRequestBuilders.get("/file/evaluation/all"))
                     .andExpect(status().isOk())
                     .andExpect(content().json(objectMapper.writeValueAsString(adminHrMngResponse)));
         }
         else{
-            when(fileStorageService.readAll(FileKind.EVALUATION, any(Principal.class))).thenReturn(Set.copyOf(userResponse));
+            when(fileStorageService.readAll(eq(FileKind.EVALUATION), nullable(Principal.class))).thenReturn(List.copyOf(userResponse));
             this.mockMvc.perform(MockMvcRequestBuilders.get("/file/evaluation/all"))
                     .andExpect(status().isOk())
                     .andExpect(content().json(objectMapper.writeValueAsString(userResponse)));
@@ -172,7 +169,7 @@ public class FileControllerTest {
                         AdminHrManagerFileResponse.class)
                 .generate(field(AdminHrManagerFileResponse::getFileType), gen -> gen
                         .enumOf(FileContent.class)
-                        .excluding(FileContent.txt, FileContent.rtf, FileContent.docx))
+                        .excluding(FileContent.txt, FileContent.rtf, FileContent.docx).asString())
                 .generate(field(AdminHrManagerFileResponse::getFileKind), gen -> gen
                         .enumOf(FileKind.class)
                         .excluding(FileKind.EVALUATION)
@@ -184,13 +181,13 @@ public class FileControllerTest {
                         .excluding(FileKind.EVALUATION)
                 ).create();
         if(List.of("ADMIN","HR").contains(roleValue)) {
-            when(fileStorageService.readAll(FileKind.TIMESHEET, any(Principal.class))).thenReturn(Set.copyOf(adminHrMngResponse));
+            when(fileStorageService.readAll(eq(FileKind.TIMESHEET), nullable(Principal.class))).thenReturn(List.copyOf(adminHrMngResponse));
             this.mockMvc.perform(MockMvcRequestBuilders.get("/file/timesheet/all"))
                     .andExpect(status().isOk())
                     .andExpect(content().json(objectMapper.writeValueAsString(adminHrMngResponse)));
         }
         else{
-            when(fileStorageService.readAll(FileKind.TIMESHEET, any(Principal.class))).thenReturn(Set.copyOf(userResponse));
+            when(fileStorageService.readAll(eq(FileKind.TIMESHEET), nullable(Principal.class))).thenReturn(List.copyOf(userResponse));
             this.mockMvc.perform(MockMvcRequestBuilders.get("/file/timesheet/all"))
                     .andExpect(status().isOk())
                     .andExpect(content().json(objectMapper.writeValueAsString(userResponse)));
@@ -201,7 +198,7 @@ public class FileControllerTest {
     @DisplayName("Should delete a file")
     void delete() throws Exception {
         var uuidOfFileToDelete = UUID.randomUUID();
-        when(fileStorageService.delete(uuidOfFileToDelete)).thenReturn(true);
+        when(fileStorageService.delete(eq(uuidOfFileToDelete))).thenReturn(true);
         this.mockMvc.perform(MockMvcRequestBuilders.delete("/file/delete/{fileId}",uuidOfFileToDelete.toString()))
                 .andExpect(status().isNoContent());
     }
@@ -211,15 +208,15 @@ public class FileControllerTest {
     void approveEvaluation() throws Exception {
         var approvedFile = Instancio.of(AdminHrManagerFileResponse.class)
                 .generate(field(AdminHrManagerFileResponse::getFileType),gen -> gen
-                        .enumOf(FileContent.class).excluding(FileContent.xlsx,FileContent.xls)
+                        .enumOf(FileContent.class).excluding(FileContent.xlsx,FileContent.xls).asString()
                 )
                 .generate(field(AdminHrManagerFileResponse::getFileKind),gen -> gen
                         .enumOf(FileKind.class).excluding(FileKind.TIMESHEET)
                 )
                 .create();
-        when(fileStorageService.approveEvaluation(approvedFile.getFileId(),any(Principal.class))).thenReturn(approvedFile);
+        when(fileStorageService.approveEvaluation(eq(approvedFile.getFileId()),nullable(Principal.class))).thenReturn(approvedFile);
         this.mockMvc.perform(MockMvcRequestBuilders.patch("/file/approveEvaluation/{fileId}",approvedFile.getFileId().toString()))
-                .andExpect(status().isAccepted())
+                .andExpect(status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(approvedFile)));
     }
 }

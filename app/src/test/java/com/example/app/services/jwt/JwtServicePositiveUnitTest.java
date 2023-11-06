@@ -15,12 +15,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.UUID;
 
 import static org.mockito.Mockito.when;
+@ActiveProfiles("unit")
 public class JwtServicePositiveUnitTest {
     private JwtService jwtService;
     @Mock

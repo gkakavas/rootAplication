@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.FileInputStream;
@@ -32,7 +33,7 @@ import java.util.UUID;
 import static org.instancio.Select.field;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-
+@ActiveProfiles("unit")
 public class FileConverterPositiveUnitTest {
     @InjectMocks
     private EntityResponseFileConverterImp fileConverter;

@@ -5,7 +5,6 @@ import com.example.app.config.TestSecurityConfig;
 import com.example.app.controllers.EventController;
 import com.example.app.entities.Role;
 import com.example.app.entities.User;
-import com.example.app.models.requests.EventRequestEntity;
 import com.example.app.models.responses.event.AdminHrMngEventResponse;
 import com.example.app.services.EventService;
 import com.example.app.tool.EventRelevantGenerator;
@@ -18,21 +17,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.instancio.Select.field;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ActiveProfiles("unit")
 @WebMvcTest
 @ContextConfiguration(classes = {TestSecurityConfig.class, EventController.class, ApplicationExceptionHandler.class})
 public class EventControllerPositiveUnitTest {
@@ -66,7 +69,7 @@ public class EventControllerPositiveUnitTest {
                 .eventExpiration(LocalDateTime.parse(request.getEventExpiration()))
                 .users(Instancio.ofSet(String.class).size(request.getIdsSet().size()).create())
                 .build();
-        when(eventService.create(request,any(Principal.class))).thenReturn(response);
+        when(eventService.create(eq(request),nullable(Principal.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.post("/event/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -90,7 +93,7 @@ public class EventControllerPositiveUnitTest {
                 .eventExpiration(LocalDateTime.parse(request.getEventExpiration()))
                 .users(Instancio.ofSet(String.class).size(request.getIdsSet().size()).create())
                 .build();
-        when(eventService.createForGroup(request,currentUser.getGroup().getGroupId(),any(Principal.class)))
+        when(eventService.createForGroup(eq(request),eq(currentUser.getGroup().getGroupId()),nullable(Principal.class)))
                 .thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.post("/event/createGroupEvent/{id}",currentUser.getGroup().getGroupId().toString())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -105,7 +108,7 @@ public class EventControllerPositiveUnitTest {
         var adminHrMngResponse = Instancio.create(AdminHrMngEventResponse.class);
         this.roleValue = roleValue;
         setUp();
-        when(eventService.read(adminHrMngResponse.getEventId())).thenReturn(adminHrMngResponse);
+        when(eventService.read(eq(adminHrMngResponse.getEventId()))).thenReturn(adminHrMngResponse);
         this.mockMvc.perform(MockMvcRequestBuilders.get("/event/{id}",adminHrMngResponse.getEventId().toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(adminHrMngResponse)));
@@ -118,7 +121,7 @@ public class EventControllerPositiveUnitTest {
         this.roleValue = roleValue;
         setUp();
         var adminHrResponse = Instancio.createList(AdminHrMngEventResponse.class);
-        when(eventService.read(any(Principal.class))).thenReturn(List.copyOf(adminHrResponse));
+        when(eventService.read()).thenReturn(List.copyOf(adminHrResponse));
         this.mockMvc.perform(MockMvcRequestBuilders.get("/event/all"))
                 .andExpect(status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(adminHrResponse)));
@@ -128,7 +131,10 @@ public class EventControllerPositiveUnitTest {
     @ValueSource(strings = {"ADMIN","HR","USER"})
     @DisplayName("Should update an event and return updated event")
     void shouldUpdateAnEventAndReturnThisBack(String roleValue) throws Exception {
-        var request = Instancio.create(EventRequestEntity.class);
+        this.roleValue = roleValue;
+        setUp();
+        var request = EventRelevantGenerator.generateValidEventRequestEntity("TestEventDescription");
+        request.setIdsSet(Instancio.createSet(UUID.class));
         var response = AdminHrMngEventResponse.builder()
                 .eventId(UUID.randomUUID())
                 .eventDescription(request.getEventDescription())
@@ -136,16 +142,14 @@ public class EventControllerPositiveUnitTest {
                 .eventCreator(currentUser.getEmail())
                 .eventDateTime(LocalDateTime.parse(request.getEventDateTime()))
                 .eventExpiration(LocalDateTime.parse(request.getEventExpiration()))
-                .users(Instancio.ofSet(String.class).size(request.getIdsSet().size()).create())
                 .build();
-        this.roleValue = roleValue;
-        setUp();
-        when(eventService.update(response.getEventId(),request)).thenReturn(response);
+        response.setUsers(Instancio.ofSet(String.class).size(request.getIdsSet().size()).create());
+        when(eventService.update(eq(response.getEventId()),eq(request))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.put("/event/update/{id}",response.getEventId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isAccepted())
-                .andExpect(content().json(objectMapper.writeValueAsString(request)));
+                .andExpect(content().json(objectMapper.writeValueAsString(response)));
     }
 
     @ParameterizedTest
@@ -155,7 +159,7 @@ public class EventControllerPositiveUnitTest {
         this.roleValue = roleValue;
         setUp();
         var eventUUIDToDelete = UUID.randomUUID();
-        when(eventService.delete(eventUUIDToDelete)).thenReturn(true);
+        when(eventService.delete(eq(eventUUIDToDelete))).thenReturn(true);
         this.mockMvc.perform(MockMvcRequestBuilders.delete("/event/delete/{id}",eventUUIDToDelete.toString()))
                 .andExpect(status().isNoContent());
     }
@@ -168,8 +172,8 @@ public class EventControllerPositiveUnitTest {
         setUp();
         var request = Instancio.ofSet(UUID.class).create();
         var response = Instancio.of(AdminHrMngEventResponse.class).ignore(field(AdminHrMngEventResponse::getUsers)).create();
-        response.getUsers().addAll(Instancio.ofSet(String.class).size(request.size()).create());
-        when(eventService.addUsersToEvent(request,response.getEventId())).thenReturn(response);
+        response.setUsers(Instancio.ofSet(String.class).size(request.size()).create());
+        when(eventService.addUsersToEvent(eq(request),eq(response.getEventId()))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.patch("/event/addUsers/{eventId}",response.getEventId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -185,8 +189,8 @@ public class EventControllerPositiveUnitTest {
         setUp();
         var request = Instancio.ofSet(UUID.class).create();
         var response = Instancio.of(AdminHrMngEventResponse.class).ignore(field(AdminHrMngEventResponse::getUsers)).create();
-        response.getUsers().addAll(Instancio.ofSet(String.class).size(request.size()).create());
-        when(eventService.removeUsersFromEvent(request,response.getEventId())).thenReturn(response);
+        response.setUsers(Instancio.ofSet(String.class).size(request.size()).create());
+        when(eventService.removeUsersFromEvent(eq(request),eq(response.getEventId()))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.patch("/event/removeUsers/{eventId}",response.getEventId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -211,7 +215,7 @@ public class EventControllerPositiveUnitTest {
                 .eventDateTime(LocalDateTime.parse(request.get("eventDateTime")))
                 .eventExpiration(LocalDateTime.parse(request.get("eventExpiration"))).users(Instancio.createSet(String.class))
                 .build();
-        when(eventService.patchEventDetails(response.getEventId(),request)).thenReturn(response);
+        when(eventService.patchEventDetails(eq(response.getEventId()),eq(request))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.patch("/event/patchEventDetails/{eventId}",response.getEventId().toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

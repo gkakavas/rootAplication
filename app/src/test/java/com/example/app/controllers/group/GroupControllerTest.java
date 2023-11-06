@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -26,11 +27,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
+@ActiveProfiles("unit")
 @WebMvcTest
 @ContextConfiguration(classes = {TestSecurityConfig.class, GroupController.class, ApplicationExceptionHandler.class})
 public class GroupControllerTest {
@@ -51,7 +52,7 @@ public class GroupControllerTest {
                 .groupCreationDate(LocalDateTime.now())
                 .users(Instancio.ofSet(AdminUserResponse.class).size(request.getIdsSet().size()).create())
                 .build();
-        when(groupService.create(request,any(Principal.class))).thenReturn(response);
+        when(groupService.create(eq(request),nullable(Principal.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.post("/group/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -63,7 +64,7 @@ public class GroupControllerTest {
     @DisplayName("Should return a specified group")
     void shouldReturnASpecifiedGroup() throws Exception {
         var response = Instancio.create(AdminGroupResponse.class);
-        when(groupService.read(response.getGroupId(),any(Principal.class))).thenReturn(response);
+        when(groupService.read(eq(response.getGroupId()),nullable(Principal.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.get("/group/{id}",response.getGroupId().toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(response)));
@@ -73,7 +74,7 @@ public class GroupControllerTest {
     @DisplayName("Should return all groups")
     void shouldReturnAllGroups() throws Exception {
         var response = Instancio.createList(AdminGroupResponse.class);
-        when(groupService.read(any(Principal.class))).thenReturn(List.copyOf(response));
+        when(groupService.read(nullable(Principal.class))).thenReturn(List.copyOf(response));
         this.mockMvc.perform(MockMvcRequestBuilders.get("/group/all"))
                 .andExpect(status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(response)));
@@ -90,7 +91,7 @@ public class GroupControllerTest {
                 .groupCreationDate(LocalDateTime.now())
                 .users(Instancio.ofSet(AdminUserResponse.class).size(request.getIdsSet().size()).create())
                 .build();
-        when(groupService.update(response.getGroupId(),request)).thenReturn(response);
+        when(groupService.update(eq(response.getGroupId()),eq(request))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.put("/group/update/{id}",response.getGroupId().toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -102,7 +103,7 @@ public class GroupControllerTest {
     @DisplayName("Should delete a specified group")
     void shouldDeleteASpecifiedGroup() throws Exception {
         var userIdToDelete = UUID.randomUUID();
-        when(groupService.delete(userIdToDelete)).thenReturn(true);
+        when(groupService.delete(eq(userIdToDelete))).thenReturn(true);
         this.mockMvc.perform(MockMvcRequestBuilders.delete("/group/delete/{id}",userIdToDelete.toString()))
                 .andExpect(status().isNoContent());
     }

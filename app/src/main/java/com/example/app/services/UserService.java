@@ -38,7 +38,7 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     private final PasswordEncoder passwordEncoder;
     @Override
     public UserResponseEntity create(UserRequestEntity request,Principal connectedUser) throws UserNotFoundException {
-        User userCreator = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+        User userCreator = (User) connectedUser;
         var group = groupRepo.findById(request.getGroup()).orElse(null); //to be implemented  custom exception
         var user =  userRepo.save(userConverter.fromRequestToEntity(
                 request,userCreator.getUserId(), group));

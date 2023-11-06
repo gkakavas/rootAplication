@@ -13,6 +13,7 @@ import com.example.app.models.responses.user.UserResponseEntity;
 import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.services.UserService;
+import com.example.app.tool.utils.CustomPrincipal;
 import com.example.app.utils.event.EntityResponseEventConverterImpl;
 import com.example.app.utils.user.EntityResponseUserConverterImpl;
 import org.instancio.Instancio;
@@ -25,9 +26,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 
 import java.security.Principal;
@@ -41,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+@ActiveProfiles("unit")
 @ContextConfiguration(classes = BCryptPasswordEncoder.class)
 public class UserServicePositiveUnitTest {
 
@@ -55,8 +57,7 @@ public class UserServicePositiveUnitTest {
     @Mock
     private EntityResponseUserConverterImpl userConverter;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private Principal principal;
     private String roleValue;
     private User currentUser;
@@ -65,8 +66,9 @@ public class UserServicePositiveUnitTest {
          this.currentUser = Instancio.of(User.class)
                 .set(field(User::getRole),Role.valueOf(roleValue))
                 .set(field(User::getRoleValue),roleValue)
+                .set(field(User::getGroup),Instancio.create(Group.class))
                 .create();
-        this.principal = (Principal) currentUser;
+        this.principal = new CustomPrincipal(currentUser);
     }
     @BeforeEach
     void setUp(){
@@ -81,7 +83,9 @@ public class UserServicePositiveUnitTest {
     public void storeAUserInDatabaseAndReturnAdminUserResponseEntity() throws UserNotFoundException {
         this.roleValue = "ADMIN";
         setUpPrincipal();
-        var request = Instancio.create(UserRequestEntity.class);
+        var request = Instancio.of(UserRequestEntity.class)
+                .generate(field(UserRequestEntity::getRole),gen -> gen.enumOf(Role.class).asString())
+                .create();
         var group = Instancio.of(Group.class)
                 .set(field(Group::getGroupId), request.getGroup())
                 .create();
@@ -90,6 +94,7 @@ public class UserServicePositiveUnitTest {
                 .firstname(request.getFirstname()).lastname(request.getLastname()).email(request.getEmail())
                 .specialization(request.getSpecialization()).currentProject(request.getCurrentProject()).createdBy(currentUser.getUserId())
                 .registerDate(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS)).roleValue(request.getRole())
+                .group(Instancio.of(Group.class).set(field(Group::getGroupId),request.getGroup()).create())
                 .role(Role.valueOf(request.getRole()))
                 .build();
         var expectedResponse = AdminUserResponse.builder()

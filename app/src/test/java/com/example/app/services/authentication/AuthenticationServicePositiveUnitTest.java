@@ -17,28 +17,31 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-
+@ActiveProfiles("unit")
 public class AuthenticationServicePositiveUnitTest {
     @InjectMocks
     private AuthenticationService authService;
     @Mock
     private UserRepository userRepo;
-    @Mock
+    @Spy
     private PasswordEncoder passwordEncoder;
     @Mock
     private JwtService jwtService;
@@ -53,6 +56,7 @@ public class AuthenticationServicePositiveUnitTest {
             .email("test@email.com")
             .password("PaSsWord123")
             .role(Role.USER)
+            .roleValue("USER")
             .specialization("testSpecialization")
             .build();
 
@@ -72,15 +76,17 @@ public class AuthenticationServicePositiveUnitTest {
     @DisplayName("Should register a user and return the jwt token")
     void shouldRegisterAUserAndReturnTheJwtToken(){
         var request = RegisterRequest.builder()
-                .firstname("testFirstname")
-                .lastname("testLastname")
-                .email("test@email.com")
-                .password("PaSsWord123")
-                .role("USER")
-                .specialization("testSpecialization")
+                .firstname("testFirstname").lastname("testLastname").email("test@email.com")
+                .password("PaSsWord123").role("USER").specialization("testSpecialization").currentProject("testCurrentProject")
                 .build();
-        when(passwordEncoder.encode(eq(request.getPassword()))).thenReturn(request.getPassword());
-        when(userRepo.save(any(User.class))).thenReturn(user);
+        var encodedPassword = "encodedPassword";
+        var user = User.builder()
+                .firstname(request.getFirstname()).lastname(request.getLastname()).email(request.getEmail())
+                .password(encodedPassword).role(Role.valueOf(request.getRole()))
+                .specialization(request.getSpecialization()).registerDate(LocalDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS))
+                .build();
+        when(passwordEncoder.encode(eq(request.getPassword()))).thenReturn(encodedPassword);
+        when(userRepo.save(eq(user))).thenReturn(user);
         when(jwtService.generateToken(eq(user))).thenReturn(testToken);
         var response = authService.register(request);
         Assertions.assertEquals(expectedResponse,response);

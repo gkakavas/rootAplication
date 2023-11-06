@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -31,11 +32,11 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.instancio.Select.field;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
+@ActiveProfiles("unit")
 @WebMvcTest
 @ContextConfiguration(classes = {LeaveController.class, TestSecurityConfig.class, ApplicationExceptionHandler.class})
 public class LeaveControllerTest {
@@ -55,14 +56,16 @@ public class LeaveControllerTest {
     @Test
     @DisplayName("Should create a leave request")
     void shouldCreateALeaveRequest() throws Exception {
-        LeaveRequestEntity request = Instancio.create(LeaveRequestEntity.class);
+        LeaveRequestEntity request = Instancio.of(LeaveRequestEntity.class)
+                .generate(field(LeaveRequestEntity::getLeaveType),gen -> gen.enumOf(LeaveType.class).asString())
+                .create();
         LeaveResponseEntity response = MyLeaveResponse.builder()
                 .leaveId(UUID.randomUUID())
                 .leaveType(LeaveType.valueOf(request.getLeaveType()))
                 .leaveStarts(request.getLeaveStarts())
                 .leaveEnds(request.getLeaveEnds())
                 .build();
-        when(leaveService.create(request,any(Principal.class))).thenReturn(response);
+        when(leaveService.create(eq(request),nullable(Principal.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.post("/leave/create")
                         .content(objectMapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON))
@@ -74,7 +77,7 @@ public class LeaveControllerTest {
     @DisplayName("Should return a specific leave")
     void shouldReturnASpecificLeave() throws Exception {
         AdminHrMngLeaveResponse response = Instancio.create(AdminHrMngLeaveResponse.class);
-        when(leaveService.read(response.getLeaveId(),any(Principal.class))).thenReturn(response);
+        when(leaveService.read(eq(response.getLeaveId()),nullable(Principal.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.get("/leave/{id}",response.getLeaveId()))
                 .andExpect(status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(response)));
@@ -84,7 +87,7 @@ public class LeaveControllerTest {
     @DisplayName("Should return all leaves")
     void shouldReturnAllLeaves() throws Exception {
         List<LeaveResponseEntity> response = List.copyOf(Instancio.createList(AdminHrMngLeaveResponse.class));
-        when(leaveService.read(any(Principal.class))).thenReturn(response);
+        when(leaveService.read(nullable(Principal.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.get("/leave/all"))
                 .andExpect(status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(response)));
@@ -93,14 +96,16 @@ public class LeaveControllerTest {
     @Test
     @DisplayName("Should update a specific leave")
     void shouldUpdateASpecificLeave() throws Exception {
-        var request = Instancio.create(LeaveRequestEntity.class);
+        var request = Instancio.of(LeaveRequestEntity.class)
+                .generate(field(LeaveRequestEntity::getLeaveType),gen -> gen.enumOf(LeaveType.class).asString())
+                .create();
         MyLeaveResponse response = MyLeaveResponse.builder()
                 .leaveId(UUID.randomUUID())
                 .leaveType(LeaveType.valueOf(request.getLeaveType()))
                 .leaveStarts(request.getLeaveStarts())
                 .leaveEnds(request.getLeaveEnds())
                 .build();
-        when(leaveService.update(response.getLeaveId(),request)).thenReturn(response);
+        when(leaveService.update(eq(response.getLeaveId()),eq(request))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.put("/leave/update/{id}",response.getLeaveId().toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -112,7 +117,7 @@ public class LeaveControllerTest {
     @DisplayName("Should delete a specific leave")
     void shouldDeleteASpecificLeave() throws Exception {
         var uuidOfLeaveToDelete = UUID.randomUUID();
-        when(leaveService.delete(uuidOfLeaveToDelete)).thenReturn(true);
+        when(leaveService.delete(eq(uuidOfLeaveToDelete))).thenReturn(true);
         this.mockMvc.perform(MockMvcRequestBuilders.delete("/leave/delete/{id}",uuidOfLeaveToDelete.toString())
                         .header("Authorization","testToken"))
                 .andExpect(status().isNoContent());
@@ -129,7 +134,7 @@ public class LeaveControllerTest {
                 .set(field("approvedOn"), LocalDateTime.now())
                 .set(field("approved"),true)
                 .create();
-        when(leaveService.approveLeave(response.getLeaveId(),any(Principal.class))).thenReturn(response);
+        when(leaveService.approveLeave(eq(response.getLeaveId()),nullable(Principal.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.patch("/leave/approval/{id}",response.getLeaveId().toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(response)));

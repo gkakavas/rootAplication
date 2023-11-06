@@ -1,38 +1,28 @@
 package com.example.app.controllers.authentication;
 
-import com.example.app.advice.ApplicationExceptionHandler;
-import com.example.app.config.SecurityConfig;
 import com.example.app.config.TestSecurityConfig;
 import com.example.app.controllers.AuthenticationController;
-import com.example.app.entities.Role;
 import com.example.app.models.requests.AuthenticationRequest;
 import com.example.app.models.requests.RegisterRequest;
 import com.example.app.models.responses.AuthenticationResponse;
-import com.example.app.security.JwtAuthenticationFilter;
 import com.example.app.services.AuthenticationService;
-import com.example.app.services.JwtService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.TestingAuthenticationProvider;
-import org.springframework.security.test.context.annotation.SecurityTestExecutionListeners;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
+@ActiveProfiles("unit")
 @WebMvcTest
 @ContextConfiguration(classes = {AuthenticationController.class, TestSecurityConfig.class})
 public class AuthenticationControllerTest {

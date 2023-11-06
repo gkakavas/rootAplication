@@ -73,46 +73,47 @@ public class FileStorageService {
     }
 
 
-    public FileResponseEntity download(UUID fileId,FileKind fileKind,Principal connectedUser) throws UserNotFoundException, FileNotFoundException {
+    public FileResponseEntity download(UUID fileId,FileKind fileKind,Principal connectedUser) throws FileNotFoundException {
         if (fileRepo.existsByFileIdAndFileKind(fileId, fileKind)) {
+            var currentUser = (User)((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
             var file = fileRepo.findById(fileId).orElseThrow(FileNotFoundException::new);
-                var currentUser = (User)((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();;
-                if(currentUser.getRole().equals(Role.ADMIN)){
-                    return fileConverter.fromFileToResource(file);
-                }
-                else if(file.getFileKind().equals(FileKind.TIMESHEET) && currentUser.getRole().equals(Role.HR)){
-                    return fileConverter.fromFileToResource(file);
-                }
-                else if (file.getFileKind().equals(FileKind.EVALUATION)
-                        && currentUser.getRole().equals(Role.MANAGER)
-                        && file.getUploadedBy().getGroup().equals(currentUser.getGroup())){
-                    return fileConverter.fromFileToResource(file);
-                }
-                else if(currentUser.getRole().equals(Role.USER) && currentUser.getUserHasFiles().contains(file)){
-                    return fileConverter.fromFileToResource(file);
-                }
-                else throw new AccessDeniedException("You have not authority to download this resource");
+            if(currentUser.getRole().equals(Role.ADMIN)){
+                return fileConverter.fromFileToResource(file);
+            }
+            else if(file.getFileKind().equals(FileKind.TIMESHEET)
+                    && currentUser.getRole().equals(Role.HR)){
+                return fileConverter.fromFileToResource(file);
+            }
+            else if (file.getFileKind().equals(FileKind.EVALUATION)
+                    && currentUser.getRole().equals(Role.MANAGER)
+                    && file.getUploadedBy().getGroup().equals(currentUser.getGroup())){
+                return fileConverter.fromFileToResource(file);
+            }
+            else if(currentUser.getRole().equals(Role.USER) && currentUser.getUserHasFiles().contains(file)){
+                return fileConverter.fromFileToResource(file);
+            }
+            else throw new AccessDeniedException("You have not authority to download this resource");
         }
         else throw new FileNotFoundException();
     }
 
-    public Set<FileResponseEntity> readAll(FileKind fileKind,Principal connectedUser) throws UserNotFoundException {
+    public List<FileResponseEntity> readAll(FileKind fileKind,Principal connectedUser) throws UserNotFoundException {
         var currentUser = (User)((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
         if(currentUser.getRole().equals(Role.ADMIN)){
             var files = fileRepo.findAllByFileKind(fileKind);
-            return Set.copyOf(fileConverter.fromFileListToAdminList(Set.copyOf(files)));
+            return fileConverter.fromFileListToAdminList(Set.copyOf(files));
         }
         else if(currentUser.getRole().equals(Role.HR) && fileKind.equals(FileKind.TIMESHEET)){
             var files = fileRepo.findAllByFileKind(FileKind.TIMESHEET);
-            return Set.copyOf(fileConverter.fromFileListToAdminList(Set.copyOf(files)));
+            return fileConverter.fromFileListToAdminList(Set.copyOf(files));
         }
         else if(currentUser.getRole().equals(Role.MANAGER) && fileKind.equals(FileKind.EVALUATION)){
             var files = fileRepo.findAllByFileKindAndUploadedBy_Group(FileKind.EVALUATION,currentUser.getGroup());
-            return Set.copyOf(fileConverter.fromFileListToAdminList(Set.copyOf(files)));
+            return fileConverter.fromFileListToAdminList(Set.copyOf(files));
         }
         else if(currentUser.getRole().equals(Role.USER)){
             var files = new HashSet<>(fileRepo.findAllByFileKindAndUploadedBy(fileKind, currentUser));
-            return Set.copyOf(fileConverter.fromFileListToUserFileList(files));
+            return fileConverter.fromFileListToUserFileList(files);
         }
        else throw new AccessDeniedException("You have not authority to access this resource");
     }
@@ -123,8 +124,8 @@ public class FileStorageService {
             try {
                 Files.delete(pathOfFile);
                 file.getUploadedBy().getUserHasFiles().remove(file);
-                fileRepo.deleteById(fileId);
-                return true;
+                fileRepo.delete(file);
+                return !fileRepo.existsById(fileId);
             } catch (IOException | IllegalArgumentException e) {
                 e.printStackTrace();
                 return false;
