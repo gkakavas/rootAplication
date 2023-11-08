@@ -2,9 +2,10 @@ package com.example.app.advice;
 
 import com.example.app.exception.*;
 import com.example.app.models.responses.error.ErrorResponse;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
-import org.springframework.context.annotation.Profile;
+import org.postgresql.util.PSQLException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -12,9 +13,10 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import org.postgresql.util.PSQLException;
-import java.sql.SQLException;
-import java.util.*;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestControllerAdvice
 public class ApplicationExceptionHandler {
@@ -102,11 +104,13 @@ public class ApplicationExceptionHandler {
         else return null;
     }
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse<Map<String,String>>> handleNullRequestBody(HttpMessageNotReadableException ex) {
+    public ResponseEntity<ErrorResponse<Map<String,String>>> handleNullRequestBody(HttpMessageNotReadableException ex) throws IOException {
         String exceptionMessage = ex.getMessage();
         Map<String,String> errorMap = new HashMap<>();
-        if (exceptionMessage.contains("UUID has to be represented by standard 36-char representation")) {
-            errorMap.put("error","Invalid UUID value provided");
+        var UUIDExceptionMessage = "UUID has to be represented by standard 36-char representation";
+        if (exceptionMessage.contains(UUIDExceptionMessage)) {
+            errorMap.put(((InvalidFormatException) ex.getCause()).getPath().get(0).getFieldName(),"Invalid UUID value provided");
+            System.err.println(ex.getHttpInputMessage());
             return ResponseEntity.badRequest()
                     .body(ErrorResponse.<Map<String,String>>builder()
                             .message(errorMap)

@@ -7,23 +7,22 @@ import com.example.app.models.responses.file.AdminHrManagerFileResponse;
 import com.example.app.models.responses.file.FileResourceResponse;
 import com.example.app.models.responses.file.UserFileResponse;
 import com.example.app.repositories.UserRepository;
-import com.example.app.utils.file.FileSizeConverter;
 import com.example.app.utils.file.EntityResponseFileConverterImp;
 import com.example.app.utils.file.FileContent;
+import com.example.app.utils.file.FileSizeConverter;
 import org.instancio.Instancio;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -31,6 +30,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.instancio.Select.field;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 @ActiveProfiles("unit")
@@ -45,9 +45,7 @@ public class FileConverterPositiveUnitTest {
     void setUp(){
         MockitoAnnotations.openMocks(this);
         fileConverter = new EntityResponseFileConverterImp(userRepo);
-
     }
-
     @Test
     @DisplayName("Should convert a File entity to AdminHrManagerFileResponse")
     void shouldConvertAFileEntityToAdminHrManagerFileResponse(){
@@ -66,9 +64,8 @@ public class FileConverterPositiveUnitTest {
                 .uploadedBy(fileToConvert.getUploadedBy().getEmail())
                 .build();
         var response = fileConverter.fromFileToAdmin(fileToConvert);
-        Assertions.assertEquals(expectedResponse,response);
+        assertEquals(expectedResponse,response);
     }
-
     @Test
     @DisplayName("Should convert a File entity to UserFileResponse")
     void shouldConvertAFileEntityToUserFileResponse(){
@@ -84,11 +81,10 @@ public class FileConverterPositiveUnitTest {
                 .fileKind(fileToConvert.getFileKind())
                 .build();
         var response = fileConverter.fromFileToUser(fileToConvert);
-        Assertions.assertEquals(expectedResponse,response);
+        assertEquals(expectedResponse,response);
     }
-
     @Test
-    @DisplayName("Should retrieve a resource from file system from a File entity")
+    @DisplayName("Should retrieve a resource from file system by a File entity")
     void shouldRetrieveAResourceFromFileSystemFromAFileEntity() throws IOException {
         Path temp = Files.createTempFile("testFile", ".docx");
         java.io.File file = new java.io.File(temp.toUri());
@@ -101,9 +97,8 @@ public class FileConverterPositiveUnitTest {
                 .resource(new FileSystemResource(file.getAbsolutePath()))
                 .build();
         var response = fileConverter.fromFileToResource(fileToConvert);
-        Assertions.assertEquals(expectedResponse,response);
+        assertEquals(expectedResponse,response);
     }
-
     @Test
     @DisplayName("Should convert a file entity list to AdminHrManagerFileResponse list")
     void shouldConvertAFileEntityListToAdminHrManagerFileResponseList(){
@@ -129,9 +124,8 @@ public class FileConverterPositiveUnitTest {
                 .toList();
         when(userRepo.findById(any(UUID.class))).thenReturn(Optional.of(approveUser));
         var response = fileConverter.fromFileListToAdminList(fileSet);
-        Assertions.assertEquals(expectedResponse,response);
+        assertEquals(expectedResponse,response);
     }
-
     @Test
     @DisplayName("Should convert a file entity list to UserFileResponse list")
     void shouldConvertAFileEntityListToUserFileResponseList(){
@@ -154,17 +148,16 @@ public class FileConverterPositiveUnitTest {
                 .toList();
         when(userRepo.findById(any(UUID.class))).thenReturn(Optional.of(approveUser));
         var response = fileConverter.fromFileListToUserFileList(fileSet);
-        Assertions.assertEquals(expectedResponse,response);
+        assertEquals(expectedResponse,response);
     }
     @Test
     @DisplayName("Should extract info from a multipart file input and then creating file entity with these info")
     void shouldExtractInfoFromAMultipartFileInputAndThenCreatingFileEntity() throws IOException {
-        MultipartFile multipartFile;
+        java.io.File file = Path.of("src/test/resources/testExcelFile.xlsx").toFile();
+        FileSystemResource resource = new FileSystemResource(file);
+        MultipartFile multipartFile = new MockMultipartFile("testExcelFile", "testExcelFile.xlsx",FileContent.xlsx.getFileContent(), resource.getInputStream());
         var fileCreator = Instancio.create(User.class);
         var fileKind = FileKind.TIMESHEET;
-        try(InputStream stream = new FileInputStream("C:\\Users\\georgios.kakavas\\Downloads\\rootAplication\\app\\src\\test\\testResources\\testExcelFile.xlsx")){
-            multipartFile = new MockMultipartFile("testExcelFile", "testExcelFile.xlsx",FileContent.xlsx.getFileContent(), stream);
-        }
         var accessUrl = multipartFile.getResource().toString();
         var expectedResponse = File.builder()
                 .filename(multipartFile.getOriginalFilename())
@@ -176,9 +169,8 @@ public class FileConverterPositiveUnitTest {
                 .uploadedBy(fileCreator)
                 .build();
         var response = fileConverter.extractMultipartInfo(multipartFile,fileCreator,accessUrl,fileKind);
-        Assertions.assertEquals(expectedResponse,response);
+        assertEquals(expectedResponse,response);
     }
-
     @Test
     @DisplayName("Should approve an existing file entity")
     void shouldApproveAnExistingFileEntity(){
@@ -203,7 +195,6 @@ public class FileConverterPositiveUnitTest {
                 .build();
         var response = fileConverter.approveFile(file,user);
         response.setApprovedDate(expectedResponse.getApprovedDate());
-        Assertions.assertEquals(expectedResponse,response);
+        assertEquals(expectedResponse,response);
     }
-
 }

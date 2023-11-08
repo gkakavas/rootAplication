@@ -25,6 +25,8 @@ file-storage:
 allowed-ips:
   ips:
     - 127.0.0.1
+default:
+  password: DeFaUlTpAsS123
 Logging:
   level:
     com.example: info

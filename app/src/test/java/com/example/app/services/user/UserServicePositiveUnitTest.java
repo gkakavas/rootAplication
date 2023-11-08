@@ -41,6 +41,7 @@ import static org.instancio.Select.field;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 @ActiveProfiles("unit")
 @ContextConfiguration(classes = BCryptPasswordEncoder.class)
@@ -80,7 +81,7 @@ public class UserServicePositiveUnitTest {
     }
     @Test
     @DisplayName("Should Store A User In Database And Return Admin User Response Entity")
-    public void storeAUserInDatabaseAndReturnAdminUserResponseEntity() throws UserNotFoundException {
+    public void storeAUserInDatabaseAndReturnAdminUserResponseEntity() throws UserNotFoundException, GroupNotFoundException {
         this.roleValue = "ADMIN";
         setUpPrincipal();
         var request = Instancio.of(UserRequestEntity.class)
@@ -107,7 +108,7 @@ public class UserServicePositiveUnitTest {
         when(userConverter.fromRequestToEntity(request,this.currentUser.getUserId(),group)).thenReturn(user);
         when(userRepository.save(user)).thenReturn(user);
         when(userConverter.fromUserToAdminUser(user)).thenReturn(expectedResponse);
-        UserResponseEntity response = userService.create(request,this.principal);
+        UserResponseEntity response = userService.create(request,this.currentUser);
         assertEquals(expectedResponse,response);
     }
 
@@ -132,12 +133,12 @@ public class UserServicePositiveUnitTest {
         when(userRepository.findById(user.getUserId())).thenReturn(Optional.of(user));
         if (currentUser.getRole().equals(Role.ADMIN)){
             when(userConverter.fromUserToAdminUser(user)).thenReturn(adminExpectedUserResponse);
-            UserResponseEntity response = userService.read(user.getUserId(),this.principal);
+            UserResponseEntity response = userService.read(user.getUserId(),this.currentUser);
             assertEquals(adminExpectedUserResponse,response);
         }
         else{
             when(userConverter.fromUserToOtherUser(user)).thenReturn(otherUserExpectedResponse);
-            UserResponseEntity response = userService.read(user.getUserId(),this.principal);
+            UserResponseEntity response = userService.read(user.getUserId(),this.currentUser);
             assertEquals(otherUserExpectedResponse,response);
         }
     }
@@ -162,12 +163,12 @@ public class UserServicePositiveUnitTest {
         when(userRepository.findAll()).thenReturn(users);
         if(currentUser.getRole().equals(Role.ADMIN)) {
             when(userConverter.fromUserListToAdminList(Set.copyOf(users))).thenReturn(adminExpectedUserResponse);
-            List<UserResponseEntity> response = userService.read(this.principal);
+            List<UserResponseEntity> response = userService.read(this.currentUser);
             assertEquals(List.copyOf(adminExpectedUserResponse), response);
         }
         else{
             when(userConverter.fromUserListToOtherList(Set.copyOf(users))).thenReturn(otherUserExpectedResponse);
-            List<UserResponseEntity> response = userService.read(this.principal);
+            List<UserResponseEntity> response = userService.read(this.currentUser);
             assertEquals(List.copyOf(otherUserExpectedResponse), response);
         }
     }
@@ -184,7 +185,7 @@ public class UserServicePositiveUnitTest {
                 .userId(user.getUserId()).firstname(request.getFirstname()).lastname(request.getLastname())
                 .email(request.getEmail()).specialization(request.getSpecialization()).currentProject(request.getCurrentProject())
                 .createdBy(user.getCreatedBy()).registerDate(user.getRegisterDate()).lastLogin(user.getLastLogin())
-                .roleValue(request.getRole()).role(Role.valueOf(request.getRole()))
+                .roleValue(request.getRole()).role(Role.valueOf(request.getRole())).group(group)
                 .build();
         var expectedResponse = AdminUserResponse.builder()
                 .userId(updatedUser.getUserId()).firstname(updatedUser.getFirstname()).lastname(updatedUser.getLastname())
@@ -214,7 +215,7 @@ public class UserServicePositiveUnitTest {
     @Test
     @DisplayName("Should Patch A User, Save Him And Return Patched User")
     void shouldPatchAUserSaveHimAndReturnPatchedUser() throws UserNotFoundException, GroupNotFoundException {
-        var user = Instancio.create(User.class);
+        var user = Instancio.of(User.class).ignore(field(User::getPassword)).ignore(field(User::getRoleValue)).create();
         var group = Instancio.create(Group.class);
         Map<String,String> request = new HashMap<>();
         request.put("firstname","testFirstname");
@@ -224,29 +225,24 @@ public class UserServicePositiveUnitTest {
         request.put("currentProject","testCurrentProject");
         request.put("role","MANAGER");
         request.put("group",group.getGroupId().toString());
-        var patchedUser = User.builder()
-                .userId(user.getUserId()).firstname(request.get("firstname")).lastname(request.get("lastname"))
-                .email(request.get("email")).specialization(request.get("specialization")).currentProject(request.get("currentProject"))
-                .createdBy(user.getCreatedBy()).registerDate(user.getRegisterDate()).lastLogin(user.getLastLogin())
-                .roleValue(request.get("role")).role(Role.valueOf(request.get("role"))).group(group)
-                .build();
+        when(userRepository.findById(eq(user.getUserId()))).thenReturn(Optional.of(user));
+        when(groupRepository.findById(eq(UUID.fromString(request.get("group"))))).thenReturn(Optional.of(group));
+        user.setFirstname(request.get("firstname"));
+        user.setLastname(request.get("lastname"));
+        user.setEmail(request.get("email"));
+        user.setSpecialization(request.get("specialization"));
+        user.setCurrentProject(request.get("currentProject"));
+        user.setRole(Role.valueOf(request.get("role")));
+        user.setGroup(group);
+        when(userRepository.save(eq(user))).thenReturn(user);
         var expectedResponse = AdminUserResponse.builder()
-                .userId(patchedUser.getUserId())
-                .firstname(patchedUser.getFirstname())
-                .lastname(patchedUser.getLastname())
-                .email(patchedUser.getEmail())
-                .specialization(patchedUser.getSpecialization())
-                .currentProject(patchedUser.getCurrentProject())
-                .groupName(patchedUser.getGroup().getGroupName())
-                .createdBy("user with id " + patchedUser.getCreatedBy())
-                .registerDate(patchedUser.getRegisterDate())
-                .lastLogin(patchedUser.getLastLogin())
-                .role(patchedUser.getRole())
+                .userId(user.getUserId()).firstname(user.getFirstname()).lastname(user.getLastname())
+                .email(user.getEmail()).specialization(user.getSpecialization())
+                .currentProject(user.getCurrentProject()).groupName(user.getGroup().getGroupName())
+                .createdBy("user with id " + user.getCreatedBy()).registerDate(user.getRegisterDate())
+                .lastLogin(user.getLastLogin()).role(user.getRole())
                 .build();
-        when(userRepository.findById(user.getUserId())).thenReturn(Optional.of(user));
-        when(groupRepository.findById(UUID.fromString(request.get("group")))).thenReturn(Optional.of(group));
-        when(userRepository.save(patchedUser)).thenReturn(patchedUser);
-        when(userConverter.fromUserToAdminUser(patchedUser)).thenReturn(expectedResponse);
+        when(userConverter.fromUserToAdminUser(eq(user))).thenReturn(expectedResponse);
         var response = userService.patch(user.getUserId(),request);
         assertEquals(expectedResponse,response);
     }

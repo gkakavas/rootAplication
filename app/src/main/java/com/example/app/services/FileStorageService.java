@@ -13,7 +13,6 @@ import com.example.app.utils.file.EntityResponseFileConverter;
 import com.example.app.utils.file.FileContent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,7 +22,6 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -35,20 +33,19 @@ public class FileStorageService {
     private final EntityResponseFileConverter fileConverter;
     private final FileStorageProperties storageProperties;
 
-    public FileResponseEntity upload(MultipartFile file,Principal connectedUser)
+    public FileResponseEntity upload(MultipartFile file,User connectedUser)
             throws IllegalTypeOfFileException, IOException {
-            var currentUser = (User)((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
             Path userPath = null;
             try {
                 FileKind fileKind;
-                if(List.of(FileContent.docx.name(),FileContent.txt.name(),FileContent.rtf.name())
+                if(List.of(FileContent.docx.getFileContent(),FileContent.txt.getFileContent(),FileContent.rtf.getFileContent())
                         .contains(file.getContentType())){
-                    userPath = storageProperties.getEvaluation().resolve(currentUser.getUserId().toString());
+                    userPath = storageProperties.getEvaluation().resolve(connectedUser.getUserId().toString());
                     Files.createDirectory(userPath);
                     fileKind = FileKind.EVALUATION;
                 }
-                else if(List.of(FileContent.xlsx.name(),FileContent.xls.name()).contains(file.getContentType())){
-                    userPath = storageProperties.getTimesheet().resolve(currentUser.getUserId().toString());
+                else if(List.of(FileContent.xlsx.getFileContent(),FileContent.xls.getFileContent()).contains(file.getContentType())){
+                    userPath = storageProperties.getTimesheet().resolve(connectedUser.getUserId().toString());
                     Files.createDirectory(userPath);
                     fileKind = FileKind.TIMESHEET;
                 }
@@ -56,7 +53,7 @@ public class FileStorageService {
                     throw new IllegalTypeOfFileException();
                 }
                 Files.copy(file.getInputStream(),userPath.resolve(Objects.requireNonNull(file.getOriginalFilename())));
-                return saveInDatabase(file,currentUser,userPath, fileKind);
+                return saveInDatabase(file,connectedUser,userPath, fileKind);
             }
             catch(FileAlreadyExistsException e){
                 Path destinationFilePath = userPath.resolve(Objects.requireNonNull(file.getOriginalFilename()));
@@ -73,23 +70,22 @@ public class FileStorageService {
     }
 
 
-    public FileResponseEntity download(UUID fileId,FileKind fileKind,Principal connectedUser) throws FileNotFoundException {
+    public FileResponseEntity download(UUID fileId,FileKind fileKind,User connectedUser) throws FileNotFoundException {
         if (fileRepo.existsByFileIdAndFileKind(fileId, fileKind)) {
-            var currentUser = (User)((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
             var file = fileRepo.findById(fileId).orElseThrow(FileNotFoundException::new);
-            if(currentUser.getRole().equals(Role.ADMIN)){
+            if(connectedUser.getRole().equals(Role.ADMIN)){
                 return fileConverter.fromFileToResource(file);
             }
             else if(file.getFileKind().equals(FileKind.TIMESHEET)
-                    && currentUser.getRole().equals(Role.HR)){
+                    && connectedUser.getRole().equals(Role.HR)){
                 return fileConverter.fromFileToResource(file);
             }
             else if (file.getFileKind().equals(FileKind.EVALUATION)
-                    && currentUser.getRole().equals(Role.MANAGER)
-                    && file.getUploadedBy().getGroup().equals(currentUser.getGroup())){
+                    && connectedUser.getRole().equals(Role.MANAGER)
+                    && file.getUploadedBy().getGroup().equals(connectedUser.getGroup())){
                 return fileConverter.fromFileToResource(file);
             }
-            else if(currentUser.getRole().equals(Role.USER) && currentUser.getUserHasFiles().contains(file)){
+            else if(connectedUser.getRole().equals(Role.USER) && connectedUser.getUserHasFiles().contains(file)){
                 return fileConverter.fromFileToResource(file);
             }
             else throw new AccessDeniedException("You have not authority to download this resource");
@@ -97,22 +93,21 @@ public class FileStorageService {
         else throw new FileNotFoundException();
     }
 
-    public List<FileResponseEntity> readAll(FileKind fileKind,Principal connectedUser) throws UserNotFoundException {
-        var currentUser = (User)((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
-        if(currentUser.getRole().equals(Role.ADMIN)){
+    public List<FileResponseEntity> readAll(FileKind fileKind,User connectedUser) throws UserNotFoundException {
+        if(connectedUser.getRole().equals(Role.ADMIN)){
             var files = fileRepo.findAllByFileKind(fileKind);
             return fileConverter.fromFileListToAdminList(Set.copyOf(files));
         }
-        else if(currentUser.getRole().equals(Role.HR) && fileKind.equals(FileKind.TIMESHEET)){
+        else if(connectedUser.getRole().equals(Role.HR) && fileKind.equals(FileKind.TIMESHEET)){
             var files = fileRepo.findAllByFileKind(FileKind.TIMESHEET);
             return fileConverter.fromFileListToAdminList(Set.copyOf(files));
         }
-        else if(currentUser.getRole().equals(Role.MANAGER) && fileKind.equals(FileKind.EVALUATION)){
-            var files = fileRepo.findAllByFileKindAndUploadedBy_Group(FileKind.EVALUATION,currentUser.getGroup());
+        else if(connectedUser.getRole().equals(Role.MANAGER) && fileKind.equals(FileKind.EVALUATION)){
+            var files = fileRepo.findAllByFileKindAndUploadedBy_Group(FileKind.EVALUATION,connectedUser.getGroup());
             return fileConverter.fromFileListToAdminList(Set.copyOf(files));
         }
-        else if(currentUser.getRole().equals(Role.USER)){
-            var files = new HashSet<>(fileRepo.findAllByFileKindAndUploadedBy(fileKind, currentUser));
+        else if(connectedUser.getRole().equals(Role.USER)){
+            var files = new HashSet<>(fileRepo.findAllByFileKindAndUploadedBy(fileKind, connectedUser));
             return fileConverter.fromFileListToUserFileList(files);
         }
        else throw new AccessDeniedException("You have not authority to access this resource");
@@ -132,13 +127,12 @@ public class FileStorageService {
             }
     }
 
-    public FileResponseEntity approveEvaluation(UUID fileId,Principal connectedUser) throws FileNotFoundException {
-        var currentUser = (User)((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+    public FileResponseEntity approveEvaluation(UUID fileId,User connectedUser) throws FileNotFoundException {
         var file = fileRepo.findById(fileId).orElseThrow(FileNotFoundException::new);
-        if(currentUser.getRole().equals(Role.ADMIN)
-                || (currentUser.getGroup().equals(file.getUploadedBy().getGroup())
+        if(connectedUser.getRole().equals(Role.ADMIN)
+                || (connectedUser.getGroup().equals(file.getUploadedBy().getGroup())
                 && file.getFileKind().equals(FileKind.EVALUATION))){
-            var approvedFile = fileConverter.approveFile(file,currentUser);
+            var approvedFile = fileConverter.approveFile(file,connectedUser);
             var patchedFile = fileRepo.save(approvedFile);
             return fileConverter.fromFileToAdmin(patchedFile);
         }
@@ -146,8 +140,12 @@ public class FileStorageService {
     }
 
     public FileResponseEntity saveInDatabase(MultipartFile file, User user, Path userPath, FileKind fileKind){
-        var newFile = fileConverter.extractMultipartInfo(file,user,
-                userPath.resolve(Objects.requireNonNull(file.getOriginalFilename())).toString(),fileKind);
+        var newFile = fileConverter.extractMultipartInfo(
+                file,
+                user,
+                userPath.resolve(Objects.requireNonNull(file.getOriginalFilename())).toString(),
+                fileKind
+        );
         var response = fileRepo.save(newFile);
         return fileConverter.fromFileToUser(response);
     }

@@ -18,6 +18,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 import static org.instancio.Select.field;
@@ -42,6 +43,8 @@ public class EventConverterPositiveUnitTest {
     private static final User user = Instancio.of(User.class)
             .create();
     private static final EventRequestEntity eventRequest = Instancio.of(EventRequestEntity.class)
+            .generate(field(EventRequestEntity::getEventDateTime),gen -> gen.temporal().localDateTime().as(localDateTime -> LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).toString()))
+            .generate(field(EventRequestEntity::getEventExpiration),gen -> gen.temporal().localDateTime().as(localDateTime -> LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).toString()))
             .create();
     @Test
     @DisplayName("Should Convert An Event To My Event")
@@ -57,7 +60,6 @@ public class EventConverterPositiveUnitTest {
         Assertions.assertEquals(response,expectedResponse);
 
     }
-
     @Test
     @DisplayName("Should Convert An Event To AdminHrMngEvent")
     void shouldConvertAnEventToAdminHrMngEvent(){
@@ -77,39 +79,26 @@ public class EventConverterPositiveUnitTest {
     @Test
     @DisplayName("Should Convert An EventList To AdminHrMngList")
     void shouldConvertAnEventListToAdminHrMngList(){
-        when(userRepo.findById(any(UUID.class))).thenReturn(Optional.of(user));
-        var usersJoinInEvent = Instancio.ofSet(User.class).size(2).create();
-        var eventsList = Instancio.ofList(Event.class)
-                .size(2)
-                .create();
-        eventsList.forEach(event1 -> {
-            event1.getUsersJoinInEvent().clear();
-            event1.getUsersJoinInEvent().addAll(usersJoinInEvent);
-        });
-
-        var expectedResponse = new HashSet<>();
-        expectedResponse.add(AdminHrMngEventResponse.builder()
-                        .eventId(eventsList.get(0).getEventId())
-                        .eventBody(eventsList.get(0).getEventBody())
-                        .eventDescription(eventsList.get(0).getEventDescription())
-                        .eventDateTime(eventsList.get(0).getEventDateTime())
-                        .eventExpiration(eventsList.get(0).getEventExpiration())
-                        .eventCreator(user.getEmail())
-                        .users(eventsList.get(0).getUsersJoinInEvent().stream().map(User::getEmail).collect(Collectors.toSet()))
-                .build());
-        expectedResponse.add(AdminHrMngEventResponse.builder()
-                        .eventId(eventsList.get(1).getEventId())
-                        .eventBody(eventsList.get(1).getEventBody())
-                        .eventDescription(eventsList.get(1).getEventDescription())
-                        .eventDateTime(eventsList.get(1).getEventDateTime())
-                        .eventExpiration(eventsList.get(1).getEventExpiration())
-                        .eventCreator(user.getEmail())
-                        .users(eventsList.get(1).getUsersJoinInEvent().stream().map(User::getEmail).collect(Collectors.toSet()))
-                        .build());
-        var response = eventConverter.fromEventListToAdminHrMngList(Set.copyOf(eventsList));
-        Assertions.assertEquals(expectedResponse,response);
+        var events = Instancio.stream(Event.class)
+                .peek(event1 -> {
+                    event1.setEventCreator(null);
+                    event1.setEventDateTime(event1.getEventDateTime().truncatedTo(ChronoUnit.SECONDS));
+                    event1.setEventExpiration(event1.getEventExpiration().truncatedTo(ChronoUnit.SECONDS));
+                })
+                .limit(10)
+                .collect(Collectors.toSet());
+        var expectedResult = events.stream().map(event1 -> AdminHrMngEventResponse.builder()
+                        .eventId(event1.getEventId())
+                        .eventDescription(event1.getEventDescription())
+                        .eventBody(event1.getEventBody())
+                        .eventDateTime(event1.getEventDateTime())
+                        .eventExpiration(event1.getEventExpiration())
+                        .users(event1.getUsersJoinInEvent().stream().map(User::getEmail).collect(Collectors.toSet()))
+                        .build())
+                .collect(Collectors.toSet());
+        var result = eventConverter.fromEventListToAdminHrMngList(Set.copyOf(events));
+        Assertions.assertEquals(expectedResult,result);
     }
-
     @Test
     @DisplayName("Should Convert An EventList To toMyList")
     void shouldConvertAnEventListTotoMyList(){
@@ -134,13 +123,10 @@ public class EventConverterPositiveUnitTest {
         var response = eventConverter.fromEventListToMyList(Set.copyOf(eventsList));
         Assertions.assertEquals(expectedResponse,response);
     }
-
     @Test
     @DisplayName("Should Convert An EventRequestEntity To Event")
     void shouldConvertAnEventRequestEntityToEvent(){
-
         var expectedResponse = Event.builder()
-                .eventId(null)
                 .eventDescription(eventRequest.getEventDescription())
                 .eventBody(eventRequest.getEventBody())
                 .eventCreator(user.getUserId())

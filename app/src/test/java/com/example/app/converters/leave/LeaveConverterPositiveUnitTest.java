@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -104,8 +105,8 @@ public class LeaveConverterPositiveUnitTest {
         var currentUser = Instancio.create(User.class);
         var expectedResponse = Leave.builder()
                 .leaveType(LeaveType.valueOf(request.getLeaveType()))
-                .leaveStarts(request.getLeaveStarts())
-                .leaveEnds(request.getLeaveEnds())
+                .leaveStarts(LocalDate.parse(request.getLeaveStarts()))
+                .leaveEnds(LocalDate.parse(request.getLeaveEnds()))
                 .approvedBy(null)
                 .approvedOn(null)
                 .approved(false)
@@ -123,8 +124,8 @@ public class LeaveConverterPositiveUnitTest {
         var expectedResponse = Leave.builder()
                 .leaveId(leave.getLeaveId())
                 .leaveType(LeaveType.valueOf(request.getLeaveType()))
-                .leaveStarts(request.getLeaveStarts())
-                .leaveEnds(request.getLeaveEnds())
+                .leaveStarts(LocalDate.parse(request.getLeaveStarts()))
+                .leaveEnds(LocalDate.parse(request.getLeaveEnds()))
                 .approvedBy(leave.getApprovedBy())
                 .approvedOn(leave.getApprovedOn())
                 .approved(leave.isApproved())

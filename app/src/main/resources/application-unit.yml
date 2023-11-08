@@ -1,6 +1,12 @@
 Spring:
   main:
     allow-bean-definition-overriding: true
+file-storage:
+  root: testUploads
+  timesheet: ${file-storage.root}/timesheets
+  evaluation: ${file-storage.root}/evaluations
+default:
+  password: DeFaUlTpAsS123
 Logging:
   level:
     com.example: DEBUG

@@ -121,8 +121,8 @@ public class LeavePositiveIntegrationTest {
         baseUrl = baseUrl.concat("/create");
         var createRequest = LeaveRequestEntity.builder()
                 .leaveType("SICK_LEAVE")
-                .leaveStarts(LocalDate.of(2024, 1, 4))
-                .leaveEnds(LocalDate.of(2024, 1, 7))
+                .leaveStarts(LocalDate.of(2024, 1, 4).toString())
+                .leaveEnds(LocalDate.of(2024, 1, 7).toString())
                 .build();
         HttpEntity<LeaveRequestEntity> request = new HttpEntity<>(createRequest, headers);
         ResponseEntity<String> response = restTemplate.exchange(
@@ -135,8 +135,8 @@ public class LeavePositiveIntegrationTest {
         var expectedResponse = MyLeaveResponse.builder()
                 .leaveId(actualResponse.getLeaveId())
                 .leaveType(LeaveType.valueOf(createRequest.getLeaveType()))
-                .leaveStarts(createRequest.getLeaveStarts())
-                .leaveEnds(createRequest.getLeaveEnds())
+                .leaveStarts(LocalDate.parse(createRequest.getLeaveStarts()))
+                .leaveEnds(LocalDate.parse(createRequest.getLeaveEnds()))
                 .approved(false)
                 .build();
         assertEquals(expectedResponse, actualResponse);
@@ -249,8 +249,8 @@ public class LeavePositiveIntegrationTest {
         baseUrl = baseUrl.concat("/update/").concat(this.leaveToRetrieve.getLeaveId().toString());
         var updateRequest = LeaveRequestEntity.builder()
                 .leaveType("BRIDGE_DAY_LEAVE")
-                .leaveStarts(LocalDate.of(2024, 3, 12))
-                .leaveEnds(LocalDate.of(2024, 3, 17))
+                .leaveStarts(LocalDate.of(2024, 3, 12).toString())
+                .leaveEnds(LocalDate.of(2024, 3, 17).toString())
                 .build();
         ResponseEntity<String> response = restTemplate.exchange(
                 baseUrl,
@@ -262,8 +262,8 @@ public class LeavePositiveIntegrationTest {
         var expectedResponse = MyLeaveResponse.builder()
                 .leaveId(this.leaveToRetrieve.getLeaveId())
                 .leaveType(LeaveType.valueOf(updateRequest.getLeaveType()))
-                .leaveStarts(updateRequest.getLeaveStarts())
-                .leaveEnds(updateRequest.getLeaveEnds())
+                .leaveStarts(LocalDate.parse(updateRequest.getLeaveStarts()))
+                .leaveEnds(LocalDate.parse(updateRequest.getLeaveEnds()))
                 .approved(false)
                 .build();
         assertEquals(expectedResponse, actualResponse);

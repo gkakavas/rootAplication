@@ -1,5 +1,6 @@
 package com.example.app.converters.user;
 
+import com.example.app.config.TestConfig;
 import com.example.app.entities.Group;
 import com.example.app.entities.Role;
 import com.example.app.entities.User;
@@ -8,6 +9,7 @@ import com.example.app.models.responses.user.AdminUserResponse;
 import com.example.app.models.responses.user.OtherUserResponse;
 import com.example.app.repositories.UserRepository;
 import com.example.app.utils.user.EntityResponseUserConverterImpl;
+import org.instancio.Instancio;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,82 +17,38 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.HashSet;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import static org.instancio.Select.field;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 @ActiveProfiles("unit")
+@SpringJUnitConfig(classes = {TestConfig.class})
 public class UserConverterPositiveUnitTest {
-
     @InjectMocks
     private EntityResponseUserConverterImpl userConverter;
     @Mock
     private UserRepository userRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
-    private static final UUID TEST_UUID_FROM_EXTRACTED_USERNAME = UUID.randomUUID();
-    private static final String TEST_REQUEST_FIRSTNAME="test_username";
-    private static final String TEST_REQUEST_LASTNAME="test_lastname";
-    private static final String TEST_REQUEST_PASSWORD="Test1234";
-    private static final String TEST_REQUEST_EMAIL="request@email.com";
-    private static final String TEST_REQUEST_SPECIALIZATION="test_specialization";
-    private static final String TEST_REQUEST_CURRENT_PROJECT="test_current_project";
-    private static final UUID TEST_REQUEST_GROUP = UUID.randomUUID();
-    private static final String TEST_REQUEST_ROLE= "ADMIN";
-    Logger logger = LoggerFactory.getLogger(UserConverterPositiveUnitTest.class);
-
-    private static final User user1 = User.builder()
-            .userId(UUID.randomUUID())
-            .firstname("test_firstname1")
-            .lastname("test_lastname1")
-            .password("testPassword1234")
-            .email("test@email.com")
-            .build();
-    private static final User user2 = User.builder()
-            .userId(UUID.randomUUID())
-            .firstname("test_firstname2")
-            .lastname("test_lastname2")
-            .password("testPassword1234")
-            .email("test@email2.com")
-            .build();
-
-    private static final Set<User> userSet = new HashSet<>();
-
-    private static final Group group = Group.builder()
-            .groupId(TEST_REQUEST_GROUP)
-            .groupCreator(UUID.randomUUID())
-            .groupName("test_group")
-            .groupCreationDate(LocalDateTime.now())
-            .build();
-    private final User TEST_USER = User.builder()
-            .userId(UUID.randomUUID())
-            .firstname(TEST_REQUEST_FIRSTNAME)
-            .lastname(TEST_REQUEST_LASTNAME)
-            .password(TEST_REQUEST_PASSWORD)
-            .email(TEST_REQUEST_EMAIL)
-            .specialization(TEST_REQUEST_SPECIALIZATION)
-            .currentProject(TEST_REQUEST_CURRENT_PROJECT)
-            .role(Role.valueOf(TEST_REQUEST_ROLE))
-            .createdBy(TEST_UUID_FROM_EXTRACTED_USERNAME)
-            .registerDate(LocalDateTime.now())
-            .group(group)
-            .build();
-
-
+    @Autowired
+    private Clock clock;
     @BeforeEach
     public void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
-        userConverter = new EntityResponseUserConverterImpl(userRepository,passwordEncoder);
+        userConverter = new EntityResponseUserConverterImpl(userRepository,passwordEncoder,clock);
     }
 
     @AfterEach
@@ -98,144 +56,132 @@ public class UserConverterPositiveUnitTest {
     }
 
     @Test
-    @DisplayName("Should convert a user entity to admin-form user response")
+    @DisplayName("Should convert a user entity to admin format user response")
     void shouldConvertAUserEntityToAdminFormUserResponse(){
-        var adminFormedUser = AdminUserResponse.builder()
-                .userId(TEST_USER.getUserId())
-                .firstname(TEST_USER.getFirstname())
-                .lastname(TEST_USER.getLastname())
-                .email(TEST_USER.getEmail())
-                .specialization(TEST_USER.getSpecialization())
-                .currentProject(TEST_USER.getCurrentProject())
-                .groupName(TEST_USER.getGroup().getGroupName())
-                .registerDate(TEST_USER.getRegisterDate())
-                .role(TEST_USER.getRole())
-                .lastLogin(TEST_USER.getLastLogin())
+        var user = Instancio.create(User.class);
+        var createdBy = Instancio.create(User.class);
+        var adminFormatUser = AdminUserResponse.builder()
+                .userId(user.getUserId())
+                .firstname(user.getFirstname())
+                .lastname(user.getLastname())
+                .email(user.getEmail())
+                .specialization(user.getSpecialization())
+                .currentProject(user.getCurrentProject())
+                .groupName(user.getGroup().getGroupName())
+                .createdBy(createdBy.getEmail())
+                .registerDate(user.getRegisterDate())
+                .role(user.getRole())
+                .lastLogin(user.getLastLogin())
                 .build();
-        when(userRepository.findById(TEST_USER.getUserId())).thenReturn(Optional.of(TEST_USER));
-        var result = userConverter.fromUserToAdminUser(TEST_USER);
-        assertEquals(adminFormedUser,result);
+        when(userRepository.findById(user.getCreatedBy())).thenReturn(Optional.of(createdBy));
+        var result = userConverter.fromUserToAdminUser(user);
+        assertEquals(adminFormatUser,result);
     }
 
     @Test
-    @DisplayName("Should convert a user entity to otherUser-form user response")
+    @DisplayName("Should convert a user entity to otherUser format user response")
     void shouldConvertAUserEntityToOtherUserFormUserResponse(){
-        var otherUserFormedUser=  OtherUserResponse.builder()
-                .userId(TEST_USER.getUserId())
-                .firstname(TEST_USER.getFirstname())
-                .lastname(TEST_USER.getLastname())
-                .email(TEST_USER.getEmail())
-                .specialization(TEST_USER.getSpecialization())
-                .currentProject(TEST_USER.getCurrentProject())
-                .groupName(TEST_USER.getGroup().getGroupName())
+        var user = Instancio.create(User.class);
+        var otherUserFormedUser = OtherUserResponse.builder()
+                .userId(user.getUserId())
+                .firstname(user.getFirstname())
+                .lastname(user.getLastname())
+                .email(user.getEmail())
+                .specialization(user.getSpecialization())
+                .currentProject(user.getCurrentProject())
+                .groupName(user.getGroup().getGroupName())
                 .build();
-        var result = userConverter.fromUserToOtherUser(TEST_USER);
+        var result = userConverter.fromUserToOtherUser(user);
         assertEquals(otherUserFormedUser,result);
     }
 
     @Test
-    @DisplayName("Should convert a user entity Set to admin-form user Set response")
+    @DisplayName("Should convert a user entity Set to admin format Set response")
     void shouldConvertAUserEntitySetToAdminFormUserSetResponse(){
-        userSet.add(user1);
-        userSet.add(user2);
-        var userAdminResponse1 = AdminUserResponse.builder()
-                .userId(user1.getUserId())
-                .firstname(user1.getFirstname())
-                .lastname(user1.getLastname())
-                .email(user1.getEmail())
-                .build();
-        var userAdminResponse2 = AdminUserResponse.builder()
-                .userId(user2.getUserId())
-                .firstname(user2.getFirstname())
-                .lastname(user2.getLastname())
-                .email(user2.getEmail())
-                .build();
-        Set<AdminUserResponse> adminUserResponseSet = new HashSet<>();
-        adminUserResponseSet.add(userAdminResponse1);
-        adminUserResponseSet.add(userAdminResponse2);
-        var result = userConverter.fromUserListToAdminList(userSet);
+        var users = Instancio.stream(User.class)
+                .peek(user -> user.setCreatedBy(null))
+                .limit(30)
+                .collect(Collectors.toSet());
+        var adminUserResponseSet = users.stream().map(user -> AdminUserResponse.builder()
+                .userId(user.getUserId())
+                .firstname(user.getFirstname())
+                .lastname(user.getLastname())
+                .email(user.getEmail())
+                .specialization(user.getSpecialization())
+                .currentProject(user.getCurrentProject())
+                .groupName(user.getGroup().getGroupName())
+                .registerDate(user.getRegisterDate())
+                .role(user.getRole())
+                .lastLogin(user.getLastLogin())
+                .build())
+                .collect(Collectors.toSet());
+        var result = userConverter.fromUserListToAdminList(users);
         assertEquals(adminUserResponseSet,result);
     }
     @Test
-    @DisplayName("Should convert a user entity Set to otherUser-form user Set response")
+    @DisplayName("Should convert a user entity set to otherUser format set response")
     void shouldConvertAUserEntitySetToOtherUserFormUserSetResponse(){
-        userSet.add(user1);
-        userSet.add(user2);
-        var otherUserResponse1 = OtherUserResponse.builder()
-                .userId(user1.getUserId())
-                .firstname(user1.getFirstname())
-                .lastname(user1.getLastname())
-                .email(user1.getEmail())
-                .build();
-        var otherUserResponse2 = OtherUserResponse.builder()
-                .userId(user2.getUserId())
-                .firstname(user2.getFirstname())
-                .lastname(user2.getLastname())
-                .email(user2.getEmail())
-                .build();
-        Set<OtherUserResponse> otherUserResponseSet = new HashSet<>();
-        otherUserResponseSet.add(otherUserResponse1);
-        otherUserResponseSet.add(otherUserResponse2);
-        var result = userConverter.fromUserListToOtherList(userSet);
+        var users = Instancio.createSet(User.class);
+        var otherUserResponseSet = users.stream().map(user -> OtherUserResponse.builder()
+                .userId(user.getUserId())
+                .firstname(user.getFirstname())
+                .lastname(user.getLastname())
+                .email(user.getEmail())
+                .specialization(user.getSpecialization())
+                .currentProject(user.getCurrentProject())
+                .groupName(user.getGroup().getGroupName())
+                .build())
+                .collect(Collectors.toSet());
+        var result = userConverter.fromUserListToOtherList(users);
         assertEquals(otherUserResponseSet,result);
     }
 
     @Test
     @DisplayName("Should convert a user request entity to User entity")
     void shouldConvertAUserRequestEntityToUserEntity(){
-        var userRequest = UserRequestEntity.builder()
-                .firstname("test_firstname1")
-                .lastname("test_lastname1")
-                .password("testPassword1234")
-                .email("test@email.com")
+        var userGroup = Instancio.create(Group.class);
+        var userCreatorUUID = UUID.randomUUID();
+        var request = Instancio.of(UserRequestEntity.class)
+                .generate(field(UserRequestEntity::getRole),gen ->
+                        gen.enumOf(Role.class).asString())
+                .create();
+        String predefinedPassword = "123456";
+        ReflectionTestUtils.setField(userConverter, "defaultPasswordForUserCreation",predefinedPassword);
+        var expectedEntity = User.builder()
+                .password(predefinedPassword)
+                .firstname(request.getFirstname())
+                .lastname(request.getLastname())
+                .email(request.getEmail())
+                .specialization(request.getSpecialization())
+                .currentProject(request.getCurrentProject())
+                .createdBy(userCreatorUUID)
+                .registerDate(LocalDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS))
+                .roleValue(request.getRole())
+                .role(Role.valueOf(request.getRole()))
+                .group(userGroup)
                 .build();
-        var userEntity = User.builder()
-                .firstname(userRequest.getFirstname())
-                .lastname(userRequest.getLastname())
-                .password(userRequest.getPassword())
-                .email(userRequest.getEmail())
-                .createdBy(UUID.randomUUID())
-                .group(group)
-                .userHasFiles(null)
-                .userRequestedLeaves(null)
-                .userHasEvents(null)
-                .build();
-        when(passwordEncoder.encode(any())).thenReturn("testPassword1234");
-        var result = userConverter.fromRequestToEntity(userRequest,userEntity.getCreatedBy(),group);
-        userEntity.setRegisterDate(result.getRegisterDate());
-        assertEquals(userEntity,result);
+        when(passwordEncoder.encode(any(String.class))).thenReturn(predefinedPassword);
+        var result = userConverter.fromRequestToEntity(request,userCreatorUUID,userGroup);
+        assertEquals(expectedEntity,result);
     }
 
     @Test
     @DisplayName("Should update a user entity")
     void shouldUpdateAUserEntity(){
-        var userRequestEntity = UserRequestEntity.builder()
-                .firstname("otherTestFirstname")
-                .lastname("otherTestLastname")
-                .password(TEST_REQUEST_PASSWORD)
-                .email("other@testemail.com")
-                .specialization("other specialization")
-                .currentProject("other current project")
-                .role("USER")
-                .group(UUID.randomUUID())
-                .build();
-        var UPDATED_TEST_USER = User.builder()
-                .userId(TEST_USER.getUserId())
-                .firstname(userRequestEntity.getFirstname())
-                .lastname(userRequestEntity.getLastname())
-                .password("testPassword1234")
-                .email(userRequestEntity.getEmail())
-                .specialization(userRequestEntity.getSpecialization())
-                .currentProject(userRequestEntity.getCurrentProject())
-                .role(Role.valueOf(userRequestEntity.getRole()))
-                .createdBy(TEST_USER.getCreatedBy())
-                .registerDate(TEST_USER.getRegisterDate())
-                .group(group)
-                .build();
-        when(passwordEncoder.encode(any())).thenReturn("testPassword1234");
-        var result = userConverter.updateSetting(TEST_USER,userRequestEntity,group);
-        System.out.println(result);
-        System.out.println(UPDATED_TEST_USER);
-        assertEquals(UPDATED_TEST_USER,result);
+        var request = Instancio.of(UserRequestEntity.class)
+                .generate(field(UserRequestEntity::getRole),gen ->
+                        gen.enumOf(Role.class).asString())
+                .create();
+        var group = Instancio.create(Group.class);
+        var user = Instancio.create(User.class);
+        var result = userConverter.updateSetting(user,request,group);
+        user.setFirstname(request.getFirstname());
+        user.setLastname(request.getLastname());
+        user.setEmail(request.getEmail());
+        user.setSpecialization(request.getSpecialization());
+        user.setCurrentProject(request.getCurrentProject());
+        user.setRole(Role.valueOf(request.getRole()));
+        user.setGroup(group);
+        assertEquals(user,result);
     }
 }

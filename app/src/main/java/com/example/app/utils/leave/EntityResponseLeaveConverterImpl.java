@@ -7,16 +7,14 @@ import com.example.app.models.requests.LeaveRequestEntity;
 import com.example.app.models.responses.leave.AdminHrMngLeaveResponse;
 import com.example.app.models.responses.leave.LeaveResponseEntity;
 import com.example.app.models.responses.leave.MyLeaveResponse;
-import com.example.app.models.responses.user.AdminUserResponse;
 import com.example.app.repositories.UserRepository;
-import com.example.app.utils.user.EntityResponseUserConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Set;
 
 @Component
@@ -72,8 +70,8 @@ public class EntityResponseLeaveConverterImpl implements EntityResponseLeaveConv
         public Leave fromRequestToEntity(LeaveRequestEntity request, User requestedBy) {
         return Leave.builder()
                 .leaveType(LeaveType.valueOf(request.getLeaveType()))
-                .leaveStarts(request.getLeaveStarts())
-                .leaveEnds(request.getLeaveEnds())
+                .leaveStarts(LocalDate.parse(request.getLeaveStarts()))
+                .leaveEnds(LocalDate.parse(request.getLeaveEnds()))
                 .approvedBy(null)
                 .approvedOn(null)
                 .approved(false)
@@ -84,15 +82,15 @@ public class EntityResponseLeaveConverterImpl implements EntityResponseLeaveConv
     @Override
     public Leave updateLeave(LeaveRequestEntity request, Leave leave) {
         leave.setLeaveType(LeaveType.valueOf(request.getLeaveType()));
-        leave.setLeaveStarts(request.getLeaveStarts());
-        leave.setLeaveEnds(request.getLeaveEnds());
+        leave.setLeaveStarts(LocalDate.parse(request.getLeaveStarts()));
+        leave.setLeaveEnds(LocalDate.parse(request.getLeaveEnds()));
         return leave;
     }
 
     @Override
     public Leave approveLeave(Leave leave, User user) {
         leave.setApproved(true);
-        leave.setApprovedOn(LocalDateTime.now());
+        leave.setApprovedOn(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
         leave.setApprovedBy(user.getUserId());
         return leave;
     }

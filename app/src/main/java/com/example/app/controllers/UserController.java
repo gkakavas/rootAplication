@@ -1,24 +1,24 @@
 package com.example.app.controllers;
 
+import com.example.app.entities.User;
 import com.example.app.exception.GroupNotFoundException;
 import com.example.app.exception.NewPasswordConfirmationNewPasswordNotMatchException;
 import com.example.app.exception.UserNotFoundException;
 import com.example.app.exception.WrongOldPasswordProvidedException;
 import com.example.app.models.requests.ChangePasswordRequest;
 import com.example.app.models.requests.UserRequestEntity;
-import com.example.app.models.responses.ChangePasswordResponse;
 import com.example.app.models.responses.event.EventResponseEntity;
-import com.example.app.services.UserService;
 import com.example.app.models.responses.user.UserResponseEntity;
+import com.example.app.services.UserService;
 import com.example.app.utils.validator.user.UserPatchValue;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,16 +34,16 @@ public class UserController implements CrudController<UserResponseEntity, UserRe
     @Override
     public ResponseEntity<UserResponseEntity> create
             (@Validated UserRequestEntity request,
-             Principal connectedUser
-            ) throws UserNotFoundException{
+             @AuthenticationPrincipal User connectedUser
+            ) throws UserNotFoundException, GroupNotFoundException {
         return new ResponseEntity<>(service.create(request,connectedUser), HttpStatus.CREATED);
     }
     @Override
-    public ResponseEntity<UserResponseEntity> readOne(UUID id,Principal connectedUser) throws UserNotFoundException {
+    public ResponseEntity<UserResponseEntity> readOne(UUID id,@AuthenticationPrincipal User connectedUser) throws UserNotFoundException {
         return new ResponseEntity<>(service.read(id,connectedUser), HttpStatus.OK);
     }
     @Override
-    public ResponseEntity<List<UserResponseEntity>> readAll(Principal connectedUser) {
+    public ResponseEntity<List<UserResponseEntity>> readAll(@AuthenticationPrincipal User connectedUser) {
         return new ResponseEntity<>(service.read(connectedUser),HttpStatus.OK);
     }
 
@@ -72,8 +72,8 @@ public class UserController implements CrudController<UserResponseEntity, UserRe
     @PatchMapping("/changePassword")
     public ResponseEntity<UserResponseEntity> changePassword(
             @RequestBody @Validated ChangePasswordRequest request,
-            Principal principal) throws NewPasswordConfirmationNewPasswordNotMatchException, WrongOldPasswordProvidedException {
-        return new ResponseEntity<>(service.changePassword(request,principal),HttpStatus.OK);
+            @AuthenticationPrincipal User connectedUser) throws NewPasswordConfirmationNewPasswordNotMatchException, WrongOldPasswordProvidedException {
+        return new ResponseEntity<>(service.changePassword(request,connectedUser),HttpStatus.OK);
     }
 }
 

@@ -3,16 +3,12 @@ package com.example.app.utils.validator.user;
 import com.example.app.entities.Role;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import jakarta.validation.metadata.ConstraintDescriptor;
-import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class UserPatchMapValueValidator implements ConstraintValidator<UserPatchValue, Map<String,String>> {
 
@@ -25,7 +21,7 @@ public class UserPatchMapValueValidator implements ConstraintValidator<UserPatch
             String fieldValue = entry.getValue();
             var fieldValues = Arrays.stream(AllowedUserFields.values()).map(Enum::name).toList();
                 if (!fieldValues.contains(fieldName)) {
-                    context.buildConstraintViolationWithTemplate("Field value is not valid")
+                    context.buildConstraintViolationWithTemplate("Field name is not valid")
                             .addPropertyNode(fieldName)
                             .addConstraintViolation();
                     ++constraintViolationsCounter;

@@ -38,7 +38,7 @@ public class EntityResponseFileConverterImp implements EntityResponseFileConvert
                 .build();
         if(file.getApprovedBy()!=null) {
             userRepo.findById(file.getApprovedBy()).ifPresent(
-                    value -> response.setApprovedBy(value.getEmail()));
+                    user -> response.setApprovedBy(user.getEmail()));
         }
         if(file.getUploadedBy()!=null){
             response.setUploadedBy(file.getUploadedBy().getEmail());
@@ -62,7 +62,6 @@ public class EntityResponseFileConverterImp implements EntityResponseFileConvert
         }
         return response;
     }
-
     @Override
     public FileResponseEntity fromFileToResource(File file) {
         try {
@@ -101,7 +100,6 @@ public class EntityResponseFileConverterImp implements EntityResponseFileConvert
                 .uploadedBy(fileCreator)
                 .build();
     }
-
     @Override
     public File approveFile(File file, User user){
         file.setApproved(true);

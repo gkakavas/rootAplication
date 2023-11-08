@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
@@ -24,8 +25,10 @@ public class EntityResponseUserConverterImpl implements EntityResponseUserConver
 
     private final UserRepository userRepo;
     private final PasswordEncoder passwordEncoder;
+    private final Clock clock;
     @Value("${default.password}")
     private String defaultPasswordForUserCreation;
+
 
     @Override
     public AdminUserResponse fromUserToAdminUser(User user) {
@@ -72,16 +75,18 @@ public class EntityResponseUserConverterImpl implements EntityResponseUserConver
     @Override
     public Set<AdminUserResponse> fromUserListToAdminList(Set<User> users) {
             Set<AdminUserResponse> responseList = new HashSet<>();
-            users.forEach((user) -> responseList.add(
-                        fromUserToAdminUser(user)));
+            for(User user:users){
+                responseList.add(fromUserToAdminUser(user));
+            }
             return responseList;
     }
 
     @Override
     public Set<OtherUserResponse> fromUserListToOtherList(Set<User> users) {
         Set<OtherUserResponse> responseList = new HashSet<>();
-        users.forEach((user)->responseList.add(
-                fromUserToOtherUser(user)));
+        for(User user:users){
+            responseList.add(fromUserToOtherUser(user));
+        }
         return responseList;
     }
     @Override
@@ -94,7 +99,7 @@ public class EntityResponseUserConverterImpl implements EntityResponseUserConver
                 .specialization(request.getSpecialization())
                 .currentProject(request.getCurrentProject())
                 .createdBy(userCreator)
-                .registerDate(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .registerDate(LocalDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS))
                 .roleValue(request.getRole())
                 .role(Role.valueOf(request.getRole()))
                 .group(userGroup)
@@ -103,7 +108,6 @@ public class EntityResponseUserConverterImpl implements EntityResponseUserConver
 
     @Override
     public User updateSetting(User user, UserRequestEntity request, Group group){
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setFirstname(request.getFirstname());
         user.setLastname(request.getLastname());
         user.setEmail(request.getEmail());

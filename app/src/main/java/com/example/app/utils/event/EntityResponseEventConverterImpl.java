@@ -2,7 +2,6 @@ package com.example.app.utils.event;
 
 import com.example.app.entities.Event;
 import com.example.app.entities.User;
-import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.EventRequestEntity;
 import com.example.app.models.responses.event.AdminHrMngEventResponse;
 import com.example.app.models.responses.event.EventResponseEntity;
@@ -21,9 +20,7 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class EntityResponseEventConverterImpl implements EntityResponseEventConverter{
-
     private final UserRepository userRepo;
-
     @Override
     public EventResponseEntity fromEventToMyEvent(Event event){
         return MyEventResponse.builder()
@@ -46,15 +43,10 @@ public class EntityResponseEventConverterImpl implements EntityResponseEventConv
                 .users(event.getUsersJoinInEvent().stream().map(User::getEmail).collect(Collectors.toSet()))
                 .build();
         if(event.getEventCreator()!=null) {
-            try {
-                response.setEventCreator(userRepo.findById(event.getEventCreator()).orElseThrow(UserNotFoundException::new).getEmail());
-            } catch (UserNotFoundException e) {
-                response.setEventCreator(null);
-            }
+            userRepo.findById(event.getEventCreator()).ifPresent(user -> response.setEventCreator(user.getEmail()));
         }
         return response;
     }
-
     @Override
     public Set<EventResponseEntity> fromEventListToAdminHrMngList(Set<Event> events){
         Set<EventResponseEntity> responseList = new HashSet<>();
@@ -67,7 +59,6 @@ public class EntityResponseEventConverterImpl implements EntityResponseEventConv
         events.forEach(((event) -> responseList.add(fromEventToMyEvent(event))));
         return responseList;
     }
-
     @Override
     public Event fromRequestToEvent(EventRequestEntity request, UUID eventCreator){
         return Event.builder()
@@ -78,7 +69,6 @@ public class EntityResponseEventConverterImpl implements EntityResponseEventConv
                 .eventExpiration(LocalDateTime.parse(request.getEventExpiration()))
                 .build();
     }
-
     @Override
     public Event eventUpdate(EventRequestEntity request, Event event) {
         event.setEventDescription(request.getEventDescription());

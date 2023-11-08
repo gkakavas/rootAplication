@@ -22,12 +22,12 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -52,7 +52,7 @@ public class GroupControllerTest {
                 .groupCreationDate(LocalDateTime.now())
                 .users(Instancio.ofSet(AdminUserResponse.class).size(request.getIdsSet().size()).create())
                 .build();
-        when(groupService.create(eq(request),nullable(Principal.class))).thenReturn(response);
+        when(groupService.create(eq(request),nullable(User.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.post("/group/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -64,7 +64,7 @@ public class GroupControllerTest {
     @DisplayName("Should return a specified group")
     void shouldReturnASpecifiedGroup() throws Exception {
         var response = Instancio.create(AdminGroupResponse.class);
-        when(groupService.read(eq(response.getGroupId()),nullable(Principal.class))).thenReturn(response);
+        when(groupService.read(eq(response.getGroupId()),nullable(User.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.get("/group/{id}",response.getGroupId().toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(response)));
@@ -74,7 +74,7 @@ public class GroupControllerTest {
     @DisplayName("Should return all groups")
     void shouldReturnAllGroups() throws Exception {
         var response = Instancio.createList(AdminGroupResponse.class);
-        when(groupService.read(nullable(Principal.class))).thenReturn(List.copyOf(response));
+        when(groupService.read(nullable(User.class))).thenReturn(List.copyOf(response));
         this.mockMvc.perform(MockMvcRequestBuilders.get("/group/all"))
                 .andExpect(status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(response)));

@@ -33,13 +33,13 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.*;
 import static org.instancio.Select.field;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -75,7 +75,7 @@ public class FileControllerTest {
                 .fileSize(FileSizeConverter.convert(request.getSize()))
                 .fileKind(FileKind.TIMESHEET)
                 .build();
-        when(fileStorageService.upload(eq(request),nullable(Principal.class))).thenReturn(response);
+        when(fileStorageService.upload(eq(request),nullable(User.class))).thenReturn(response);
         this.mockMvc.perform(multipart("/file/upload").file(request))
                 .andExpect(status().isCreated())
                 .andExpect(content().json(objectMapper.writeValueAsString(response)));
@@ -95,7 +95,7 @@ public class FileControllerTest {
                 .resource(new FileSystemResource(testFile.getAbsolutePath()))
                 .build();
         var uuidOfFile = UUID.randomUUID();
-        when(fileStorageService.download(eq(uuidOfFile),eq(FileKind.EVALUATION), nullable(Principal.class))).thenReturn(response);
+        when(fileStorageService.download(eq(uuidOfFile),eq(FileKind.EVALUATION), nullable(User.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.get("/file/download/evaluation/{fileId}",uuidOfFile))
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, equalTo("attachment; filename=" + response.getFileName())))
@@ -117,7 +117,7 @@ public class FileControllerTest {
                 .resource(new FileSystemResource(testFile.getAbsolutePath()))
                 .build();
         var uuidOfFile = UUID.randomUUID();
-        when(fileStorageService.download(eq(uuidOfFile),eq(FileKind.TIMESHEET),nullable(Principal.class))).thenReturn(response);
+        when(fileStorageService.download(eq(uuidOfFile),eq(FileKind.TIMESHEET),nullable(User.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.get("/file/download/timesheet/{fileId}", uuidOfFile.toString()))
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, equalTo("attachment; filename=" + response.getFileName())))
@@ -146,13 +146,13 @@ public class FileControllerTest {
                         .excluding(FileKind.TIMESHEET)
                 ).create();
         if(List.of("ADMIN","MANAGER").contains(roleValue)) {
-            when(fileStorageService.readAll(eq(FileKind.EVALUATION), nullable(Principal.class))).thenReturn(List.copyOf(adminHrMngResponse));
+            when(fileStorageService.readAll(eq(FileKind.EVALUATION), nullable(User.class))).thenReturn(List.copyOf(adminHrMngResponse));
             this.mockMvc.perform(MockMvcRequestBuilders.get("/file/evaluation/all"))
                     .andExpect(status().isOk())
                     .andExpect(content().json(objectMapper.writeValueAsString(adminHrMngResponse)));
         }
         else{
-            when(fileStorageService.readAll(eq(FileKind.EVALUATION), nullable(Principal.class))).thenReturn(List.copyOf(userResponse));
+            when(fileStorageService.readAll(eq(FileKind.EVALUATION), nullable(User.class))).thenReturn(List.copyOf(userResponse));
             this.mockMvc.perform(MockMvcRequestBuilders.get("/file/evaluation/all"))
                     .andExpect(status().isOk())
                     .andExpect(content().json(objectMapper.writeValueAsString(userResponse)));
@@ -181,13 +181,13 @@ public class FileControllerTest {
                         .excluding(FileKind.EVALUATION)
                 ).create();
         if(List.of("ADMIN","HR").contains(roleValue)) {
-            when(fileStorageService.readAll(eq(FileKind.TIMESHEET), nullable(Principal.class))).thenReturn(List.copyOf(adminHrMngResponse));
+            when(fileStorageService.readAll(eq(FileKind.TIMESHEET), nullable(User.class))).thenReturn(List.copyOf(adminHrMngResponse));
             this.mockMvc.perform(MockMvcRequestBuilders.get("/file/timesheet/all"))
                     .andExpect(status().isOk())
                     .andExpect(content().json(objectMapper.writeValueAsString(adminHrMngResponse)));
         }
         else{
-            when(fileStorageService.readAll(eq(FileKind.TIMESHEET), nullable(Principal.class))).thenReturn(List.copyOf(userResponse));
+            when(fileStorageService.readAll(eq(FileKind.TIMESHEET), nullable(User.class))).thenReturn(List.copyOf(userResponse));
             this.mockMvc.perform(MockMvcRequestBuilders.get("/file/timesheet/all"))
                     .andExpect(status().isOk())
                     .andExpect(content().json(objectMapper.writeValueAsString(userResponse)));
@@ -214,7 +214,7 @@ public class FileControllerTest {
                         .enumOf(FileKind.class).excluding(FileKind.TIMESHEET)
                 )
                 .create();
-        when(fileStorageService.approveEvaluation(eq(approvedFile.getFileId()),nullable(Principal.class))).thenReturn(approvedFile);
+        when(fileStorageService.approveEvaluation(eq(approvedFile.getFileId()),nullable(User.class))).thenReturn(approvedFile);
         this.mockMvc.perform(MockMvcRequestBuilders.patch("/file/approveEvaluation/{fileId}",approvedFile.getFileId().toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(approvedFile)));

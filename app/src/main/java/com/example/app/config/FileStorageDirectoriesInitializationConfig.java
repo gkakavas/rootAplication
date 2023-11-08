@@ -9,10 +9,9 @@ import org.springframework.context.annotation.Profile;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 
 @Configuration
-@Profile("dev")
+@Profile({"dev","unit"})
 @RequiredArgsConstructor
 @Slf4j
 public class FileStorageDirectoriesInitializationConfig {

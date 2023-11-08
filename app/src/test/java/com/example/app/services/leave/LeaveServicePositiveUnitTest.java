@@ -6,12 +6,12 @@ import com.example.app.entities.Role;
 import com.example.app.entities.User;
 import com.example.app.exception.LeaveNotFoundException;
 import com.example.app.exception.UserNotFoundException;
-import com.example.app.models.requests.LeaveRequestEntity;
 import com.example.app.models.responses.leave.AdminHrMngLeaveResponse;
 import com.example.app.models.responses.leave.LeaveResponseEntity;
 import com.example.app.models.responses.leave.MyLeaveResponse;
 import com.example.app.repositories.LeaveRepository;
 import com.example.app.services.LeaveService;
+import com.example.app.tool.LeaveRelevantGenerator;
 import com.example.app.utils.leave.EntityResponseLeaveConverterImpl;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.*;
@@ -23,6 +23,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.security.Principal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -32,7 +33,6 @@ import java.util.UUID;
 
 import static org.instancio.Select.field;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 @ActiveProfiles("unit")
 public class LeaveServicePositiveUnitTest {
@@ -51,31 +51,31 @@ public class LeaveServicePositiveUnitTest {
         MockitoAnnotations.openMocks(this);
         leaveService = new LeaveService(leaveRepo, leaveConverter);
     }
-    void setUpPrincipal(){
+    void setUpCurrentUser(){
         currentUser = Instancio.of(User.class)
                 .set(field(User::getRole),Role.valueOf(roleValue))
                 .create();
-        this.principal = (Principal) currentUser;
     }
     @AfterEach
+
     void tearDown(){
     }
     @Test
     @DisplayName("Should create and store in database a new leave request")
     void shouldCreateAndStoreInDatabaseANewLeaveRequest() {
         this.roleValue = "USER";
-        setUpPrincipal();
-        var request = Instancio.create(LeaveRequestEntity.class);
+        setUpCurrentUser();
+        var request = LeaveRelevantGenerator.generateValidLeaveRequestEntity();
         var createdLeave = Leave.builder()
                 .leaveId(UUID.randomUUID()).leaveType(LeaveType.valueOf(request.getLeaveType()))
-                .leaveStarts(request.getLeaveStarts()).leaveEnds(request.getLeaveEnds())
+                .leaveStarts(LocalDate.parse(request.getLeaveStarts())).leaveEnds(LocalDate.parse(request.getLeaveEnds()))
                 .requestedBy(currentUser)
                 .build();
         var expectedResponse = MyLeaveResponse.builder().build();
         when(leaveConverter.fromRequestToEntity(request, currentUser)).thenReturn(createdLeave);
         when(leaveRepo.save(createdLeave)).thenReturn(createdLeave);
         when(leaveConverter.fromLeaveToMyLeave(createdLeave)).thenReturn(expectedResponse);
-        var response = leaveService.create(request,this.principal);
+        var response = leaveService.create(request,currentUser);
         assertEquals(expectedResponse,response);
     }
     @ParameterizedTest
@@ -83,8 +83,9 @@ public class LeaveServicePositiveUnitTest {
     @DisplayName("Should return a specific leave")
     void shouldReturnASpecificLeave(String roleValue) throws LeaveNotFoundException {
         this.roleValue = roleValue;
+        setUpCurrentUser();
         var leave = Instancio.create(Leave.class);
-        when(leaveRepo.findById(any(UUID.class))).thenReturn(Optional.of(leave));
+        when(leaveRepo.findById(leave.getLeaveId())).thenReturn(Optional.of(leave));
         var expectedAdminHrMngResponse = AdminHrMngLeaveResponse.builder()
                 .leaveId(leave.getLeaveId()).leaveType(leave.getLeaveType()).leaveStarts(leave.getLeaveStarts())
                 .leaveEnds(leave.getLeaveEnds()).approvedBy("user with id " + leave.getApprovedBy()).approvedOn(leave.getApprovedOn())
@@ -97,19 +98,19 @@ public class LeaveServicePositiveUnitTest {
                 .build();
         if(List.of(Role.ADMIN,Role.HR).contains(currentUser.getRole())){
             when(leaveConverter.fromLeaveToAdminHrMngLeave(leave)).thenReturn(expectedAdminHrMngResponse);
-            var response = leaveService.read(leave.getLeaveId(),this.principal);
+            var response = leaveService.read(leave.getLeaveId(),this.currentUser);
             assertEquals(expectedAdminHrMngResponse,response);
         }
         else if(currentUser.getRole().equals(Role.MANAGER)){
             leave.getRequestedBy().setGroup(currentUser.getGroup());
             when(leaveConverter.fromLeaveToAdminHrMngLeave(leave)).thenReturn(expectedAdminHrMngResponse);
-            var response = leaveService.read(leave.getLeaveId(),this.principal);
+            var response = leaveService.read(leave.getLeaveId(),this.currentUser);
             assertEquals(expectedAdminHrMngResponse,response);
         }
         else if (currentUser.getRole().equals(Role.USER)) {
             leave.setRequestedBy(currentUser);
             when(leaveConverter.fromLeaveToMyLeave(leave)).thenReturn(expectedUserResponse);
-            var response = leaveService.read(leave.getLeaveId(),this.principal);
+            var response = leaveService.read(leave.getLeaveId(),this.currentUser);
             assertEquals(expectedUserResponse,response);
         }
     }
@@ -119,7 +120,7 @@ public class LeaveServicePositiveUnitTest {
     @DisplayName("Should return all leaves based on current user")
     void shouldReturnAllLeavesForAdmin(String roleValue) {
         this.roleValue = roleValue;
-        setUpPrincipal();
+        setUpCurrentUser();
         var leaves = Instancio.createList(Leave.class);
         if(List.of(Role.ADMIN,Role.HR).contains(currentUser.getRole())) {
             var adminHrResponse = leaves.stream().map(leave -> (LeaveResponseEntity) AdminHrMngLeaveResponse.builder()
@@ -130,7 +131,7 @@ public class LeaveServicePositiveUnitTest {
             ).toList();
             when(leaveRepo.findAll()).thenReturn(leaves);
             when(leaveConverter.fromLeaveListToAdminHrMngLeaveList(Set.copyOf(leaves))).thenReturn(adminHrResponse);
-            var response = leaveService.read(this.principal);
+            var response = leaveService.read(this.currentUser);
             assertEquals(adminHrResponse,response);
         }
         else if (currentUser.getRole().equals(Role.MANAGER)) {
@@ -145,7 +146,7 @@ public class LeaveServicePositiveUnitTest {
             ).toList();
             when(leaveRepo.findAllByRequestedBy_Group(currentUser.getGroup())).thenReturn(leaves);
             when(leaveConverter.fromLeaveListToAdminHrMngLeaveList(Set.copyOf(leaves))).thenReturn(managerResponse);
-            var response = leaveService.read(this.principal);
+            var response = leaveService.read(this.currentUser);
             assertEquals(managerResponse, response);
         }
         else {
@@ -156,20 +157,20 @@ public class LeaveServicePositiveUnitTest {
                     .build()
             ).toList();
             when(leaveConverter.fromLeaveListToMyLeaveList(currentUser.getUserRequestedLeaves())).thenReturn(userResponse);
-            var response = leaveService.read(this.principal);
+            var response = leaveService.read(this.currentUser);
             assertEquals(userResponse,response);
         }
     }
     @Test
     @DisplayName("Should update and store in database an existing leave")
     void shouldUpdateAndStoreInDatabaseAnExistingLeave() throws LeaveNotFoundException {
-        var request = Instancio.create(LeaveRequestEntity.class);
+        var request = LeaveRelevantGenerator.generateValidLeaveRequestEntity();
         var leaveToUpdate = Instancio.create(Leave.class);
         var updatedLeave = Leave.builder()
                 .leaveId(leaveToUpdate.getLeaveId()).leaveType(LeaveType.valueOf(request.getLeaveType()))
-                .leaveStarts(request.getLeaveStarts()).leaveEnds(request.getLeaveEnds()).approvedBy(leaveToUpdate.getApprovedBy())
-                .approvedOn(leaveToUpdate.getApprovedOn()).approved(leaveToUpdate.isApproved())
-                .requestedBy(leaveToUpdate.getRequestedBy())
+                .leaveStarts(LocalDate.parse(request.getLeaveStarts())).leaveEnds(LocalDate.parse(request.getLeaveEnds()))
+                .approvedBy(leaveToUpdate.getApprovedBy()).approvedOn(leaveToUpdate.getApprovedOn())
+                .approved(leaveToUpdate.isApproved()).requestedBy(leaveToUpdate.getRequestedBy())
                 .build();
         var expectedResponse = MyLeaveResponse.builder()
                 .leaveId(updatedLeave.getLeaveId()).leaveType(updatedLeave.getLeaveType())
@@ -198,7 +199,7 @@ public class LeaveServicePositiveUnitTest {
     @DisplayName("Should approve and store an existing leave in database ")
     void shouldApproveAndStoreAnExistingLeaveInDatabase(String roleValue) throws LeaveNotFoundException, UserNotFoundException {
         this.roleValue = roleValue;
-        setUpPrincipal();
+        setUpCurrentUser();
         var leaveToApprove = Instancio.of(Leave.class)
                 .set(field("approvedBy"),null)
                 .set(field("approvedOn"),null)
@@ -219,8 +220,8 @@ public class LeaveServicePositiveUnitTest {
         when(leaveRepo.findById(leaveToApprove.getLeaveId())).thenReturn(Optional.of(leaveToApprove));
         when(leaveConverter.approveLeave(leaveToApprove,currentUser)).thenReturn(approvedLeave);
         when(leaveRepo.save(approvedLeave)).thenReturn(approvedLeave);
-        when(leaveConverter.fromLeaveToAdminHrMngLeave(leaveToApprove)).thenReturn(expectedResponse);
-        var response = leaveService.approveLeave(leaveToApprove.getLeaveId(),this.principal);
+        when(leaveConverter.fromLeaveToAdminHrMngLeave(approvedLeave)).thenReturn(expectedResponse);
+        var response = leaveService.approveLeave(leaveToApprove.getLeaveId(),this.currentUser);
         assertEquals(expectedResponse,response);
     }
 

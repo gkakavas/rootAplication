@@ -1,5 +1,6 @@
 package com.example.app.controllers;
 
+import com.example.app.entities.User;
 import com.example.app.exception.EventNotFoundException;
 import com.example.app.exception.GroupNotFoundException;
 import com.example.app.exception.UserNotFoundException;
@@ -10,10 +11,10 @@ import com.example.app.utils.validator.event.EventPatchValue;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,7 +28,7 @@ public class EventController {
     private final EventService service;
     @PostMapping("/create")
     public ResponseEntity<EventResponseEntity> create
-            (@Validated @RequestBody EventRequestEntity request, Principal connectedUser) throws UserNotFoundException {
+            (@Validated @RequestBody EventRequestEntity request, @AuthenticationPrincipal User connectedUser) throws UserNotFoundException {
         return new ResponseEntity<>(service.create(request,connectedUser),HttpStatus.CREATED);
     }
     @GetMapping("/{id}")
@@ -56,7 +57,7 @@ public class EventController {
     public ResponseEntity<EventResponseEntity> createByGroup
             (@PathVariable UUID id,
              @Validated @RequestBody EventRequestEntity request,
-             Principal connectedUser
+             @AuthenticationPrincipal User connectedUser
             )
             throws GroupNotFoundException {
         return new ResponseEntity<>(service.createForGroup(request,id,connectedUser),HttpStatus.CREATED);

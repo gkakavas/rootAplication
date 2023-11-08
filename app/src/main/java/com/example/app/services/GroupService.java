@@ -12,10 +12,8 @@ import com.example.app.repositories.UserRepository;
 import com.example.app.utils.group.EntityResponseGroupConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,10 +25,9 @@ public class GroupService {
     private final EntityResponseGroupConverter groupConverter;
 
 
-    public GroupResponseEntity create(GroupRequestEntity request, Principal connectedUser) throws UserNotFoundException {
-        var groupCreator = (User)((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+    public GroupResponseEntity create(GroupRequestEntity request,User connectedUser) throws UserNotFoundException {
         var users = userRepo.findAllById(request.getIdsSet());
-        var group = groupConverter.fromRequestToGroup(request,groupCreator.getUserId());
+        var group = groupConverter.fromRequestToGroup(request,connectedUser.getUserId());
         group.getGroupHasUsers().addAll(users);
         for(User user:users){
             user.setGroup(group);
@@ -39,22 +36,20 @@ public class GroupService {
         return groupConverter.fromGroupToAdminGroup(newGroup);
     }
 
-    public GroupResponseEntity read(UUID id,Principal connectedUser) throws GroupNotFoundException{
-        var currentUser = (User)((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+    public GroupResponseEntity read(UUID id,User connectedUser) throws GroupNotFoundException{
         var group = groupRepo.findById(id).orElseThrow(GroupNotFoundException::new);
-        if(currentUser.getRole().equals(Role.ADMIN)){
+        if(connectedUser.getRole().equals(Role.ADMIN)){
             return groupConverter.fromGroupToAdminGroup(group);
         }
-        else if (currentUser.getRole().equals(Role.MANAGER)) {
-            return groupConverter.fromGroupToMngGroup(currentUser.getGroup());
+        else if (connectedUser.getRole().equals(Role.MANAGER)) {
+            return groupConverter.fromGroupToMngGroup(connectedUser.getGroup());
         }
         else
             throw new AccessDeniedException("You have not authority to access this resource");
     }
-    public List<GroupResponseEntity> read(Principal connectedUser) {
-        var currentUser = (User)((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+    public List<GroupResponseEntity> read(User connectedUser) {
         List<Group> groups = groupRepo.findAll();
-        if(currentUser.getRole().equals(Role.ADMIN)){
+        if(connectedUser.getRole().equals(Role.ADMIN)){
             return groupConverter.fromGroupListToAdminGroupList(groups);
         }
         else{

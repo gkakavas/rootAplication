@@ -3,8 +3,6 @@ package com.example.app.utils.validator.event;
 import com.example.app.utils.validator.date.DateTimeValidator;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -22,7 +20,7 @@ public class EventPatchMapValueValidator implements ConstraintValidator<EventPat
             String fieldValue = entry.getValue();
             var fieldValues = Arrays.stream(AllowedEventFields.values()).map(Enum::name).toList();
             if (!fieldValues.contains(fieldName)) {
-                context.buildConstraintViolationWithTemplate("Field value is not valid")
+                context.buildConstraintViolationWithTemplate("Field name is not valid")
                         .addPropertyNode(fieldName)
                         .addConstraintViolation();
                 ++constraintViolationsCounter;
@@ -49,7 +47,7 @@ public class EventPatchMapValueValidator implements ConstraintValidator<EventPat
                 case "eventDateTime" -> {
                     if (!isValidEventDateTime(fieldValue)) {
                         context.buildConstraintViolationWithTemplate(
-                                        "Invalid event date and time format. The correct format is yyyy-MM-dd HH:mm:ss")
+                                        "Invalid event date and time format. The correct format is yyyy-MM-ddTHH:mm:ss")
                                 .addPropertyNode("eventDateTime")
                                 .addConstraintViolation();
                         ++constraintViolationsCounter;
@@ -58,7 +56,7 @@ public class EventPatchMapValueValidator implements ConstraintValidator<EventPat
                 case "eventExpiration" -> {
                     if (!isValidEventExpiration(fieldValue)) {
                         context.buildConstraintViolationWithTemplate(
-                                        "Invalid event expiration format. The correct format is yyyy-MM-dd HH:mm:ss")
+                                        "Invalid event expiration format. The correct format is yyyy-MM-ddTHH:mm:ss")
                                 .addPropertyNode("eventExpiration")
                                 .addConstraintViolation();
                         ++constraintViolationsCounter;

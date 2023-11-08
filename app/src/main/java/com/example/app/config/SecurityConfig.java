@@ -6,7 +6,6 @@ import com.example.app.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,6 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
 import static org.springframework.http.HttpMethod.*;
 @Configuration
 @EnableWebSecurity
@@ -39,7 +39,8 @@ public class SecurityConfig implements WebMvcConfigurer {
                         .requestMatchers(POST,"/auth/authenticate").permitAll()
                         .requestMatchers(POST,"/auth/register").permitAll()
                         .requestMatchers(GET,"/access-denied").permitAll()
-                        .requestMatchers(GET,"/test/user").permitAll()
+                        .requestMatchers(GET,"/test/authPrincipal").permitAll()
+                        .requestMatchers(GET,"/test/principal").permitAll()
 
                         .requestMatchers(POST,"/user/create").hasAuthority("user::create")
                         .requestMatchers(GET,"/user/all").hasAuthority("user::readAll")

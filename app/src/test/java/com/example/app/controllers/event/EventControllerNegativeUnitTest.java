@@ -4,12 +4,9 @@ import com.example.app.advice.ApplicationExceptionHandler;
 import com.example.app.config.TestSecurityConfig;
 import com.example.app.controllers.EventController;
 import com.example.app.exception.EventNotFoundException;
-import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.EventRequestEntity;
 import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.services.EventService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -30,8 +27,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.instancio.Select.field;
@@ -72,15 +72,14 @@ public class EventControllerNegativeUnitTest {
                 .content(createRequest)
         )
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message.eventDescription",
-                        equalTo("Event body should contain at least 5 and " +
-                                "no many than 100 characters including spaces")))
                 .andExpect(jsonPath("$.message.eventBody",
                         equalTo("Event body should contain at least 100 characters including spaces")))
+                .andExpect(jsonPath("$.message.eventDescription",
+                        equalTo("Event description should contain at least 5 and no many than 100 characters including spaces")))
                 .andExpect(jsonPath("$.message.eventDateTime",
-                        equalTo("Invalid event date and time format. The correct format is yyyy-MM-dd HH:mm:ss")))
+                        equalTo("Invalid event date and time format. The correct format is yyyy-MM-ddTHH:mm:ss")))
                 .andExpect(jsonPath("$.message.eventExpiration",
-                        equalTo("Invalid event expiration format. The correct format is yyyy-MM-dd HH:mm:ss")));
+                        equalTo("Invalid event expiration format. The correct format is yyyy-MM-ddTHH:mm:ss")));
     }
 
     @ParameterizedTest
@@ -124,7 +123,7 @@ public class EventControllerNegativeUnitTest {
                         .content(objectMapper.writeValueAsString(jsonNode))
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message.error",equalTo("Invalid UUID value provided")))
+                .andExpect(jsonPath("$.message.idsSet",equalTo("Invalid UUID value provided")))
                 .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
     }
     /*
@@ -164,15 +163,11 @@ public class EventControllerNegativeUnitTest {
                         .content(updateRequest)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message.eventDescription",
-                        equalTo("Event body should contain at least 5 and " +
-                                "no many than 100 characters including spaces")))
-                .andExpect(jsonPath("$.message.eventBody",
-                        equalTo("Event body should contain at least 100 characters including spaces")))
-                .andExpect(jsonPath("$.message.eventDateTime",
-                        equalTo("Invalid event date and time format. The correct format is yyyy-MM-dd HH:mm:ss")))
-                .andExpect(jsonPath("$.message.eventExpiration",
-                        equalTo("Invalid event expiration format. The correct format is yyyy-MM-dd HH:mm:ss")));
+                .andExpect(jsonPath("$.message.eventDescription",equalTo("Event description should contain at least 5 and no many than 100 characters including spaces")))
+                .andExpect(jsonPath("$.message.eventBody",equalTo("Event body should contain at least 100 characters including spaces")))
+                .andExpect(jsonPath("$.message.eventDateTime",equalTo("Invalid event date and time format. The correct format is yyyy-MM-ddTHH:mm:ss")))
+                .andExpect(jsonPath("$.message.eventExpiration",equalTo("Invalid event expiration format. The correct format is yyyy-MM-ddTHH:mm:ss")))
+                .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
 
     }
     @Test
@@ -195,7 +190,7 @@ public class EventControllerNegativeUnitTest {
                         .content(objectMapper.writeValueAsString(jsonNode))
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message.error",equalTo("Invalid UUID value provided")))
+                .andExpect(jsonPath("$.message.idsSet",equalTo("Invalid UUID value provided")))
                 .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
     }
     @Test
@@ -206,8 +201,8 @@ public class EventControllerNegativeUnitTest {
         var updateRequest = Instancio.of(EventRequestEntity.class)
                 .generate(field("eventDescription"),gen -> gen.string().length(5,100))
                 .generate(field("eventBody"),gen -> gen.string().length(100,200))
-                .set(field("eventDateTime"),LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
-                .set(field("eventExpiration"),LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                .set(field("eventDateTime"),LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).toString())
+                .set(field("eventExpiration"),LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).toString())
                 .create();
         when(eventService.update(nonExistingUUID,updateRequest)).thenThrow(new EventNotFoundException());
         this.mockMvc.perform(MockMvcRequestBuilders.put("/event/update/{id}",nonExistingUUID)
@@ -264,11 +259,12 @@ public class EventControllerNegativeUnitTest {
     @DisplayName("If addUsersToEvent request has invalid UUID format on idsSet of request body" +
             "should return 400 and a response with error message and response status code")
     void invalidAddRemoveRequestShouldReturn400AndAResponseWithErrorMessageAndResponseStatusCode(String url) throws Exception {
+        var request = Set.of("invalidUUID1","invalidUUID2");
         this.mockMvc.perform(MockMvcRequestBuilders.patch(url,UUID.randomUUID())
-                        .content(objectMapper.writeValueAsString(Set.of("invalidUUID1","invalidUUID2")))
+                        .content(objectMapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message.error",equalTo("Invalid UUID value provided")))
+                .andExpect(jsonPath("$.message.invalidUUID1",equalTo("Invalid UUID value provided")))
                 .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
     }
     @ParameterizedTest
@@ -352,23 +348,24 @@ public class EventControllerNegativeUnitTest {
                     .andExpect(jsonPath("$.responseCode", equalTo(HttpStatus.BAD_REQUEST.name())));
         }
     }
-    @Test
+    @ParameterizedTest
+    @CsvSource({"invalidField1, invalidField2, invalidField3, inv, invalid size event body, invalid date value"})
     @DisplayName("If patchEventDetails request map contains invalid fields to patch" +
             "should return 400 and a response with error message and response status code")
-    void invalidFieldsPatchRequestShouldReturn400AndAResponseWithErrorMessageAndResponseStatusCode() throws Exception {
-        var invalidFieldsPatchRequest = "{" +
-                "\"invalidField1\":\"inv\"," +
-                "\"invalidField2\":\"invalid size event body\"," +
-                "\"invalidField3\":\"invalid date value\"" +
-                "}";
+    void invalidFieldsPatchRequestShouldReturn400AndAResponseWithErrorMessageAndResponseStatusCode(
+            String key1, String key2, String key3, String value1, String value2, String value3) throws Exception {
+        Map<String,String> requestMap = new HashMap<>();
+        requestMap.put(key1,value1);
+        requestMap.put(key2,value2);
+        requestMap.put(key3,value3);
         this.mockMvc.perform(MockMvcRequestBuilders.patch("/event/patchEventDetails/{eventId}",UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(invalidFieldsPatchRequest)
+                        .content(objectMapper.writeValueAsString(requestMap))
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message.invalidField1",equalTo("Field value is not valid")))
-                .andExpect(jsonPath("$.message.invalidField2",equalTo("Field value is not valid")))
-                .andExpect(jsonPath("$.message.invalidField3",equalTo("Field value is not valid")))
+                .andExpect(jsonPath("$.message."+key1,equalTo("Field name is not valid")))
+                .andExpect(jsonPath("$.message."+key2,equalTo("Field name is not valid")))
+                .andExpect(jsonPath("$.message."+key3,equalTo("Field name is not valid")))
                 .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
     }
 
@@ -389,8 +386,8 @@ public class EventControllerNegativeUnitTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message.eventDescription",equalTo("Event description should contain at least 5 and no many than 100 characters including spaces")))
                 .andExpect(jsonPath("$.message.eventBody",equalTo("Event body should contain at least 100 characters including spaces")))
-                .andExpect(jsonPath("$.message.eventDateTime",equalTo("Invalid event date and time format. The correct format is yyyy-MM-dd HH:mm:ss")))
-                .andExpect(jsonPath("$.message.eventExpiration",equalTo("Invalid event expiration format. The correct format is yyyy-MM-dd HH:mm:ss")))
+                .andExpect(jsonPath("$.message.eventDateTime",equalTo("Invalid event date and time format. The correct format is yyyy-MM-ddTHH:mm:ss")))
+                .andExpect(jsonPath("$.message.eventExpiration",equalTo("Invalid event expiration format. The correct format is yyyy-MM-ddTHH:mm:ss")))
                 .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
     }
 

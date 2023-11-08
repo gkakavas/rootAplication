@@ -22,7 +22,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -69,7 +68,7 @@ public class EventControllerPositiveUnitTest {
                 .eventExpiration(LocalDateTime.parse(request.getEventExpiration()))
                 .users(Instancio.ofSet(String.class).size(request.getIdsSet().size()).create())
                 .build();
-        when(eventService.create(eq(request),nullable(Principal.class))).thenReturn(response);
+        when(eventService.create(eq(request),nullable(User.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.post("/event/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -93,7 +92,7 @@ public class EventControllerPositiveUnitTest {
                 .eventExpiration(LocalDateTime.parse(request.getEventExpiration()))
                 .users(Instancio.ofSet(String.class).size(request.getIdsSet().size()).create())
                 .build();
-        when(eventService.createForGroup(eq(request),eq(currentUser.getGroup().getGroupId()),nullable(Principal.class)))
+        when(eventService.createForGroup(eq(request),eq(currentUser.getGroup().getGroupId()),nullable(User.class)))
                 .thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.post("/event/createGroupEvent/{id}",currentUser.getGroup().getGroupId().toString())
                         .contentType(MediaType.APPLICATION_JSON)

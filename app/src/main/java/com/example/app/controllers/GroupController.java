@@ -1,5 +1,6 @@
 package com.example.app.controllers;
 
+import com.example.app.entities.User;
 import com.example.app.exception.GroupNotFoundException;
 import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.GroupRequestEntity;
@@ -9,9 +10,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,17 +24,17 @@ public class GroupController implements CrudController<GroupResponseEntity,Group
     private final GroupService service;
 
     @Override
-    public ResponseEntity<GroupResponseEntity> create(@Valid GroupRequestEntity request, Principal connectedUser)
+    public ResponseEntity<GroupResponseEntity> create(@Valid GroupRequestEntity request, @AuthenticationPrincipal User connectedUser)
     throws UserNotFoundException {
         return new ResponseEntity<>(service.create(request,connectedUser),HttpStatus.CREATED);
     }
     @Override
-    public ResponseEntity<GroupResponseEntity> readOne(UUID id,Principal connectedUser)
+    public ResponseEntity<GroupResponseEntity> readOne(UUID id,@AuthenticationPrincipal User connectedUser)
     throws GroupNotFoundException{
         return new ResponseEntity<>(service.read(id,connectedUser),HttpStatus.OK);
     }
     @Override
-    public ResponseEntity<List<GroupResponseEntity>> readAll(Principal connectedUser) {
+    public ResponseEntity<List<GroupResponseEntity>> readAll(@AuthenticationPrincipal User connectedUser) {
        return new ResponseEntity<>((service.read(connectedUser)),HttpStatus.OK);
     }
     @Override

@@ -18,4 +18,5 @@ public class TestSecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable);
         return httpSecurity.build();
     }
+
 }

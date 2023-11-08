@@ -14,12 +14,10 @@ import com.example.app.repositories.UserRepository;
 import com.example.app.utils.event.EntityResponseEventConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
-import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -30,34 +28,31 @@ public class EventService {
     private final EventRepository eventRepo;
     private final GroupRepository groupRepo;
     private final UserRepository userRepo;
-    private final JwtService jwtService;
     private final EntityResponseEventConverter eventConverter;
 
 
-    public EventResponseEntity create(EventRequestEntity request, Principal connectedUser)
+    public EventResponseEntity create(EventRequestEntity request,User connectedUser)
     throws UserNotFoundException{
-        var eventCreator = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
-            var newEvent = eventConverter.fromRequestToEvent(request,eventCreator.getUserId());
+            var newEvent = eventConverter.fromRequestToEvent(request,connectedUser.getUserId());
             var users = userRepo.findAllById(request.getIdsSet());
             newEvent.getUsersJoinInEvent().addAll(users);
             for(User user:users){
                 user.getUserHasEvents().add(newEvent);
             }
-            var responseEvent = eventRepo.save(newEvent);
-            return eventConverter.fromEventToAdminHrMngEvent(responseEvent);
+            var createdEvent = eventRepo.save(newEvent);
+            return eventConverter.fromEventToAdminHrMngEvent(createdEvent);
     }
 
-    public EventResponseEntity createForGroup(EventRequestEntity request, UUID groupId,Principal connectedUser)
+    public EventResponseEntity createForGroup(EventRequestEntity request, UUID groupId,User connectedUser)
             throws GroupNotFoundException{
-        var currentUser = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
-        var event = eventConverter.fromRequestToEvent(request,currentUser.getUserId());
+        var event = eventConverter.fromRequestToEvent(request,connectedUser.getUserId());
         Set<User> usersToAdd = new HashSet<>();
-        if(List.of(Role.ADMIN,Role.HR).contains(currentUser.getRole())){
+        if(List.of(Role.ADMIN,Role.HR).contains(connectedUser.getRole())){
             var group = groupRepo.findById(groupId).orElseThrow(GroupNotFoundException::new);
             usersToAdd = group.getGroupHasUsers();
         }
-        else if (currentUser.getRole().equals(Role.MANAGER) && currentUser.getGroup().getGroupId().equals(groupId)) {
-            usersToAdd = currentUser.getGroup().getGroupHasUsers();
+        else if (connectedUser.getRole().equals(Role.MANAGER) && connectedUser.getGroup().getGroupId().equals(groupId)) {
+            usersToAdd = connectedUser.getGroup().getGroupHasUsers();
         }
         event.getUsersJoinInEvent().addAll(usersToAdd);
         for(User user : usersToAdd){
@@ -100,7 +95,6 @@ public class EventService {
         var users = userRepo.findAllById(idsSet);
         for(User user:users){
             event.getUsersJoinInEvent().add(user);
-            user.getUserHasEvents().add(event);
         }
         var updatedEvent = eventRepo.save(event);
         return eventConverter.fromEventToAdminHrMngEvent(updatedEvent);
@@ -109,9 +103,8 @@ public class EventService {
     public EventResponseEntity removeUsersFromEvent(Set<UUID> idsSet, UUID eventId)throws EventNotFoundException{
         var event = eventRepo.findById(eventId).orElseThrow(EventNotFoundException::new);
         var users = userRepo.findAllById(idsSet);
-        for(User user:users){
+        for(User user: users){
             event.getUsersJoinInEvent().remove(user);
-            user.getUserHasEvents().remove(event);
         }
         var updatedEvent = eventRepo.save(event);
         return eventConverter.fromEventToAdminHrMngEvent(updatedEvent);

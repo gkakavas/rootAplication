@@ -6,7 +6,6 @@ import com.example.app.entities.User;
 import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.user.AdminUserResponse;
 import com.example.app.models.responses.user.OtherUserResponse;
-import com.example.app.repositories.EventRepository;
 import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.services.JwtService;
@@ -49,12 +48,9 @@ public class UserPositiveIntegrationTest {
     @Autowired
     private GroupRepository groupRepo;
     @Autowired
-    private EventRepository eventRepo;
-    @Autowired
     private ObjectMapper objectMapper;
     private static TestRestTemplate restTemplate;
     private String baseUrl = "http://localhost";
-    private User user;
     private String currentToken;
     private String roleValue;
     private User currentUser;

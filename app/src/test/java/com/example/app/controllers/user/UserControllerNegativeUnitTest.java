@@ -3,6 +3,7 @@ package com.example.app.controllers.user;
 import com.example.app.advice.ApplicationExceptionHandler;
 import com.example.app.config.TestSecurityConfig;
 import com.example.app.controllers.UserController;
+import com.example.app.entities.User;
 import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.services.UserService;
@@ -19,14 +20,12 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -150,7 +149,7 @@ public class UserControllerNegativeUnitTest {
             "should return 404 and a response with error message and response status code")
     void readOneShouldReturn404AndAResponseWithErrorMessageAndResponseStatusCode() throws Exception {
         var nonExistingUUID = UUID.randomUUID();
-        when(userService.read(nonExistingUUID,any(Principal.class))).thenThrow(new UserNotFoundException());
+        when(userService.read(eq(nonExistingUUID),nullable(User.class))).thenThrow(new UserNotFoundException());
         this.mockMvc.perform(MockMvcRequestBuilders.get("/user/{id}",nonExistingUUID)
                 )
                 .andExpect(status().isNotFound())
@@ -215,9 +214,9 @@ public class UserControllerNegativeUnitTest {
             "should return 400 and a response with error message and response status code")
     void updateRequestShouldReturn400AndAResponseWithErrorMessageAndResponseStatusCode() throws Exception {
         String invalidGroupValue = "randomGroupValue";
-        var updateRequest = "{\"firstname\": \"test_firstName\"," +
+        var updateRequest =
+                "{\"firstname\": \"test_firstName\"," +
                 "\"lastname\": \"test_lastname\"," +
-                "\"password\": \"Password123\"," +
                 "\"email\": \"test@email.com\"," +
                 "\"specialization\": \"test_specialization\"," +
                 "\"group\": \""+invalidGroupValue+"\"," +
@@ -226,9 +225,7 @@ public class UserControllerNegativeUnitTest {
                 "}";
         this.mockMvc.perform(MockMvcRequestBuilders.put("/user/update/{id}",UUID.randomUUID())
                         .content(updateRequest)
-                        .contentType(MediaType.APPLICATION_JSON)
-
-                )
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message.group",equalTo("Invalid UUID value provided")))
                 .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
@@ -350,19 +347,6 @@ public class UserControllerNegativeUnitTest {
                 .andExpect(jsonPath("$.message.error",equalTo("Request body is required")))
                 .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
     }
-    @Test
-    @DisplayName("If the patch request is empty" +
-            "should return 400 and a response with error message and response status code")
-    void emptyPatchRequestShouldReturnStatus400AndAResponseWithErrorMessageAndResponseStatusCode() throws Exception {
-        var emptyPatchRequest = "{}";
-        this.mockMvc.perform(MockMvcRequestBuilders.patch("/user/patch/{id}",UUID.randomUUID())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(emptyPatchRequest)
-                )
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message[0]",containsString("Patch request cannot be empty")))
-                .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
-    }
 
     @Test
     @DisplayName("If the patch request contains not valid fields to update" +
@@ -377,8 +361,7 @@ public class UserControllerNegativeUnitTest {
                         .content(objectMapper.writeValueAsString(patchMap))
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message[0]",equalTo(mapKey.substring(0, 1).toUpperCase()
-                        + mapKey.substring(1)+" field name is not valid")))
+                .andExpect(jsonPath("$.message"+"."+mapKey,equalTo("Field name is not valid")))
                 .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
     }
 

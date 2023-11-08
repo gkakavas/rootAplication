@@ -14,7 +14,10 @@ import com.example.app.repositories.UserRepository;
 import com.example.app.services.GroupService;
 import com.example.app.utils.group.EntityResponseGroupConverter;
 import org.instancio.Instancio;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
@@ -22,15 +25,17 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.security.Principal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
+
 import static org.instancio.Select.field;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 @ActiveProfiles("unit")
 public class GroupServicePositiveUnitTest {
@@ -44,7 +49,6 @@ public class GroupServicePositiveUnitTest {
     private EntityResponseGroupConverter groupConverter;
 
     private User currentUser;
-    private Principal principal;
     private String roleValue;
 
     @BeforeEach
@@ -52,9 +56,8 @@ public class GroupServicePositiveUnitTest {
         MockitoAnnotations.openMocks(this);
         groupService = new GroupService(userRepo, groupRepo, groupConverter);
     }
-    void setUpPrincipal(){
+    void setUpCurrentUser(){
         currentUser = Instancio.of(User.class).set(field(User::getRoleValue),roleValue).set(field(User::getRole),Role.valueOf(roleValue)).create();
-        principal = (Principal) currentUser;
     }
     @AfterEach
     void tearDown() {
@@ -64,7 +67,7 @@ public class GroupServicePositiveUnitTest {
     @DisplayName("Should store a group and return the AdminGroupResponse")
     void shouldStoreAGroupAndReturnTheAdminGroupResponse() throws Exception {
         this.roleValue = "ADMIN";
-        setUpPrincipal();
+        setUpCurrentUser();
         var request = Instancio.create(GroupRequestEntity.class);
         var usersToAddInGroup = request.getIdsSet().stream().map(uuid ->
                 Instancio.of(User.class).set(field(User::getUserId),uuid)
@@ -87,7 +90,7 @@ public class GroupServicePositiveUnitTest {
         when(groupConverter.fromRequestToGroup(request,currentUser.getUserId())).thenReturn(createdGroup);
         when(groupRepo.save(createdGroup)).thenReturn(createdGroup);
         when(groupConverter.fromGroupToAdminGroup(createdGroup)).thenReturn(expectedResponse);
-        var response = groupService.create(request,this.principal);
+        var response = groupService.create(request,this.currentUser);
         assertEquals(expectedResponse,response);
     }
 
@@ -96,8 +99,9 @@ public class GroupServicePositiveUnitTest {
     @DisplayName("Should return a specific group in form that corresponds to the current user")
     void shouldReturnASpecifiedGroupInFormThatCorrespondsToTheCurrentUser(String roleValue) throws Exception {
         this.roleValue = roleValue;
-        setUpPrincipal();
+        setUpCurrentUser();
         var group = Instancio.create(Group.class);
+        group.getGroupHasUsers().forEach(user -> user.setGroup(group));
         when(groupRepo.findById(any(UUID.class))).thenReturn(Optional.of(group));
         if(currentUser.getRole().equals(Role.ADMIN)){
             var adminUsers = group.getGroupHasUsers().stream().map(user ->
@@ -114,7 +118,7 @@ public class GroupServicePositiveUnitTest {
                     .users(adminUsers)
                     .build();
             when(groupConverter.fromGroupToAdminGroup(group)).thenReturn(adminExpectedResponse);
-            var response = groupService.read(group.getGroupId(),this.principal);
+            var response = groupService.read(group.getGroupId(),this.currentUser);
             assertEquals(adminExpectedResponse,response);
         }
         else if (currentUser.getRole().equals(Role.MANAGER)){
@@ -129,7 +133,7 @@ public class GroupServicePositiveUnitTest {
                     .groupId(group.getGroupId()).groupName(group.getGroupName()).users(managerUsers)
                     .build();
             when(groupConverter.fromGroupToMngGroup(group)).thenReturn(managerExpectedResponse);
-            var response = groupService.read(group.getGroupId(),this.principal);
+            var response = groupService.read(group.getGroupId(),this.currentUser);
             assertEquals(managerExpectedResponse,response);
         }
     }
@@ -139,7 +143,7 @@ public class GroupServicePositiveUnitTest {
     @DisplayName("Should return all groups in form that corresponds to the current user")
     void shouldReturnAllGroupsInFormThatCorrespondsToTheCurrentUser(String roleValue){
         this.roleValue = roleValue;
-        setUpPrincipal();
+        setUpCurrentUser();
         var groups = Instancio.ofList(Group.class).size(5).create();
         groups.forEach(group->group.getGroupHasUsers().forEach(user -> user.setGroup(group)));
         when(groupRepo.findAll()).thenReturn(groups);
@@ -157,7 +161,7 @@ public class GroupServicePositiveUnitTest {
                     ).collect(Collectors.toSet()))
                     .build()).toList();
             when(groupConverter.fromGroupListToAdminGroupList(groups)).thenReturn(List.copyOf(adminExpectedResponse));
-            var response = groupService.read(this.principal);
+            var response = groupService.read(this.currentUser);
             assertEquals(adminExpectedResponse,response);
         }
         else if(currentUser.getRole().equals(Role.MANAGER)) {
@@ -171,7 +175,7 @@ public class GroupServicePositiveUnitTest {
                     ).collect(Collectors.toSet()))
                     .build()).toList();
             when(groupConverter.fromGroupListToMngGroupList(groups)).thenReturn(List.copyOf(managerExpectedResponse));
-            var response = groupService.read(this.principal);
+            var response = groupService.read(this.currentUser);
             assertEquals(managerExpectedResponse,response);
         }
     }
