@@ -7,20 +7,25 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 import java.util.UUID;
 
 @Configuration
 @Slf4j
-@Profile({"dev","unit","integration"})
+@Profile({"dev","integration"})
 public class JacksonConfig {
     @Bean
     public ObjectMapper objectMapper(){
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new SimpleModule("UUIDModule"){{
-            addDeserializer(UUID.class, new UUIDDeserializer());
-        }});
+        objectMapper.registerModule(uuidModule());
         return objectMapper;
     }
+
+    @Bean
+    public SimpleModule uuidModule() {
+        SimpleModule uuidModule = new SimpleModule("UUIDModule");
+        uuidModule.addDeserializer(UUID.class, new UUIDDeserializer());
+        return uuidModule;
+    }
 }
+
