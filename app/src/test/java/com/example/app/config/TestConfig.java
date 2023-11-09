@@ -1,20 +1,22 @@
 package com.example.app.config;
 
-import com.example.app.utils.deserializers.UUIDDeserializer;
+import com.example.app.utils.deserializers.UUIDSetDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.UUID;
+import java.util.Set;
 
-
-@ActiveProfiles("unit")
-@TestConfiguration
+@Configuration
+@Profile("unit")
+@ComponentScan(basePackages = "com.example.app.utils.deserializers")
 public class TestConfig {
     @Bean
     public Clock clock(){
@@ -22,11 +24,17 @@ public class TestConfig {
     }
 
     @Bean
-        public ObjectMapper objectMapper(){
+    public ObjectMapper testObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new SimpleModule("UUIDModule"){{
-             addDeserializer(UUID.class, new UUIDDeserializer());
-        }});
+        SimpleModule simpleModule = new SimpleModule();
+        simpleModule.addDeserializer(Set.class, new UUIDSetDeserializer());
+        objectMapper.registerModule(simpleModule);
         return objectMapper;
+    }
+    @Bean
+    public MappingJackson2HttpMessageConverter testMappingJackson2HttpMessageConverter() {
+        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+        converter.setObjectMapper(testObjectMapper());
+        return converter;
     }
 }

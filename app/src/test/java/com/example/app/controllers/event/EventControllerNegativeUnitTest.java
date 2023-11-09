@@ -1,6 +1,7 @@
 package com.example.app.controllers.event;
 
 import com.example.app.advice.ApplicationExceptionHandler;
+import com.example.app.config.TestConfig;
 import com.example.app.config.TestSecurityConfig;
 import com.example.app.controllers.EventController;
 import com.example.app.exception.EventNotFoundException;
@@ -42,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 @ActiveProfiles("unit")
 @WebMvcTest
-@ContextConfiguration(classes = {TestSecurityConfig.class, EventController.class, ApplicationExceptionHandler.class})
+@ContextConfiguration(classes = {TestConfig.class,TestSecurityConfig.class, EventController.class, ApplicationExceptionHandler.class})
 public class EventControllerNegativeUnitTest {
     @MockBean
     private EventService eventService;
@@ -123,7 +124,7 @@ public class EventControllerNegativeUnitTest {
                         .content(objectMapper.writeValueAsString(jsonNode))
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message.idsSet",equalTo("Invalid UUID value provided")))
+                .andExpect(jsonPath("$.message.idsSet",equalTo("Invalid UUID values provided")))
                 .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
     }
     /*
@@ -190,7 +191,7 @@ public class EventControllerNegativeUnitTest {
                         .content(objectMapper.writeValueAsString(jsonNode))
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message.idsSet",equalTo("Invalid UUID value provided")))
+                .andExpect(jsonPath("$.message.idsSet",equalTo("Invalid UUID values provided")))
                 .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
     }
     @Test
@@ -204,9 +205,10 @@ public class EventControllerNegativeUnitTest {
                 .set(field("eventDateTime"),LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).toString())
                 .set(field("eventExpiration"),LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).toString())
                 .create();
+        System.err.println(objectMapper.writeValueAsString(updateRequest));
         when(eventService.update(nonExistingUUID,updateRequest)).thenThrow(new EventNotFoundException());
         this.mockMvc.perform(MockMvcRequestBuilders.put("/event/update/{id}",nonExistingUUID)
-                        .contentType(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.valueOf("application/json"))
                         .content(objectMapper.writeValueAsString(updateRequest))
                 )
                 .andExpect(status().isNotFound())
@@ -264,7 +266,7 @@ public class EventControllerNegativeUnitTest {
                         .content(objectMapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message.invalidUUID1",equalTo("Invalid UUID value provided")))
+                .andExpect(jsonPath("$.message.idsSet",equalTo("Invalid UUID values provided")))
                 .andExpect(jsonPath("$.responseCode",equalTo(HttpStatus.BAD_REQUEST.name())));
     }
     @ParameterizedTest

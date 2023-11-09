@@ -7,6 +7,7 @@ import java.util.UUID;
 @Data
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class AdminUserResponse implements UserResponseEntity {
     private UUID userId;
     private String firstname;

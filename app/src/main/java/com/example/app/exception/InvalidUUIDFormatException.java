@@ -1,14 +1,13 @@
 package com.example.app.exception;
 
 import lombok.Getter;
-import lombok.Setter;
 
 @Getter
 public class InvalidUUIDFormatException extends RuntimeException {
     private final String fieldName;
-    private final String invalidValue;
+    private final Object invalidValue;
 
-    public InvalidUUIDFormatException(String message,String fieldName,String invalidValue){
+    public <T> InvalidUUIDFormatException(String message,String fieldName,T invalidValue){
         super(message);
         this.fieldName = fieldName;
         this.invalidValue = invalidValue;

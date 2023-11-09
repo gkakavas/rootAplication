@@ -14,7 +14,7 @@ spring:
 #    database: postgresql
 #    database-platform: org.hibernate.dialect.PostgreSQLDialect
   profiles:
-    active: dev
+    active: integration
 Logging:
   level:
     com.example: TRACE

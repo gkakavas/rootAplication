@@ -1,6 +1,8 @@
 package com.example.app.models.requests;
 
+import com.example.app.utils.deserializers.UUIDSetDeserializer;
 import com.example.app.utils.validators.date.DateTime;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,5 +31,6 @@ public class EventRequestEntity implements RequestEntity {
     @DateTime(message = "Invalid event expiration format. The correct format is yyyy-MM-ddTHH:mm:ss")
     private String eventExpiration;
     @Builder.Default
+    @JsonDeserialize(using = UUIDSetDeserializer.class)
     private Set<UUID> idsSet = new HashSet<>();
 }

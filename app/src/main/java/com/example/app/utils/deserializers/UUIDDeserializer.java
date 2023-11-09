@@ -8,8 +8,6 @@ import org.springframework.boot.jackson.JsonComponent;
 
 import java.io.IOException;
 import java.util.UUID;
-
-
 @JsonComponent
 public class UUIDDeserializer extends JsonDeserializer<UUID> {
     @Override

@@ -7,7 +7,9 @@ import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.EventRequestEntity;
 import com.example.app.models.responses.event.EventResponseEntity;
 import com.example.app.services.EventService;
+import com.example.app.utils.deserializers.UUIDSetDeserializer;
 import com.example.app.utils.validators.event.EventPatchValue;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -64,13 +66,15 @@ public class EventController {
     }
     @PatchMapping("/addUsers/{eventId}")
     public ResponseEntity<EventResponseEntity> addUsersToEvent(
-            @PathVariable UUID eventId, @RequestBody Set<UUID> idsSet)
+            @RequestBody @JsonDeserialize(using = UUIDSetDeserializer.class) Set<UUID> idsSet,
+            @PathVariable UUID eventId)
     throws EventNotFoundException{
         return new ResponseEntity<>(service.addUsersToEvent(idsSet, eventId),HttpStatus.ACCEPTED);
     }
     @PatchMapping("/removeUsers/{eventId}")
     public ResponseEntity<EventResponseEntity> removeUsersFromEvent(
-            @PathVariable UUID eventId, @RequestBody Set<UUID> idsSet)
+            @RequestBody @JsonDeserialize(using = UUIDSetDeserializer.class) Set<UUID> idsSet,
+            @PathVariable UUID eventId)
     throws EventNotFoundException{
         return new ResponseEntity<>(service.removeUsersFromEvent(idsSet,eventId),HttpStatus.ACCEPTED);
     }

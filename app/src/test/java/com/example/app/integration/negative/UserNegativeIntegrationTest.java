@@ -4,8 +4,6 @@ import com.example.app.entities.Role;
 import com.example.app.entities.User;
 import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.error.ErrorResponse;
-import com.example.app.repositories.EventRepository;
-import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.services.JwtService;
 import com.example.app.tool.UserRelevantGenerator;
@@ -40,10 +38,6 @@ public class UserNegativeIntegrationTest {
     private JwtService jwtService;
     @Autowired
     private UserRepository userRepo;
-    @Autowired
-    private GroupRepository groupRepo;
-    @Autowired
-    private EventRepository eventRepo;
     @Autowired
     private ObjectMapper objectMapper;
     private static TestRestTemplate httpClient;

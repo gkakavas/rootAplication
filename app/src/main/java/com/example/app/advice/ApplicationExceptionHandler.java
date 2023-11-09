@@ -2,7 +2,6 @@ package com.example.app.advice;
 
 import com.example.app.exception.*;
 import com.example.app.models.responses.error.ErrorResponse;
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.postgresql.util.PSQLException;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -104,7 +102,7 @@ public class ApplicationExceptionHandler {
         else return null;
     }
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse<Map<String,String>>> handleNullRequestBody(HttpMessageNotReadableException ex) throws IOException {
+    public ResponseEntity<ErrorResponse<Map<String,String>>> handleNullRequestBody(HttpMessageNotReadableException ex) {
         String exceptionMessage = ex.getMessage();
         Map<String,String> errorMap = new HashMap<>();
         if (ex.getRootCause() instanceof InvalidUUIDFormatException) {
@@ -133,6 +131,7 @@ public class ApplicationExceptionHandler {
                         .responseCode(HttpStatus.INTERNAL_SERVER_ERROR)
                     .build());
     }
+
     @ExceptionHandler(PSQLException.class)
     public ResponseEntity<ErrorResponse<Map<String,String>>> handleSQLException(PSQLException ex){
         String exceptionMessage = ex.getMessage();

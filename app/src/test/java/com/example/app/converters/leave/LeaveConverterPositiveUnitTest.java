@@ -20,6 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -101,7 +102,14 @@ public class LeaveConverterPositiveUnitTest {
     @Test
     @DisplayName("Should convert a leave request to leave entity")
     void shouldConvertALeaveRequestToLeaveEntity() {
-        var request = Instancio.create(LeaveRequestEntity.class);
+        var request = Instancio.of(LeaveRequestEntity.class)
+                .generate(field(LeaveRequestEntity::getLeaveType),gen ->
+                        gen.enumOf(LeaveType.class).asString())
+                .generate(field(LeaveRequestEntity::getLeaveStarts),gen ->
+                        gen.temporal().localDate().asString())
+                .generate(field(LeaveRequestEntity::getLeaveEnds),gen ->
+                        gen.temporal().localDate().asString())
+                .create();
         var currentUser = Instancio.create(User.class);
         var expectedResponse = Leave.builder()
                 .leaveType(LeaveType.valueOf(request.getLeaveType()))
@@ -120,7 +128,14 @@ public class LeaveConverterPositiveUnitTest {
     @DisplayName("Should update a leave entity from given request")
     void shouldUpdateALeaveEntityFromGivenRequest() {
         var leave = Instancio.create(Leave.class);
-        var request = Instancio.create(LeaveRequestEntity.class);
+        var request = Instancio.of(LeaveRequestEntity.class)
+                .generate(field(LeaveRequestEntity::getLeaveType),gen ->
+                        gen.enumOf(LeaveType.class).asString())
+                .generate(field(LeaveRequestEntity::getLeaveStarts),gen ->
+                        gen.temporal().localDate().asString())
+                .generate(field(LeaveRequestEntity::getLeaveEnds),gen ->
+                        gen.temporal().localDate().asString())
+                .create();
         var expectedResponse = Leave.builder()
                 .leaveId(leave.getLeaveId())
                 .leaveType(LeaveType.valueOf(request.getLeaveType()))
@@ -150,7 +165,7 @@ public class LeaveConverterPositiveUnitTest {
                 .leaveStarts(leave.getLeaveStarts())
                 .leaveEnds(leave.getLeaveEnds())
                 .approvedBy(currentUser.getUserId())
-                .approvedOn(LocalDateTime.now())
+                .approvedOn(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .approved(true)
                 .requestedBy(leave.getRequestedBy())
                 .build();
