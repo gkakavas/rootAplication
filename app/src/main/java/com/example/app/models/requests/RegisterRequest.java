@@ -1,7 +1,7 @@
 package com.example.app.models.requests;
 
 import com.example.app.entities.Role;
-import com.example.app.utils.validator.venum.ValueOfEnum;
+import com.example.app.utils.validators.venum.ValueOfEnum;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;

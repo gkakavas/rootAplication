@@ -6,7 +6,7 @@ import com.example.app.models.requests.EventRequestEntity;
 import com.example.app.models.responses.event.AdminHrMngEventResponse;
 import com.example.app.models.responses.event.MyEventResponse;
 import com.example.app.repositories.UserRepository;
-import com.example.app.utils.event.EntityResponseEventConverterImpl;
+import com.example.app.utils.converters.event.EntityResponseEventConverterImpl;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

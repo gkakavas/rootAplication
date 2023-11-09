@@ -107,10 +107,9 @@ public class ApplicationExceptionHandler {
     public ResponseEntity<ErrorResponse<Map<String,String>>> handleNullRequestBody(HttpMessageNotReadableException ex) throws IOException {
         String exceptionMessage = ex.getMessage();
         Map<String,String> errorMap = new HashMap<>();
-        var UUIDExceptionMessage = "UUID has to be represented by standard 36-char representation";
-        if (exceptionMessage.contains(UUIDExceptionMessage)) {
-            errorMap.put(((InvalidFormatException) ex.getCause()).getPath().get(0).getFieldName(),"Invalid UUID value provided");
-            System.err.println(ex.getHttpInputMessage());
+        if (ex.getRootCause() instanceof InvalidUUIDFormatException) {
+            errorMap.put((((InvalidUUIDFormatException) ex.getRootCause()).getFieldName()),
+                    ((ex.getRootCause()).getMessage()));
             return ResponseEntity.badRequest()
                     .body(ErrorResponse.<Map<String,String>>builder()
                             .message(errorMap)
@@ -156,6 +155,7 @@ public class ApplicationExceptionHandler {
         return ResponseEntity.badRequest()
                 .body(ErrorResponse.<String>builder()
                         .message(ex.getMessage())
+                        .responseCode(HttpStatus.BAD_REQUEST)
                         .build());
     }
     @ExceptionHandler(NewPasswordConfirmationNewPasswordNotMatchException.class)
@@ -164,7 +164,19 @@ public class ApplicationExceptionHandler {
         return ResponseEntity.badRequest()
                 .body(ErrorResponse.<String>builder()
                         .message(ex.getMessage())
+                        .responseCode(HttpStatus.BAD_REQUEST)
                         .build());
     }
 
+    @ExceptionHandler(InvalidUUIDFormatException.class)
+    public ResponseEntity<ErrorResponse<Map<String,String>>> handleInvalidUUIDFormatException
+            (InvalidUUIDFormatException ex){
+        Map<String,String> responseMap = new HashMap<>();
+        responseMap.put(ex.getFieldName(), ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body(ErrorResponse.<Map<String,String>> builder()
+                        .message(responseMap)
+                        .responseCode(HttpStatus.BAD_REQUEST)
+                        .build());
+    }
 }

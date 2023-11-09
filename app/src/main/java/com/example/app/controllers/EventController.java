@@ -7,7 +7,7 @@ import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.EventRequestEntity;
 import com.example.app.models.responses.event.EventResponseEntity;
 import com.example.app.services.EventService;
-import com.example.app.utils.validator.event.EventPatchValue;
+import com.example.app.utils.validators.event.EventPatchValue;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

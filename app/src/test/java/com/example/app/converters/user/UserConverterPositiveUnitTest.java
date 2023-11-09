@@ -8,7 +8,7 @@ import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.user.AdminUserResponse;
 import com.example.app.models.responses.user.OtherUserResponse;
 import com.example.app.repositories.UserRepository;
-import com.example.app.utils.user.EntityResponseUserConverterImpl;
+import com.example.app.utils.converters.user.EntityResponseUserConverterImpl;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

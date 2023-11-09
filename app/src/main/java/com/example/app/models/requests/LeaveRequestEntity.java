@@ -1,8 +1,8 @@
 package com.example.app.models.requests;
 
 import com.example.app.entities.LeaveType;
-import com.example.app.utils.validator.leave.ValidLeaveRequest;
-import com.example.app.utils.validator.venum.ValueOfEnum;
+import com.example.app.utils.validators.leave.ValidLeaveRequest;
+import com.example.app.utils.validators.venum.ValueOfEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

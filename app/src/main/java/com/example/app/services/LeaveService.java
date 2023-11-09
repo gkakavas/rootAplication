@@ -7,7 +7,7 @@ import com.example.app.exception.UserNotFoundException;
 import com.example.app.models.requests.LeaveRequestEntity;
 import com.example.app.models.responses.leave.LeaveResponseEntity;
 import com.example.app.repositories.LeaveRepository;
-import com.example.app.utils.leave.EntityResponseLeaveConverter;
+import com.example.app.utils.converters.leave.EntityResponseLeaveConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;

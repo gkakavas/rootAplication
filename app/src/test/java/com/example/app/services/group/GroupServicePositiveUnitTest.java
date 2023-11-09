@@ -12,7 +12,7 @@ import com.example.app.models.responses.user.OtherUserResponse;
 import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.services.GroupService;
-import com.example.app.utils.group.EntityResponseGroupConverter;
+import com.example.app.utils.converters.group.EntityResponseGroupConverter;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

@@ -14,7 +14,7 @@ import com.example.app.repositories.EventRepository;
 import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.services.EventService;
-import com.example.app.utils.event.EntityResponseEventConverter;
+import com.example.app.utils.converters.event.EntityResponseEventConverter;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

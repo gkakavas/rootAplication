@@ -10,7 +10,7 @@ import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.event.EventResponseEntity;
 import com.example.app.models.responses.user.UserResponseEntity;
 import com.example.app.services.UserService;
-import com.example.app.utils.validator.user.UserPatchValue;
+import com.example.app.utils.validators.user.UserPatchValue;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

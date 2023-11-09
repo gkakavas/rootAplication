@@ -7,7 +7,7 @@ import com.example.app.models.requests.LeaveRequestEntity;
 import com.example.app.models.responses.leave.AdminHrMngLeaveResponse;
 import com.example.app.models.responses.leave.MyLeaveResponse;
 import com.example.app.repositories.UserRepository;
-import com.example.app.utils.leave.EntityResponseLeaveConverterImpl;
+import com.example.app.utils.converters.leave.EntityResponseLeaveConverterImpl;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

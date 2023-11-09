@@ -11,7 +11,7 @@ import com.example.app.models.responses.event.EventResponseEntity;
 import com.example.app.repositories.EventRepository;
 import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
-import com.example.app.utils.event.EntityResponseEventConverter;
+import com.example.app.utils.converters.event.EntityResponseEventConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

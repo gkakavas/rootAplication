@@ -12,7 +12,7 @@ import com.example.app.models.responses.leave.MyLeaveResponse;
 import com.example.app.repositories.LeaveRepository;
 import com.example.app.services.LeaveService;
 import com.example.app.tool.LeaveRelevantGenerator;
-import com.example.app.utils.leave.EntityResponseLeaveConverterImpl;
+import com.example.app.utils.converters.leave.EntityResponseLeaveConverterImpl;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;

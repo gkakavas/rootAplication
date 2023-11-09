@@ -9,7 +9,7 @@ import com.example.app.models.requests.GroupRequestEntity;
 import com.example.app.models.responses.group.GroupResponseEntity;
 import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
-import com.example.app.utils.group.EntityResponseGroupConverter;
+import com.example.app.utils.converters.group.EntityResponseGroupConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
