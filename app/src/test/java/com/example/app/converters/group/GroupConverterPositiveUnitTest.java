@@ -19,10 +19,12 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.instancio.Select.field;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 @ActiveProfiles("unit")
@@ -60,7 +62,7 @@ public class GroupConverterPositiveUnitTest {
                 .build();
         when(userConverter.fromUserListToOtherList(group.getGroupHasUsers())).thenReturn(expectedResponse.getUsers());
         var response = groupConverter.fromGroupToMngGroup(group);
-        Assertions.assertEquals(expectedResponse,response);
+        assertEquals(expectedResponse,response);
     }
 
     @Test
@@ -89,7 +91,7 @@ public class GroupConverterPositiveUnitTest {
             expectedResponse.add(groupExpectedResponse);
         }
         var response = groupConverter.fromGroupListToMngGroupList(groups);
-        Assertions.assertEquals(expectedResponse,response);
+        assertEquals(expectedResponse,response);
     }
 
     @Test
@@ -122,7 +124,7 @@ public class GroupConverterPositiveUnitTest {
         when(userConverter.fromUserListToAdminList(group.getGroupHasUsers())).thenReturn(expectedResponse.getUsers());
         when(userRepo.findById(any(UUID.class))).thenReturn(Optional.of(groupCreator));
         var response = groupConverter.fromGroupToAdminGroup(group);
-        Assertions.assertEquals(expectedResponse,response);
+        assertEquals(expectedResponse,response);
     }
 
     @Test
@@ -162,7 +164,7 @@ public class GroupConverterPositiveUnitTest {
         var response = groupConverter.fromGroupListToAdminGroupList(groups);
         System.out.println(expectedResponse);
         System.out.println(response);
-        Assertions.assertEquals(expectedResponse,response);
+        assertEquals(expectedResponse,response);
 
     }
 
@@ -173,9 +175,9 @@ public class GroupConverterPositiveUnitTest {
         var expectedResponse = Group.builder()
                 .groupName(groupRequest.getGroupName())
                 .groupCreator(UUID.randomUUID())
-                .groupCreationDate(LocalDateTime.now())
+                .groupCreationDate(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .build();
         var response = groupConverter.fromRequestToGroup(groupRequest,expectedResponse.getGroupCreator());
-        Assertions.assertEquals(expectedResponse,response);
+        assertEquals(expectedResponse,response);
     }
 }

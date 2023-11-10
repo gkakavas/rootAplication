@@ -11,8 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -39,15 +39,10 @@ public class EntityResponseGroupConverterImpl implements EntityResponseGroupConv
                 .groupId(group.getGroupId())
                 .groupName(group.getGroupName())
                 .groupCreationDate(group.getGroupCreationDate())
-                .groupCreator(null)
                 .users(userConverter.fromUserListToAdminList(group.getGroupHasUsers()))
                 .build();
         if(group.getGroupCreator()!=null) {
-            try {
-                response.setGroupCreator(userRepo.findById(group.getGroupCreator()).orElseThrow().getEmail());
-            } catch (NoSuchElementException e) {
-                response.setGroupCreator(null);
-            }
+            userRepo.findById(group.getGroupCreator()).ifPresent(user ->response.setGroupCreator(user.getEmail()));
         }
         return response;
     }
@@ -62,7 +57,7 @@ public class EntityResponseGroupConverterImpl implements EntityResponseGroupConv
         return Group.builder()
                 .groupName(request.getGroupName())
                 .groupCreator(createdBy)
-                .groupCreationDate(LocalDateTime.now())
+                .groupCreationDate(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .build();
     }
 }

@@ -124,7 +124,7 @@ public class EventPositiveIntegrationTest {
             var createRequest = EventRelevantGenerator.generateValidEventRequestEntity("A_Random_Test_Event_Description");
             var existingUserEmails = existingUsers.stream().map(User::getEmail).collect(Collectors.toSet());
             var existingUserIds = existingUsers.stream().map(User::getUserId).collect(Collectors.toSet());
-            createRequest.getIdsSet().addAll(existingUserIds);
+            createRequest.getIdsSet().getUserIds().addAll(existingUserIds);
             HttpEntity<EventRequestEntity> request = new HttpEntity<>(createRequest, headers);
             ResponseEntity<String> response = restTemplate.exchange(
                     baseUrl,

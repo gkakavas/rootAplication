@@ -26,7 +26,7 @@ public class GroupService {
 
 
     public GroupResponseEntity create(GroupRequestEntity request,User connectedUser) throws UserNotFoundException {
-        var users = userRepo.findAllById(request.getIdsSet());
+        var users = userRepo.findAllById(request.getIdsSet().getUserIds());
         var group = groupConverter.fromRequestToGroup(request,connectedUser.getUserId());
         group.getGroupHasUsers().addAll(users);
         for(User user:users){
@@ -61,7 +61,7 @@ public class GroupService {
         var group = groupRepo.findById(id).orElseThrow(GroupNotFoundException::new);
         group.setGroupName(request.getGroupName());
         if(request.getIdsSet()!=null){
-            var updatedGroupUsers = userRepo.findAllById(request.getIdsSet());
+            var updatedGroupUsers = userRepo.findAllById(request.getIdsSet().getUserIds());
             group.getGroupHasUsers().clear();
             group.getGroupHasUsers().addAll(updatedGroupUsers);
         }

@@ -4,9 +4,8 @@ import com.example.app.entities.Event;
 import com.example.app.models.requests.EventRequestEntity;
 import org.instancio.Instancio;
 
-import javax.annotation.Nullable;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+
 import static org.instancio.Select.field;
 
 public class EventRelevantGenerator {
@@ -28,7 +27,7 @@ public class EventRelevantGenerator {
                         .future()
                         .as(dateTime -> dateTime.truncatedTo(ChronoUnit.SECONDS).toString()))
                 //.ignore(field("eventCreator"))
-                .ignore(field("idsSet"))
+                .ignore(field(EventRequestEntity::getIdsSet))
                 .create();
     }
 

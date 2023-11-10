@@ -1,7 +1,9 @@
 package com.example.app.controllers.event;
 
 import com.example.app.advice.ApplicationExceptionHandler;
+import com.example.app.config.TestConfig;
 import com.example.app.config.TestSecurityConfig;
+import com.example.app.models.requests.UserIdsSet;
 import com.example.app.controllers.EventController;
 import com.example.app.entities.Role;
 import com.example.app.entities.User;
@@ -26,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.instancio.Select.field;
 import static org.mockito.ArgumentMatchers.eq;
@@ -36,7 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ActiveProfiles("unit")
 @WebMvcTest
-@ContextConfiguration(classes = {TestSecurityConfig.class, EventController.class, ApplicationExceptionHandler.class})
+@ContextConfiguration(classes = {TestConfig.class,TestSecurityConfig.class, EventController.class, ApplicationExceptionHandler.class})
 public class EventControllerPositiveUnitTest {
     @MockBean
     private EventService eventService;
@@ -59,6 +62,7 @@ public class EventControllerPositiveUnitTest {
         this.roleValue = roleValue;
         setUp();
         var request = EventRelevantGenerator.generateValidEventRequestEntity("test event description");
+        request.setIdsSet(Instancio.create(UserIdsSet.class));
         var response = AdminHrMngEventResponse.builder()
                 .eventId(UUID.randomUUID())
                 .eventDescription(request.getEventDescription())
@@ -66,7 +70,8 @@ public class EventControllerPositiveUnitTest {
                 .eventCreator(currentUser.getEmail())
                 .eventDateTime(LocalDateTime.parse(request.getEventDateTime()))
                 .eventExpiration(LocalDateTime.parse(request.getEventExpiration()))
-                .users(Instancio.ofSet(String.class).size(request.getIdsSet().size()).create())
+                .users(request.getIdsSet().getUserIds().stream()
+                        .map(uuid -> Instancio.create(String.class)).collect(Collectors.toSet()))
                 .build();
         when(eventService.create(eq(request),nullable(User.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.post("/event/create")
@@ -83,6 +88,7 @@ public class EventControllerPositiveUnitTest {
         this.roleValue = roleValue;
         setUp();
         var request = EventRelevantGenerator.generateValidEventRequestEntity("test event description");
+        request.setIdsSet(Instancio.create(UserIdsSet.class));
         var response = AdminHrMngEventResponse.builder()
                 .eventId(UUID.randomUUID())
                 .eventDescription(request.getEventDescription())
@@ -90,7 +96,8 @@ public class EventControllerPositiveUnitTest {
                 .eventCreator(currentUser.getEmail())
                 .eventDateTime(LocalDateTime.parse(request.getEventDateTime()))
                 .eventExpiration(LocalDateTime.parse(request.getEventExpiration()))
-                .users(Instancio.ofSet(String.class).size(request.getIdsSet().size()).create())
+                .users(request.getIdsSet().getUserIds().stream()
+                        .map(uuid -> Instancio.create(String.class)).collect(Collectors.toSet()))
                 .build();
         when(eventService.createForGroup(eq(request),eq(currentUser.getGroup().getGroupId()),nullable(User.class)))
                 .thenReturn(response);
@@ -133,7 +140,7 @@ public class EventControllerPositiveUnitTest {
         this.roleValue = roleValue;
         setUp();
         var request = EventRelevantGenerator.generateValidEventRequestEntity("TestEventDescription");
-        request.setIdsSet(Instancio.createSet(UUID.class));
+        request.setIdsSet(Instancio.create(UserIdsSet.class));
         var response = AdminHrMngEventResponse.builder()
                 .eventId(UUID.randomUUID())
                 .eventDescription(request.getEventDescription())
@@ -141,8 +148,9 @@ public class EventControllerPositiveUnitTest {
                 .eventCreator(currentUser.getEmail())
                 .eventDateTime(LocalDateTime.parse(request.getEventDateTime()))
                 .eventExpiration(LocalDateTime.parse(request.getEventExpiration()))
+                .users(request.getIdsSet().getUserIds().stream()
+                        .map(uuid -> Instancio.create(String.class)).collect(Collectors.toSet()))
                 .build();
-        response.setUsers(Instancio.ofSet(String.class).size(request.getIdsSet().size()).create());
         when(eventService.update(eq(response.getEventId()),eq(request))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.put("/event/update/{id}",response.getEventId())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -169,9 +177,9 @@ public class EventControllerPositiveUnitTest {
     void shouldAddUsersToAnExistingEvent(String roleValue) throws Exception {
         this.roleValue = roleValue;
         setUp();
-        var request = Instancio.ofSet(UUID.class).create();
+        var request = UserIdsSet.builder().userIds(Instancio.ofSet(UUID.class).create()).build();
         var response = Instancio.of(AdminHrMngEventResponse.class).ignore(field(AdminHrMngEventResponse::getUsers)).create();
-        response.setUsers(Instancio.ofSet(String.class).size(request.size()).create());
+        response.setUsers(request.getUserIds().stream().map(uuid -> Instancio.create(String.class)).collect(Collectors.toSet()));
         when(eventService.addUsersToEvent(eq(request),eq(response.getEventId()))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.patch("/event/addUsers/{eventId}",response.getEventId())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -186,9 +194,9 @@ public class EventControllerPositiveUnitTest {
     void shouldRemoveUsersFromAnExistingEvent(String roleValue) throws Exception {
         this.roleValue = roleValue;
         setUp();
-        var request = Instancio.ofSet(UUID.class).create();
+        var request = UserIdsSet.builder().userIds(Instancio.ofSet(UUID.class).create()).build();
         var response = Instancio.of(AdminHrMngEventResponse.class).ignore(field(AdminHrMngEventResponse::getUsers)).create();
-        response.setUsers(Instancio.ofSet(String.class).size(request.size()).create());
+        response.setUsers(request.getUserIds().stream().map(uuid -> Instancio.create(String.class)).collect(Collectors.toSet()));
         when(eventService.removeUsersFromEvent(eq(request),eq(response.getEventId()))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.patch("/event/removeUsers/{eventId}",response.getEventId())
                         .contentType(MediaType.APPLICATION_JSON)

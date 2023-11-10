@@ -1,6 +1,7 @@
 package com.example.app.controllers.file;
 
 import com.example.app.advice.ApplicationExceptionHandler;
+import com.example.app.config.TestConfig;
 import com.example.app.config.TestSecurityConfig;
 import com.example.app.controllers.FileController;
 import com.example.app.entities.FileKind;
@@ -45,7 +46,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 @ActiveProfiles("unit")
 @WebMvcTest
-@ContextConfiguration(classes = {FileController.class,TestSecurityConfig.class, ApplicationExceptionHandler.class})
+@ContextConfiguration(classes = {TestConfig.class,FileController.class,TestSecurityConfig.class, ApplicationExceptionHandler.class})
 public class FileControllerTest {
 
     @MockBean

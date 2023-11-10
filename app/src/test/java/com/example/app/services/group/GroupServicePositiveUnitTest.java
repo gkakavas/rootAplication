@@ -69,7 +69,7 @@ public class GroupServicePositiveUnitTest {
         this.roleValue = "ADMIN";
         setUpCurrentUser();
         var request = Instancio.create(GroupRequestEntity.class);
-        var usersToAddInGroup = request.getIdsSet().stream().map(uuid ->
+        var usersToAddInGroup = request.getIdsSet().getUserIds().stream().map(uuid ->
                 Instancio.of(User.class).set(field(User::getUserId),uuid)
                         .create()).collect(Collectors.toSet());
         var createdGroup = Group.builder()
@@ -86,7 +86,7 @@ public class GroupServicePositiveUnitTest {
                                 .registerDate(user.getRegisterDate()).lastLogin(user.getLastLogin()).role(user.getRole())
                         .build()).collect(Collectors.toSet()))
                 .build();
-        when(userRepo.findAllById(request.getIdsSet())).thenReturn(List.copyOf(usersToAddInGroup));
+        when(userRepo.findAllById(request.getIdsSet().getUserIds())).thenReturn(List.copyOf(usersToAddInGroup));
         when(groupConverter.fromRequestToGroup(request,currentUser.getUserId())).thenReturn(createdGroup);
         when(groupRepo.save(createdGroup)).thenReturn(createdGroup);
         when(groupConverter.fromGroupToAdminGroup(createdGroup)).thenReturn(expectedResponse);
@@ -185,7 +185,7 @@ public class GroupServicePositiveUnitTest {
     void shouldUpdateAGroupSaveItAndReturnsUpdatedGroup() throws GroupNotFoundException {
         var request = Instancio.create(GroupRequestEntity.class);
         var groupToUpdate = Instancio.create(Group.class);
-        var usersToAdd = request.getIdsSet().stream().map(uuid -> Instancio.create(User.class)).collect(Collectors.toSet());
+        var usersToAdd = request.getIdsSet().getUserIds().stream().map(uuid -> Instancio.create(User.class)).collect(Collectors.toSet());
         var updatedGroup = Group.builder()
                 .groupId(groupToUpdate.getGroupId()).groupName(request.getGroupName()).groupCreator(groupToUpdate.getGroupCreator())
                 .groupCreationDate(groupToUpdate.getGroupCreationDate())
@@ -206,7 +206,7 @@ public class GroupServicePositiveUnitTest {
                         .collect(Collectors.toSet()))
                 .build();
         when(groupRepo.findById(groupToUpdate.getGroupId())).thenReturn(Optional.of(groupToUpdate));
-        when(userRepo.findAllById(request.getIdsSet())).thenReturn(List.copyOf(usersToAdd));
+        when(userRepo.findAllById(request.getIdsSet().getUserIds())).thenReturn(List.copyOf(usersToAdd));
         when(groupRepo.save(updatedGroup)).thenReturn(updatedGroup);
         when(groupConverter.fromGroupToAdminGroup(updatedGroup)).thenReturn(expectedResponse);
         var response = groupService.update(groupToUpdate.getGroupId(),request);

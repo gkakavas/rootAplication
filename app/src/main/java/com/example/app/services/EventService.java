@@ -1,5 +1,6 @@
 package com.example.app.services;
 
+import com.example.app.models.requests.UserIdsSet;
 import com.example.app.entities.Event;
 import com.example.app.entities.Role;
 import com.example.app.entities.User;
@@ -34,7 +35,7 @@ public class EventService {
     public EventResponseEntity create(EventRequestEntity request,User connectedUser)
     throws UserNotFoundException{
             var newEvent = eventConverter.fromRequestToEvent(request,connectedUser.getUserId());
-            var users = userRepo.findAllById(request.getIdsSet());
+            var users = userRepo.findAllById(request.getIdsSet().getUserIds());
             newEvent.getUsersJoinInEvent().addAll(users);
             for(User user:users){
                 user.getUserHasEvents().add(newEvent);
@@ -90,9 +91,9 @@ public class EventService {
             return !eventRepo.existsById(event.getEventId());
     }
 
-    public EventResponseEntity addUsersToEvent(Set<UUID> idsSet, UUID eventId) throws EventNotFoundException{
+    public EventResponseEntity addUsersToEvent(UserIdsSet idsSet, UUID eventId) throws EventNotFoundException{
         var event = eventRepo.findById(eventId).orElseThrow(EventNotFoundException::new);
-        var users = userRepo.findAllById(idsSet);
+        var users = userRepo.findAllById(idsSet.getUserIds());
         for(User user:users){
             event.getUsersJoinInEvent().add(user);
         }
@@ -100,9 +101,9 @@ public class EventService {
         return eventConverter.fromEventToAdminHrMngEvent(updatedEvent);
     }
 
-    public EventResponseEntity removeUsersFromEvent(Set<UUID> idsSet, UUID eventId)throws EventNotFoundException{
+    public EventResponseEntity removeUsersFromEvent(UserIdsSet idsSet, UUID eventId)throws EventNotFoundException{
         var event = eventRepo.findById(eventId).orElseThrow(EventNotFoundException::new);
-        var users = userRepo.findAllById(idsSet);
+        var users = userRepo.findAllById(idsSet.getUserIds());
         for(User user: users){
             event.getUsersJoinInEvent().remove(user);
         }

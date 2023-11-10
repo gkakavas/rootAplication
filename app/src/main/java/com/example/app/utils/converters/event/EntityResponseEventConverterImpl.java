@@ -77,7 +77,7 @@ public class EntityResponseEventConverterImpl implements EntityResponseEventConv
         event.setEventExpiration(LocalDateTime.parse(request.getEventExpiration()));
         if(request.getIdsSet()!=null){
             try {
-                var users = userRepo.findAllById(request.getIdsSet());
+                var users = userRepo.findAllById(request.getIdsSet().getUserIds());
                 event.getUsersJoinInEvent().clear();
                 event.getUsersJoinInEvent().addAll(users);
             }catch (Exception e){

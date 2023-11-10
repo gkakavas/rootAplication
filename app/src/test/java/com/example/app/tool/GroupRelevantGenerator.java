@@ -8,9 +8,7 @@ import org.instancio.Instancio;
 import javax.annotation.Nullable;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.instancio.Select.field;
@@ -32,7 +30,7 @@ public class GroupRelevantGenerator {
                 .generate(field("groupName"), gen -> gen.string().mixedCase().length(7, 8))
                 .create();
         if (users!=null) {
-            request.getIdsSet().addAll(users.stream().map(User::getUserId).collect(Collectors.toSet()));
+            request.getIdsSet().getUserIds().addAll(users.stream().map(User::getUserId).collect(Collectors.toSet()));
         }
         return request;
     }

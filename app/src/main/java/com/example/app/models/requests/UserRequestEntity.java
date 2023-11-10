@@ -1,9 +1,7 @@
 package com.example.app.models.requests;
 
 import com.example.app.entities.Role;
-import com.example.app.utils.deserializers.UUIDDeserializer;
 import com.example.app.utils.validators.venum.ValueOfEnum;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,7 +30,6 @@ public class UserRequestEntity implements RequestEntity {
     @Email(message = "Email must be in a normal email form")
     private String email;
     private String specialization;
-    @JsonDeserialize(using = UUIDDeserializer.class)
     @NotNull(message = "Group is required")
     private UUID group;
     private String currentProject;

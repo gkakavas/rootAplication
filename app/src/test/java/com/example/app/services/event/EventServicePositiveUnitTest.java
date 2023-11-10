@@ -1,5 +1,6 @@
 package com.example.app.services.event;
 
+import com.example.app.models.requests.UserIdsSet;
 import com.example.app.entities.Event;
 import com.example.app.entities.Group;
 import com.example.app.entities.Role;
@@ -81,7 +82,7 @@ public class EventServicePositiveUnitTest {
                 .generate(field(EventRequestEntity::getEventDateTime),gen -> gen.temporal().localDateTime().as(localDateTime -> LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).toString()))
                 .generate(field(EventRequestEntity::getEventExpiration),gen -> gen.temporal().localDateTime().as(localDateTime -> LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).toString()))
                 .create();
-        var usersOfEvent = request.getIdsSet().stream().map(uuid ->
+        var usersOfEvent = request.getIdsSet().getUserIds().stream().map(uuid ->
                 Instancio.of(User.class).set(field(User::getUserId),uuid).create()).collect(Collectors.toSet());
         var event = Event.builder()
                 .eventId(UUID.randomUUID()).eventDescription(request.getEventDescription())
@@ -90,7 +91,7 @@ public class EventServicePositiveUnitTest {
                 .eventExpiration(LocalDateTime.parse(request.getEventExpiration()))
                 .build();
         when(eventConverter.fromRequestToEvent(request,currentUser.getUserId())).thenReturn(event);
-        when(userRepo.findAllById(request.getIdsSet())).thenReturn(List.copyOf(usersOfEvent));
+        when(userRepo.findAllById(request.getIdsSet().getUserIds())).thenReturn(List.copyOf(usersOfEvent));
         event.setUsersJoinInEvent(usersOfEvent);
         when(eventRepo.save(event)).thenReturn(event);
         var expectedResponse = AdminHrMngEventResponse.builder()
@@ -144,13 +145,13 @@ public class EventServicePositiveUnitTest {
                 .create();
         var event = Instancio.of(Event.class)
                         .generate(field("usersJoinInEvent"), gen ->
-                                gen.collection().size(updateRequest.getIdsSet().size())).create();
+                                gen.collection().size(updateRequest.getIdsSet().getUserIds().size())).create();
         var updatedEvent = Event.builder()
                 .eventId(event.getEventId()).eventDescription(updateRequest.getEventDescription())
                 .eventBody(updateRequest.getEventBody()).eventCreator(event.getEventCreator())
                 .eventDateTime(LocalDateTime.parse(updateRequest.getEventDateTime()))
                 .eventExpiration(LocalDateTime.parse(updateRequest.getEventExpiration()))
-                .usersJoinInEvent(updateRequest.getIdsSet().stream().map(uuid
+                .usersJoinInEvent(updateRequest.getIdsSet().getUserIds().stream().map(uuid
                         -> Instancio.of(User.class).set(field(User::getUserId),uuid).create())
                         .collect(Collectors.toSet()))
                 .build();
@@ -216,12 +217,12 @@ public class EventServicePositiveUnitTest {
     @Test
     @DisplayName("Should Add Users In An Existing Event And Return The  Response")
     void shouldAddUsersToAnExistingEventAndReturnTheResponse() throws EventNotFoundException {
-        var idsSet = Instancio.ofSet(UUID.class).size(3).create();
-        var usersToAdd = idsSet.stream().map(uuid -> Instancio.of(User.class).set(field(User::getUserId),uuid).create())
+        var idsSet = UserIdsSet.builder().userIds(Instancio.ofSet(UUID.class).size(3).create()).build();
+        var usersToAdd = idsSet.getUserIds().stream().map(uuid -> Instancio.of(User.class).set(field(User::getUserId),uuid).create())
                 .toList();
         var event = Instancio.create(Event.class);
         when(eventRepo.findById(event.getEventId())).thenReturn(Optional.of(event));
-        when(userRepo.findAllById(idsSet)).thenReturn(usersToAdd);
+        when(userRepo.findAllById(idsSet.getUserIds())).thenReturn(usersToAdd);
         when(eventRepo.save(event)).thenReturn(event);
         var expectedResponse = AdminHrMngEventResponse.builder()
                 .eventId(event.getEventId()).eventBody(event.getEventBody())
@@ -251,10 +252,10 @@ public class EventServicePositiveUnitTest {
         //add the completed set into the event entity object
         event.getUsersJoinInEvent().addAll(usersJoinInEvent);
         //extracting the request id's set of users to remove from the previously created usersToRemove set
-        var idsSet = usersToRemove.stream().map(User::getUserId).collect(Collectors.toSet());
+        var idsSet = UserIdsSet.builder().userIds(usersToRemove.stream().map(User::getUserId).collect(Collectors.toSet())).build();
 
         when(eventRepo.findById(event.getEventId())).thenReturn(Optional.of(event));
-        when(userRepo.findAllById(idsSet)).thenReturn(List.copyOf(usersToRemove));
+        when(userRepo.findAllById(idsSet.getUserIds())).thenReturn(List.copyOf(usersToRemove));
         when(eventRepo.save(event)).thenReturn(event);
         var expectedResponse = AdminHrMngEventResponse.builder()
                 .eventId(event.getEventId()).eventBody(event.getEventBody())

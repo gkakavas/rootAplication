@@ -1,6 +1,7 @@
 package com.example.app.controllers.group;
 
 import com.example.app.advice.ApplicationExceptionHandler;
+import com.example.app.config.TestConfig;
 import com.example.app.config.TestSecurityConfig;
 import com.example.app.controllers.GroupController;
 import com.example.app.entities.User;
@@ -33,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 @ActiveProfiles("unit")
 @WebMvcTest
-@ContextConfiguration(classes = {TestSecurityConfig.class, GroupController.class, ApplicationExceptionHandler.class})
+@ContextConfiguration(classes = {TestConfig.class,TestSecurityConfig.class, GroupController.class, ApplicationExceptionHandler.class})
 public class GroupControllerTest {
     @MockBean
     private GroupService groupService;
@@ -50,7 +51,7 @@ public class GroupControllerTest {
                 .groupName(request.getGroupName())
                 .groupCreator(Instancio.create(String.class))
                 .groupCreationDate(LocalDateTime.now())
-                .users(Instancio.ofSet(AdminUserResponse.class).size(request.getIdsSet().size()).create())
+                .users(Instancio.ofSet(AdminUserResponse.class).size(request.getIdsSet().getUserIds().size()).create())
                 .build();
         when(groupService.create(eq(request),nullable(User.class))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.post("/group/create")
@@ -81,7 +82,7 @@ public class GroupControllerTest {
     }
 
     @Test
-    @DisplayName("Should update a specified group")
+    @DisplayName("Should update a specific group")
     void shouldUpdateASpecifiedGroup() throws Exception {
         var request = Instancio.create(GroupRequestEntity.class);
         var response = AdminGroupResponse.builder()
@@ -89,7 +90,7 @@ public class GroupControllerTest {
                 .groupName(request.getGroupName())
                 .groupCreator(Instancio.create(String.class))
                 .groupCreationDate(LocalDateTime.now())
-                .users(Instancio.ofSet(AdminUserResponse.class).size(request.getIdsSet().size()).create())
+                .users(Instancio.ofSet(AdminUserResponse.class).size(request.getIdsSet().getUserIds().size()).create())
                 .build();
         when(groupService.update(eq(response.getGroupId()),eq(request))).thenReturn(response);
         this.mockMvc.perform(MockMvcRequestBuilders.put("/group/update/{id}",response.getGroupId().toString())

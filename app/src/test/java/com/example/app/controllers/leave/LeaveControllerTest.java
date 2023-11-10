@@ -1,6 +1,7 @@
 package com.example.app.controllers.leave;
 
 import com.example.app.advice.ApplicationExceptionHandler;
+import com.example.app.config.TestConfig;
 import com.example.app.config.TestSecurityConfig;
 import com.example.app.controllers.LeaveController;
 import com.example.app.entities.LeaveType;
@@ -40,7 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 @ActiveProfiles("unit")
 @WebMvcTest
-@ContextConfiguration(classes = {LeaveController.class, TestSecurityConfig.class, ApplicationExceptionHandler.class})
+@ContextConfiguration(classes = {TestConfig.class,LeaveController.class, TestSecurityConfig.class, ApplicationExceptionHandler.class})
 public class LeaveControllerTest {
     @MockBean
     private LeaveService leaveService;

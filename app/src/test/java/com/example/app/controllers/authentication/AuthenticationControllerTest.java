@@ -1,5 +1,6 @@
 package com.example.app.controllers.authentication;
 
+import com.example.app.config.TestConfig;
 import com.example.app.config.TestSecurityConfig;
 import com.example.app.controllers.AuthenticationController;
 import com.example.app.models.requests.AuthenticationRequest;
@@ -24,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 @ActiveProfiles("unit")
 @WebMvcTest
-@ContextConfiguration(classes = {AuthenticationController.class, TestSecurityConfig.class})
+@ContextConfiguration(classes = {TestConfig.class,AuthenticationController.class, TestSecurityConfig.class})
 public class AuthenticationControllerTest {
     @MockBean
     private AuthenticationService authenticationService;

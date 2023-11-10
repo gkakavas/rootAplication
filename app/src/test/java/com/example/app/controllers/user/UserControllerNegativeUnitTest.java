@@ -1,6 +1,7 @@
 package com.example.app.controllers.user;
 
 import com.example.app.advice.ApplicationExceptionHandler;
+import com.example.app.config.TestConfig;
 import com.example.app.config.TestSecurityConfig;
 import com.example.app.controllers.UserController;
 import com.example.app.entities.User;
@@ -31,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 @ActiveProfiles("unit")
 @WebMvcTest
-@ContextConfiguration(classes = {TestSecurityConfig.class, UserController.class, ApplicationExceptionHandler.class})
+@ContextConfiguration(classes = {TestConfig.class,TestSecurityConfig.class, UserController.class, ApplicationExceptionHandler.class})
 public class UserControllerNegativeUnitTest {
     @MockBean
     private UserService userService;

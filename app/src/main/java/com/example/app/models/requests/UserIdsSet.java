@@ -1,4 +1,4 @@
-package com.example.app.config.json;
+package com.example.app.models.requests;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
