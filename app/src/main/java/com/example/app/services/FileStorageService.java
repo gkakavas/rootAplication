@@ -85,7 +85,8 @@ public class FileStorageService {
                     && file.getUploadedBy().getGroup().equals(connectedUser.getGroup())){
                 return fileConverter.fromFileToResource(file);
             }
-            else if(connectedUser.getRole().equals(Role.USER) && connectedUser.getUserHasFiles().contains(file)){
+            else if(connectedUser.getRole().equals(Role.USER)
+                    && connectedUser.getUserHasFiles().stream().anyMatch(file1 -> file1.equals(file))){
                 return fileConverter.fromFileToResource(file);
             }
             else throw new AccessDeniedException("You have not authority to download this resource");

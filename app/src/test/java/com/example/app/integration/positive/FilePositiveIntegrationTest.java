@@ -210,7 +210,7 @@ public class FilePositiveIntegrationTest {
     @ValueSource(strings = {"ADMIN", "HR", "USER"})
     @DisplayName("When a download timesheet request is dispatched " +
             "should retrieve the file from database and filesystem and return response with file and information about file to user")
-     void timesheetDownloadShouldRetrieveTheFileFromDatabaseAndFilesystemAndReturnTheFileWithSuitableHeadersThatIncludingTheFileMetadata(String roleValue) throws IOException {
+    void timesheetDownloadShouldRetrieveTheFileFromDatabaseAndFilesystemAndReturnTheFileWithSuitableHeadersThatIncludingTheFileMetadata(String roleValue) throws IOException {
         this.roleValue = roleValue;
         setUp();
         preDownloadSetup();

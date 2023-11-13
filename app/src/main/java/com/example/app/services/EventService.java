@@ -15,6 +15,7 @@ import com.example.app.repositories.UserRepository;
 import com.example.app.utils.converters.event.EntityResponseEventConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
 
@@ -34,27 +35,26 @@ public class EventService {
 
     public EventResponseEntity create(EventRequestEntity request,User connectedUser)
     throws UserNotFoundException{
-            var newEvent = eventConverter.fromRequestToEvent(request,connectedUser.getUserId());
-            var users = userRepo.findAllById(request.getIdsSet().getUserIds());
-            newEvent.getUsersJoinInEvent().addAll(users);
-            for(User user:users){
-                user.getUserHasEvents().add(newEvent);
-            }
-            var createdEvent = eventRepo.save(newEvent);
-            return eventConverter.fromEventToAdminHrMngEvent(createdEvent);
+        var event = eventConverter.fromRequestToEvent(request,connectedUser.getUserId());
+        var users = userRepo.findAllById(request.getIdsSet().getUserIds());
+        event.getUsersJoinInEvent().addAll(users);
+        for(User user:users){
+            user.getUserHasEvents().add(event);
+        }
+        var newEvent = eventRepo.save(event);
+        return eventConverter.fromEventToAdminHrMngEvent(newEvent);
     }
 
     public EventResponseEntity createForGroup(EventRequestEntity request, UUID groupId,User connectedUser)
             throws GroupNotFoundException{
         var event = eventConverter.fromRequestToEvent(request,connectedUser.getUserId());
-        Set<User> usersToAdd = new HashSet<>();
-        if(List.of(Role.ADMIN,Role.HR).contains(connectedUser.getRole())){
+        Set<User> usersToAdd;
+        if(List.of(Role.ADMIN,Role.HR).contains(connectedUser.getRole())
+        || connectedUser.getRole().equals(Role.MANAGER) && connectedUser.getGroup().getGroupId().equals(groupId)){
             var group = groupRepo.findById(groupId).orElseThrow(GroupNotFoundException::new);
             usersToAdd = group.getGroupHasUsers();
         }
-        else if (connectedUser.getRole().equals(Role.MANAGER) && connectedUser.getGroup().getGroupId().equals(groupId)) {
-            usersToAdd = connectedUser.getGroup().getGroupHasUsers();
-        }
+        else throw new AccessDeniedException("You have not authority to create this event");
         event.getUsersJoinInEvent().addAll(usersToAdd);
         for(User user : usersToAdd){
             user.getUserHasEvents().add(event);
@@ -77,6 +77,7 @@ public class EventService {
     throws EventNotFoundException{
             var event = eventRepo.findById(id).orElseThrow(EventNotFoundException::new);
             var updatedEvent = eventConverter.eventUpdate(request,event);
+            userRepo.saveAll(updatedEvent.getUsersJoinInEvent());
             var newEvent = eventRepo.save(updatedEvent);
             return eventConverter.fromEventToAdminHrMngEvent(newEvent);
     }
@@ -97,6 +98,7 @@ public class EventService {
         for(User user:users){
             event.getUsersJoinInEvent().add(user);
         }
+        userRepo.saveAll(users);
         var updatedEvent = eventRepo.save(event);
         return eventConverter.fromEventToAdminHrMngEvent(updatedEvent);
     }
@@ -107,6 +109,7 @@ public class EventService {
         for(User user: users){
             event.getUsersJoinInEvent().remove(user);
         }
+        userRepo.saveAll(users);
         var updatedEvent = eventRepo.save(event);
         return eventConverter.fromEventToAdminHrMngEvent(updatedEvent);
     }

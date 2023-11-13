@@ -25,7 +25,7 @@ public class AccessDeniedControllerTest {
     @DisplayName("Should return a specific access denied HTML page")
     void shouldReturnASpecificAccessDeniedHtmlPage() throws Exception {
         this.mockMvc.perform(MockMvcRequestBuilders.get("/access-denied"))
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().isForbidden())
                 .andExpect(content().contentType("text/html;charset=UTF-8"));
     }
 }

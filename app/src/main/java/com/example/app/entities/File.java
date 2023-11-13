@@ -1,17 +1,11 @@
 package com.example.app.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.net.URL;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -49,6 +43,18 @@ public class File {
 
         File file = (File) o;
 
-        return new EqualsBuilder().append(fileId, file.fileId).append(filename, file.filename).append(fileSize, file.fileSize).append(fileType, file.fileType).append(uploadDate, file.uploadDate).append(accessUrl, file.accessUrl).append(approved, file.approved).append(approvedBy, file.approvedBy).append(approvedDate, file.approvedDate).append(fileKind, file.fileKind).append(uploadedBy, file.uploadedBy).isEquals();
+        return new EqualsBuilder()
+                .append(fileId, file.fileId)
+                .append(filename, file.filename)
+                .append(fileSize, file.fileSize)
+                .append(fileType, file.fileType)
+                .append(uploadDate, file.uploadDate)
+                .append(accessUrl, file.accessUrl)
+                .append(approved, file.approved)
+                .append(approvedBy, file.approvedBy)
+                .append(approvedDate, file.approvedDate)
+                .append(fileKind, file.fileKind)
+                .append(uploadedBy != null ? uploadedBy.getUserId() : null, file.uploadedBy != null ? file.uploadedBy.getUserId() : null)
+                .isEquals();
     }
 }

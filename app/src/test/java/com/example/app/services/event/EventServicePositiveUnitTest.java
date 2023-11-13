@@ -205,9 +205,10 @@ public class EventServicePositiveUnitTest {
                 .users(newEvent.getUsersJoinInEvent().stream().map(User::getEmail).collect(Collectors.toSet()))
                 .build();
         when(eventConverter.fromRequestToEvent(eventRequest, currentUser.getUserId())).thenReturn(newEvent);
-        if(List.of(Role.ADMIN,Role.HR).contains(currentUser.getRole())){
-            when(groupRepo.findById(group.getGroupId())).thenReturn(Optional.of(group));
+        if(currentUser.getRole().equals(Role.MANAGER)){
+            currentUser.setGroup(group);
         }
+        when(groupRepo.findById(group.getGroupId())).thenReturn(Optional.of(group));
         when(eventRepo.save(newEvent)).thenReturn(newEvent);
         when(eventConverter.fromEventToAdminHrMngEvent(newEvent)).thenReturn(expectedResponse);
         var response = eventService.createForGroup(eventRequest, group.getGroupId(),this.currentUser);

@@ -2,8 +2,10 @@ package com.example.app.integration.positive;
 
 import com.example.app.entities.Event;
 import com.example.app.entities.Group;
+import com.example.app.entities.Role;
 import com.example.app.entities.User;
 import com.example.app.models.requests.EventRequestEntity;
+import com.example.app.models.requests.UserIdsSet;
 import com.example.app.models.responses.event.AdminHrMngEventResponse;
 import com.example.app.repositories.EventRepository;
 import com.example.app.repositories.GroupRepository;
@@ -13,6 +15,7 @@ import com.example.app.tool.EventRelevantGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.instancio.Instancio;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -35,8 +38,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
+
 @ActiveProfiles("integration")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class EventPositiveIntegrationTest {
@@ -124,7 +127,7 @@ public class EventPositiveIntegrationTest {
             var createRequest = EventRelevantGenerator.generateValidEventRequestEntity("A_Random_Test_Event_Description");
             var existingUserEmails = existingUsers.stream().map(User::getEmail).collect(Collectors.toSet());
             var existingUserIds = existingUsers.stream().map(User::getUserId).collect(Collectors.toSet());
-            createRequest.getIdsSet().getUserIds().addAll(existingUserIds);
+            createRequest.setIdsSet(UserIdsSet.builder().userIds(existingUserIds).build());
             HttpEntity<EventRequestEntity> request = new HttpEntity<>(createRequest, headers);
             ResponseEntity<String> response = restTemplate.exchange(
                     baseUrl,
@@ -145,17 +148,23 @@ public class EventPositiveIntegrationTest {
             var users = event.getUsersJoinInEvent();
             users.forEach(user -> user.getUserHasEvents().remove(event));
             userRepo.saveAll(users);
-            eventRepo.deleteById(event.getEventId());
-
+            eventRepo.delete(event);
+            assertFalse(eventRepo.existsById(event.getEventId()));
         }
         @ParameterizedTest
         @ValueSource(strings = {"ADMIN", "HR", "MANAGER"})
-        @DisplayName("when a create group request dispatched " +
+        @DisplayName("when a create event by group request dispatched " +
                 "should create a group event in database and return this event")
         void shouldCreateAGroupEventInDatabaseAndReturnThisEvent (String roleValue) throws JsonProcessingException {
             this.roleValue = roleValue;
             setUp();
-            this.baseUrl = baseUrl.concat("/createGroupEvent/").concat(this.existingGroup.getGroupId().toString());
+            this.baseUrl = baseUrl.concat("/createGroupEvent/");
+            if(currentUser.getRole().equals(Role.MANAGER)){
+                this.baseUrl = this.baseUrl.concat(currentUser.getGroup().getGroupId().toString());
+            }
+            else{
+                this.baseUrl = this.baseUrl.concat(this.existingGroup.getGroupId().toString());
+            }
             var createRequest = EventRelevantGenerator.generateValidEventRequestEntity("A_Random_Test_Event_Description");
             HttpEntity<EventRequestEntity> request = new HttpEntity<>(createRequest, headers);
             ResponseEntity<String> response = restTemplate.exchange(
@@ -169,14 +178,21 @@ public class EventPositiveIntegrationTest {
                     .eventBody(createRequest.getEventBody()).eventCreator(currentUser.getEmail())
                     .eventDateTime(LocalDateTime.parse(createRequest.getEventDateTime()))
                     .eventExpiration(LocalDateTime.parse(createRequest.getEventExpiration()))
-                    .users(this.existingUsers.stream().map(User::getEmail).collect(Collectors.toSet()))
                     .build();
+            if(currentUser.getRole().equals(Role.MANAGER)){
+                expectedResponse.setUsers(currentUser.getGroup().getGroupHasUsers()
+                        .stream().map(User::getEmail).collect(Collectors.toSet()));
+            }
+            else{
+                expectedResponse.setUsers(existingGroup.getGroupHasUsers().stream().map(User::getEmail).collect(Collectors.toSet()));
+            }
             assertEquals(expectedResponse, actualResponse);
             var event = eventRepo.findById(actualResponse.getEventId()).orElseThrow();
             var users = event.getUsersJoinInEvent();
             users.forEach(user -> user.getUserHasEvents().remove(event));
             userRepo.saveAll(users);
-            eventRepo.deleteById(event.getEventId());
+            eventRepo.delete(event);
+            assertFalse(eventRepo.existsById(event.getEventId()));
         }
 
     @ParameterizedTest
@@ -221,7 +237,6 @@ public class EventPositiveIntegrationTest {
                             .users(event.getUsersJoinInEvent().stream().map(User::getEmail).collect(Collectors.toSet()))
                             .build()
         ).collect(Collectors.toSet());
-
         assertEquals(expectedResponse,actualResponse);
     }
     @ParameterizedTest
@@ -230,7 +245,7 @@ public class EventPositiveIntegrationTest {
     void shouldUpdateTheExistingEventSaveItInDatabaseAndReturnThis(String roleValue) throws JsonProcessingException {
         this.roleValue = roleValue;
         setUp();
-        this.baseUrl = baseUrl.concat("/update/").concat(this.existingEvent.getEventId()+"");
+        this.baseUrl = baseUrl.concat("/update/").concat(this.existingEvent.getEventId().toString());
         var updateRequest = EventRelevantGenerator.generateValidEventRequestEntity(this.existingEvent.getEventDescription());
         HttpEntity<EventRequestEntity> request = new HttpEntity<>(updateRequest, headers);
         ResponseEntity<String> response = restTemplate.exchange(
@@ -246,8 +261,10 @@ public class EventPositiveIntegrationTest {
                 .eventCreator(null)
                 .eventDateTime(LocalDateTime.parse(updateRequest.getEventDateTime()))
                 .eventExpiration(LocalDateTime.parse(updateRequest.getEventExpiration()))
+                .users(existingEvent.getUsersJoinInEvent().stream().map(User::getEmail).collect(Collectors.toSet()))
                 .build();
         assertEquals(expectedResponse,actualResponse);
+        this.existingEvent = eventRepo.save(existingEvent);
     }
 
     @ParameterizedTest
@@ -256,17 +273,18 @@ public class EventPositiveIntegrationTest {
     void shouldDeleteTheExistingEventFromDatabaseAndReturnNoContent204(String roleValue){
         this.roleValue = roleValue;
         setUp();
-        var event = EventRelevantGenerator.generateValidEvent();
-        event.getUsersJoinInEvent().addAll(this.existingUsers);
-        var savedEvent = eventRepo.save(event);
-        this.baseUrl = baseUrl.concat("/delete/").concat(savedEvent.getEventId().toString());
+        var event = Instancio.create(Event.class);
+        event.setUsersJoinInEvent(Set.copyOf(existingUsers));
+        var eventToDelete = eventRepo.save(event);
+        assertEquals(existingUsers.size(),eventToDelete.getUsersJoinInEvent().size());
+        this.baseUrl = baseUrl.concat("/delete/").concat(eventToDelete.getEventId().toString());
         ResponseEntity<String> response = restTemplate.exchange(
                 baseUrl,
                 HttpMethod.DELETE,
                 new HttpEntity<>(headers),
                 String.class);
         assertEquals(response.getStatusCode(), HttpStatusCode.valueOf(204));
-        assertFalse(eventRepo.existsById(savedEvent.getEventId()));
+        assertFalse(eventRepo.existsById(eventToDelete.getEventId()));
     }
 
     @ParameterizedTest
@@ -282,7 +300,7 @@ public class EventPositiveIntegrationTest {
                     UUID.fromString("4d0dd9db-b777-4e8e-97ba-ef0b57534927")
                 )
         );
-        HttpEntity<Set<UUID>> request = new HttpEntity<>(addUsersToEventRequest,headers);
+        HttpEntity<UserIdsSet> request = new HttpEntity<>(new UserIdsSet(addUsersToEventRequest),headers);
         ResponseEntity<String> response = restTemplate.exchange(
                 baseUrl,
                 HttpMethod.PATCH,
@@ -307,8 +325,8 @@ public class EventPositiveIntegrationTest {
                 )
                 .build();
         assertEquals(expectedResponse, actualResponse);
-        existingEvent = eventRepo.save(existingEvent);
-        assertEquals(3,existingEvent.getUsersJoinInEvent().size());
+        this.existingEvent = eventRepo.save(this.existingEvent);
+        assertEquals(3,this.existingEvent.getUsersJoinInEvent().size());
     }
 
     @ParameterizedTest
@@ -318,28 +336,15 @@ public class EventPositiveIntegrationTest {
         this.roleValue = roleValue;
         setUp();
         this.baseUrl = baseUrl.concat("/removeUsers/").concat(this.existingEvent.getEventId().toString());
-        var usersToAdd = userRepo.findAllById(Set.of(
-                UUID.fromString("45b3df4b-f5bf-49d1-b928-16bbdb8e323e"),
-                UUID.fromString("4d0dd9db-b777-4e8e-97ba-ef0b57534927")
-        ));
-        for(User user:usersToAdd){
-            this.existingEvent.getUsersJoinInEvent().add(user);
-            user.getUserHasEvents().add(this.existingEvent);
-        }
-        this.existingEvent = eventRepo.save(this.existingEvent);
-        assertEquals(5,this.existingEvent.getUsersJoinInEvent().size());
-        var removeUsersFromEventRequest = new HashSet<>(
-                Set.of(
-                        UUID.fromString("45b3df4b-f5bf-49d1-b928-16bbdb8e323e"),
-                        UUID.fromString("4d0dd9db-b777-4e8e-97ba-ef0b57534927")
-                )
+        var usersToRemove = Set.of(
+                UUID.fromString("e6e47100-2fe1-4413-89cf-2df47253a3af"),
+                UUID.fromString("e48cf7a3-3427-41d1-b26f-604e74cf6b8a")
         );
-
-        HttpEntity<Set<UUID>> request = new HttpEntity<>(removeUsersFromEventRequest,headers);
+        var request = UserIdsSet.builder().userIds(usersToRemove).build();
         ResponseEntity<String> response = restTemplate.exchange(
                 baseUrl,
                 HttpMethod.PATCH,
-                request,
+                new HttpEntity<>(request,headers),
                 String.class);
         var actualResponse = objectMapper.readValue(response.getBody(), new TypeReference<AdminHrMngEventResponse>() {});
         var expectedResponse = AdminHrMngEventResponse.builder()
@@ -349,15 +354,11 @@ public class EventPositiveIntegrationTest {
                 .eventCreator(null)
                 .eventDateTime(existingEvent.getEventDateTime())
                 .eventExpiration(existingEvent.getEventExpiration())
-                .users(Set.of
-                        (
-                                "firstname1@email.com",
-                                "firstname2@email.com",
-                                "firstname3@email.com"
-                        )
-                )
+                .users(Set.of("firstname1@email.com"))
                 .build();
         assertEquals(expectedResponse, actualResponse);
+        this.existingEvent = eventRepo.save(existingEvent);
+        assertEquals(3,existingEvent.getUsersJoinInEvent().size());
     }
 
     @ParameterizedTest

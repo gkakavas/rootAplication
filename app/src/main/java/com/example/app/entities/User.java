@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -122,7 +123,27 @@ public class User implements UserDetails {
 
         User user = (User) o;
 
-        return new EqualsBuilder().append(userId, user.userId).append(password, user.password).append(firstname, user.firstname).append(lastname, user.lastname).append(email, user.email).append(specialization, user.specialization).append(currentProject, user.currentProject).append(createdBy, user.createdBy).append(registerDate, user.registerDate).append(lastLogin, user.lastLogin).append(roleValue, user.roleValue).append(role, user.role).append(userHasEvents, user.userHasEvents).append(group, user.group).append(userHasFiles, user.userHasFiles).append(userRequestedLeaves, user.userRequestedLeaves).isEquals();
+        return new EqualsBuilder()
+                .append(userId, user.userId)
+                .append(password, user.password)
+                .append(firstname, user.firstname)
+                .append(lastname, user.lastname)
+                .append(email, user.email)
+                .append(specialization, user.specialization)
+                .append(currentProject, user.currentProject)
+                .append(createdBy, user.createdBy)
+                .append(registerDate, user.registerDate)
+                .append(lastLogin, user.lastLogin)
+                .append(roleValue, user.roleValue)
+                .append(role, user.role)
+                .append(userHasEvents.stream().map(Event::getEventId).collect(Collectors.toSet()),
+                        user.userHasEvents.stream().map(Event::getEventId).collect(Collectors.toSet()))
+                .append(group, user.group)
+                .append(userHasFiles.stream().map(File::getFileId).collect(Collectors.toSet()),
+                        user.userHasFiles.stream().map(File::getFileId).collect(Collectors.toSet()))
+                .append(userRequestedLeaves.stream().map(Leave::getLeaveId).collect(Collectors.toSet()),
+                        user.userRequestedLeaves.stream().map(Leave::getLeaveId).collect(Collectors.toSet()))
+                .isEquals();
     }
 }
 

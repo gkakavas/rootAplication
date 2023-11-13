@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @Controller
 public class AccessDeniedController {
 
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
     @GetMapping("/access-denied")
     public String getAccessDenied(){
         return "/accessDenied";

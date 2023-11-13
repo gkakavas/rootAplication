@@ -1,9 +1,9 @@
 package com.example.app.integration.negative;
 
-import com.example.app.entities.Role;
+import com.example.app.entities.Group;
 import com.example.app.entities.User;
-import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.error.ErrorResponse;
+import com.example.app.repositories.GroupRepository;
 import com.example.app.repositories.UserRepository;
 import com.example.app.services.JwtService;
 import com.example.app.tool.UserRelevantGenerator;
@@ -19,13 +19,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -39,26 +38,40 @@ public class UserNegativeIntegrationTest {
     @Autowired
     private UserRepository userRepo;
     @Autowired
+    private GroupRepository groupRepo;
+    @Autowired
     private ObjectMapper objectMapper;
     private static TestRestTemplate httpClient;
     private String baseUrl = "http://localhost";
-    private String token;
-    private User user;
+    private static HttpHeaders headers;
 
-    @BeforeAll
-    public static void init(){
-        httpClient = new TestRestTemplate();
+    @Container
+    public static PostgreSQLContainer<?> myPostgresContainer = new PostgreSQLContainer<>("postgres:13.11")
+            .withCommand("postgres", "-c", "log_statement=all");
+    private Group groupForUserCreation;
+    private User currentUser;
+
+    @DynamicPropertySource
+    public static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", myPostgresContainer::getJdbcUrl);
+        registry.add("spring.datasource.username", myPostgresContainer::getUsername);
+        registry.add("spring.datasource.password", myPostgresContainer::getPassword);
     }
-
+    @BeforeAll
+    public static void init() {
+        myPostgresContainer.start();
+        httpClient = new TestRestTemplate();
+        headers = new HttpHeaders();
+    }
     private void setUp(){
-        userRepo.save(user);
-        user = userRepo.findByEmail(user.getEmail()).orElseThrow();
-        token = jwtService.generateToken(user);
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user,null,user.getAuthorities()));
+        baseUrl = "http://localhost:".concat(String.valueOf(port).concat("/user"));
+        currentUser = userRepo.findByEmail("firstname1@email.com").orElseThrow();
+        String currentToken = jwtService.generateToken(currentUser);
+        headers.set("Authorization", "Bearer " + currentToken);
+        groupForUserCreation = groupRepo.findByGroupName("group1").orElseThrow();
     }
     @AfterEach
     void tearDown(){
-        userRepo.deleteById(user.getUserId());
         SecurityContextHolder.clearContext();
     }
 
@@ -66,35 +79,26 @@ public class UserNegativeIntegrationTest {
     @DisplayName("when a create request contains an email which already exists" +
             "should return an error message and the response status code")
     void createRequestShouldReturnAnErrorMessageAndTheResponseStatusCode() throws JsonProcessingException {
-        this.user = UserRelevantGenerator.generateValidUser(null, Role.ADMIN,null);
         setUp();
-        this.baseUrl = baseUrl
-                .concat(":")
-                .concat(String.valueOf(port))
-                .concat("/user/create");
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + this.token);
-        var createRequest = UserRelevantGenerator.generateValidUserRequestEntity("USER", UUID.randomUUID());
-        createRequest.setEmail(this.user.getEmail());
-        HttpEntity<UserRequestEntity> request = new HttpEntity<>(createRequest, headers);
-            ResponseEntity<String> response = httpClient.exchange(
-                    baseUrl,
-                    HttpMethod.POST,
-                    request,
-                    String.class);
-            ObjectNode rootNode = objectMapper.readValue(response.getBody(), ObjectNode.class);
-            Map<String,String> actualResponseMap = new HashMap<>();
-            actualResponseMap.put("email",rootNode.get("message").get("email").textValue());
-            var actualResponse = ErrorResponse.builder()
-                    .message(actualResponseMap)
-                    .responseCode(HttpStatus.valueOf(rootNode.get("responseCode").asText()))
-                    .build();
-            var expectedResponse = new ErrorResponse<Map<String,String>>();
-            Map<String,String> errorResponseMap = new HashMap<>();
-            errorResponseMap.put("email","This email already exists");
-            expectedResponse.setMessage(errorResponseMap);
-            expectedResponse.setResponseCode(HttpStatus.INTERNAL_SERVER_ERROR);
-            assertEquals(expectedResponse,actualResponse);
+        this.baseUrl = baseUrl.concat("/create");
+        var createRequest = UserRelevantGenerator.generateValidUserRequestEntity("USER", groupForUserCreation.getGroupId());
+        //setting the email of request same with an existing user
+        createRequest.setEmail(this.currentUser.getEmail());
+        ResponseEntity<String> response = httpClient.exchange(
+                baseUrl,
+                HttpMethod.POST,
+                new HttpEntity<>(createRequest, headers),
+                String.class);
+        ObjectNode node = objectMapper.readValue(response.getBody(), ObjectNode.class);
+        var actualResponse = ErrorResponse.<String> builder()
+                .message(node.get("message").asText())
+                .responseCode(HttpStatus.valueOf(node.get("responseCode").asText()))
+                .build();
+        var expectedResponse = ErrorResponse.<String> builder()
+                .message("This email already exists")
+                .responseCode(HttpStatusCode.valueOf(500))
+                .build();
+        assertEquals(expectedResponse,actualResponse);
     }
 
 

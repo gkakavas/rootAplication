@@ -15,6 +15,9 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RestControllerAdvice
 public class ApplicationExceptionHandler {
@@ -133,18 +136,19 @@ public class ApplicationExceptionHandler {
     }
 
     @ExceptionHandler(PSQLException.class)
-    public ResponseEntity<ErrorResponse<Map<String,String>>> handleSQLException(PSQLException ex){
-        String exceptionMessage = ex.getMessage();
-        Map<String,String> errorMap = new HashMap<>();
-        if (exceptionMessage.contains("duplicate key value violates unique constraint \"_user_email_key\"")) {
-            errorMap.put("email","This email already exists");
+    public ResponseEntity<ErrorResponse<String>> handleSQLException(PSQLException ex){
+        var exceptionMessage = ex.getServerErrorMessage();
+        String errorMessage;
+        if (Objects.equals(Objects.requireNonNull(ex.getServerErrorMessage()).getSQLState(), "23505")) {
+            assert exceptionMessage != null;
+            errorMessage = "This " + extractColumnName(exceptionMessage.getConstraint())  + " already exists";
         }
         else{
-            errorMap.put("error","Unexpected SQL exception occurs");
+            errorMessage = "Unexpected SQL exception occurs";
         }
         return ResponseEntity.internalServerError()
-                .body(ErrorResponse.<Map<String,String>>builder()
-                        .message(errorMap)
+                .body(ErrorResponse.<String> builder()
+                        .message(errorMessage)
                         .responseCode(HttpStatus.INTERNAL_SERVER_ERROR)
                         .build());
     }
@@ -177,5 +181,16 @@ public class ApplicationExceptionHandler {
                         .message(responseMap)
                         .responseCode(HttpStatus.BAD_REQUEST)
                         .build());
+    }
+
+    //helper method to extract field name
+    public String extractColumnName(String constraint){
+        Pattern pattern = Pattern.compile(".*_(.*)_key");
+        Matcher matcher = pattern.matcher(constraint);
+        if (matcher.matches()) {
+            return matcher.group(1);
+        } else {
+            return constraint;
+        }
     }
 }

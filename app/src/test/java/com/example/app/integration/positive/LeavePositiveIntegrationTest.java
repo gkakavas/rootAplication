@@ -142,11 +142,9 @@ public class LeavePositiveIntegrationTest {
         assertEquals(expectedResponse, actualResponse);
         assertTrue(leaveRepo.existsById(actualResponse.getLeaveId()));
         var leaveToDelete = leaveRepo.findById(actualResponse.getLeaveId()).orElseThrow();
-        currentUser.setUserRequestedLeaves(null);
-        userRepo.save(currentUser);
         leaveToDelete.setRequestedBy(null);
         leaveRepo.save(leaveToDelete);
-        leaveRepo.delete(leaveToDelete);
+        leaveRepo.deleteById(leaveToDelete.getLeaveId());
         assertFalse(leaveRepo.existsById(leaveToDelete.getLeaveId()));
     }
 
@@ -275,6 +273,8 @@ public class LeavePositiveIntegrationTest {
     @DisplayName("When a delete leave request is dispatched" +
             " should delete from db the specific leave and returning 204")
     void shouldDeleteFromDbTheSpecificLeaveAndReturning204(String roleValue) {
+        this.roleValue = roleValue;
+        setUp();
         var leaveToDelete = Instancio.of(Leave.class)
                 .ignore(field(Leave::getLeaveId))
                 .ignore(field(Leave::getApproved))
@@ -283,8 +283,8 @@ public class LeavePositiveIntegrationTest {
                 .set(field(Leave::getRequestedBy), currentUser)
                 .create();
         var savedLeaveToDelete = leaveRepo.save(leaveToDelete);
-        this.roleValue = roleValue;
-        setUp();
+        currentUser.setUserRequestedLeaves(Set.of(savedLeaveToDelete));
+        userRepo.save(currentUser);
         baseUrl = baseUrl.concat("/delete/").concat(savedLeaveToDelete.getLeaveId().toString());
         ResponseEntity<String> response = restTemplate.exchange(
                 baseUrl,
