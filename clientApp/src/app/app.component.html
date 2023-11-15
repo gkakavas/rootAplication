@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Management System</title>
+</head>
+
+<body>
+    <div class="top-bar">
+        <div class="title">HR Management System</div>
+        <div class="profile-manager">
+            <div class="connectedUser">Connected User </div>
+            <mat-icon>person</mat-icon>
+            <router-outlet></router-outlet>
+        </div>
+    </div>
+    @switch(currentRoute){
+        @case ('login') {
+            <app-login></app-login>
+        }
+        @case ('changePassword'){
+            <!-- <app-change-password> </app-change-password> -->
+        } 
+    }   
+</body>
+</html>
+

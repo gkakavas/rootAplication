@@ -17,6 +17,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 
@@ -94,7 +95,7 @@ public class EntityResponseFileConverterImp implements EntityResponseFileConvert
                 .filename(multipartFile.getOriginalFilename())
                 .fileSize(multipartFile.getSize())
                 .fileType(multipartFile.getContentType())
-                .uploadDate(LocalDateTime.now())
+                .uploadDate(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .accessUrl(accessUrl)
                 .fileKind(fileKind)
                 .uploadedBy(fileCreator)

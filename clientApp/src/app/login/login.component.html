@@ -1,0 +1,24 @@
+<div class="loginFormContainer">
+<form [formGroup]="loginForm" (ngSubmit)="login()">
+  <label for="username">Username:</label>
+  <input type="text" id="username" name="username" formControlName="username" required>
+  
+  @if(loginForm.get('username')!.hasError('required')){
+    <div class="error-message">Username is required</div>
+  }
+  @if(loginForm.get('username')!.hasError('email')){
+    <div class="error-message">Invalid email format</div>
+  }
+
+  <label for="password">Password:</label>
+  <input type="password" id="password" name="password" formControlName="password" required>
+  @if(loginForm.get('password')!.hasError('required')){
+    <div class="error-message">Password is required</div>
+  }
+  @if(loginForm.get('password')!.hasError('pattern')){
+    <div class="error-message">Password must be at least 8 characters long and it contains at least one letter and one digit</div>
+  }
+
+  <button type="submit">Login</button>
+</form>
+</div>

@@ -41,6 +41,15 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
         return userConverter.fromUserToAdminUser(user);
     }
 
+    public UserResponseEntity getCurrentUser(User user){
+        if(user.getRole().equals(Role.ADMIN)){
+            return userConverter.fromUserToAdminUser(user);
+        }
+        else{
+            return userConverter.fromUserToOtherUser(user);
+        }
+    }
+
     public User read(String email) throws UserNotFoundException {
         return userRepo.findByEmail(email).orElseThrow(UserNotFoundException::new);
     }

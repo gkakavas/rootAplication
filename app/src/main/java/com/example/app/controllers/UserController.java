@@ -38,6 +38,11 @@ public class UserController implements CrudController<UserResponseEntity, UserRe
             ) throws UserNotFoundException, GroupNotFoundException {
         return new ResponseEntity<>(service.create(request,connectedUser), HttpStatus.CREATED);
     }
+
+    @GetMapping("/currentUser")
+    public ResponseEntity<UserResponseEntity> getCurrentUser(@AuthenticationPrincipal User user){
+        return new ResponseEntity<>(service.getCurrentUser(user),HttpStatus.OK);
+    }
     @Override
     public ResponseEntity<UserResponseEntity> readOne(UUID id,@AuthenticationPrincipal User connectedUser) throws UserNotFoundException {
         return new ResponseEntity<>(service.read(id,connectedUser), HttpStatus.OK);

@@ -1,0 +1,34 @@
+.body {
+    margin: 0%;
+    padding: 0%;
+}
+
+.top-bar {
+    background-color: #0c0a0a;
+    display: flex;
+    position: absolute;
+    left:0;
+    right:0;
+    height: 40px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.profile-manager {
+    display: flex;
+    align-items: center;
+    color: #fff;
+    justify-content: space-between;
+    padding-right: 10px;
+}
+
+.accountIcon{
+    width: 20px;
+    height: 20px;
+    margin-left: 10px;
+}
+
+.title{
+    color: #fff;
+    padding-left: 10px;
+}

@@ -1,0 +1,49 @@
+.loginFormContainer {
+    width: 350px;
+    height: 500;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+}
+
+.loginFormContainer form {
+    margin-bottom: 10px;
+    margin-top: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.loginFormContainer label {
+    display: block;
+    margin-bottom: 10px;
+    font-family: serif;
+}
+
+.loginFormContainer input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+.loginFormContainer input:focus {
+    border-color: #000;
+}
+
+.loginFormContainer button {
+    width: 100%;
+    padding: 10px;
+    background-color: #4217b8;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+.loginFormContainer button:hover {
+    background-color: #333;
+}
+
+.error-message {
+    color: red;
+    font-size: 12px;
+    margin-top: 5px;
+  }

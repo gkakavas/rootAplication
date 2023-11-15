@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -163,7 +164,7 @@ public class FileConverterPositiveUnitTest {
                 .filename(multipartFile.getOriginalFilename())
                 .fileSize(multipartFile.getSize())
                 .fileType(multipartFile.getContentType())
-                .uploadDate(LocalDateTime.now())
+                .uploadDate(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .accessUrl(accessUrl)
                 .fileKind(fileKind)
                 .uploadedBy(fileCreator)
