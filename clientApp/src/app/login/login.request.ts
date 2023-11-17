@@ -1,3 +1,22 @@
 export class LoginRequest {
-  constructor(public username: string, public password: string) {}
+  #username: string;
+  #password: string;
+
+  constructor(username: string, password: string) {
+    this.#username = username;
+    this.#password = password;
+  }
+
+  getUsername(): string {
+    return this.#username;
+  } 
+  setUsername(username: string): void {
+    this.#username = username;
+  }
+  getPassword(): string {
+    return this.#password;
+  }
+  setPassword(password: string): void {
+    this.#password = password;
+  }
 }

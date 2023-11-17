@@ -1,34 +1,45 @@
-.body {
-    margin: 0%;
-    padding: 0%;
+.container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto 1fr;
+    gap: 10px;
+    row-gap: 20%;
+    align-items: center;
 }
 
 .top-bar {
-    background-color: #0c0a0a;
-    display: flex;
-    position: absolute;
-    left:0;
-    right:0;
+    grid-column: 1 / span 3;
+    background-color: #333;
+    display: grid;
+    grid-template-columns: repeat(6,1fr);
+    left: 0;
+    right: 0;
     height: 40px;
+    width: 100%;
     align-items: center;
-    justify-content: space-between;
+}
+
+.title {
+    color: #eef7f8;
+    padding-left: 10px;
+    grid-column: 1/2;
 }
 
 .profile-manager {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto auto;
+    color: #eef7f8;
+    grid-column: 6;
     align-items: center;
-    color: #fff;
-    justify-content: space-between;
-    padding-right: 10px;
+    justify-self: end;
 }
 
-.accountIcon{
-    width: 20px;
-    height: 20px;
-    margin-left: 10px;
+.accountIcon {
+    grid-column: 2;
 }
 
-.title{
-    color: #fff;
-    padding-left: 10px;
+.connectedUser{
+    grid-column: 1;
 }
+
+  
