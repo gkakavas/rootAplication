@@ -1,6 +1,6 @@
 import { Component, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { LoginComponent } from "./login/login.component";
 
@@ -17,7 +17,7 @@ export class AppComponent {
 
   isCenteredLayout() {
     const route = this.router.url;
-    return route.includes('/login') || route.includes('/change-password') || route.includes('/register');
+    return route.includes('login') || route.includes('change-password') || route.includes('register');
   }
-  
-} 
+
+}

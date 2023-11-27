@@ -7,7 +7,7 @@ import com.example.app.models.responses.event.EventResponseEntity;
 import java.util.Set;
 import java.util.UUID;
 
-public interface EntityResponseEventConverter{
+public interface EntityResponseEventConverter {
     EventResponseEntity fromEventToMyEvent(Event event);
 
     EventResponseEntity fromEventToAdminHrMngEvent(Event event);

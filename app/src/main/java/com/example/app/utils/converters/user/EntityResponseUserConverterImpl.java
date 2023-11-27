@@ -5,8 +5,10 @@ import com.example.app.entities.Role;
 import com.example.app.entities.User;
 import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.user.AdminUserResponse;
+import com.example.app.models.responses.user.CurrentUserResponse;
 import com.example.app.models.responses.user.OtherUserResponse;
 import com.example.app.repositories.UserRepository;
+import com.example.app.utils.converters.event.EntityResponseEventConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +30,7 @@ public class EntityResponseUserConverterImpl implements EntityResponseUserConver
     private final Clock clock;
     @Value("${default.password}")
     private String defaultPasswordForUserCreation;
+    private final EntityResponseEventConverter eventConverter;
 
 
     @Override
@@ -116,5 +119,19 @@ public class EntityResponseUserConverterImpl implements EntityResponseUserConver
         user.setRole(Role.valueOf(request.getRole()));
         user.setGroup(group);
         return user;
+    }
+
+    @Override
+    public CurrentUserResponse fromUserToCurrentUser(User user) {
+        return CurrentUserResponse.builder()
+                .userId(user.getUserId())
+                .firstname(user.getFirstname())
+                .lastname(user.getLastname())
+                .email(user.getEmail())
+                .specialization(user.getSpecialization())
+                .currentProject(user.getCurrentProject())
+                .groupName(user.getGroup().getGroupName())
+                .role(user.getRole())
+                .build();
     }
 }

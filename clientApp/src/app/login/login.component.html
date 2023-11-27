@@ -1,26 +1,26 @@
 <div class="loginFormContainer">
-    <label class = "loginLabel">Login</label>
+    <h1>Login</h1>
     <form [formGroup]="loginForm" (ngSubmit)="login()">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" formControlName="username" required>
-
-        @if(loginForm.get('username')!.hasError('required')){
-            <div class="error-message">Username is required</div>
-        }
-        @if(loginForm.get('username')!.hasError('email')){
-            <div class="error-message">Invalid email format</div>
-        }
-
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" formControlName="password" required>
-        
-        @if(loginForm.get('password')!.hasError('required')){
-        <div class="error-message">Password is required</div>
-        }
-        @if(loginForm.get('password')!.hasError('pattern')){
-        <div class="error-message">Password must be at least 8 characters long and it contains at least one letter and one
-           digit</div>
-        }
+        <div class="usernameGroup">
+            <input type="text" placeholder="Username" id="username" name="username" formControlName="username" required>
+        </div>
+        <div class="passwordGroup">
+            <input type="password" placeholder="Password" id="password" name="password" formControlName="password" required>
+        </div>
         <button type="submit">Login</button>
     </form>
+
+    <div class = "errorMessagesContainer" ></div>
+    @if(loginForm.get('username')?.hasError('required') && submitted){
+        <div class="errorMessage">Username is required</div>
+    }
+    @else if (loginForm.get('username')?.hasError('email') && submitted) {
+        <div class="errorMessage">Username must be a valid email</div>
+    }
+    @if (loginForm.get('password')?.hasError('required') && submitted) {
+        <div class="errorMessage">Password is required</div>
+    }
+    @else if (loginForm.get('password')?.hasError('pattern') && submitted){
+        <div class="errorMessage">Password must be at least 8 characters long and contain at least one letter and one number</div>
+    }
 </div>

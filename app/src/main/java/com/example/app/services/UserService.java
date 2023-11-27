@@ -42,12 +42,7 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     }
 
     public UserResponseEntity getCurrentUser(User user){
-        if(user.getRole().equals(Role.ADMIN)){
-            return userConverter.fromUserToAdminUser(user);
-        }
-        else{
-            return userConverter.fromUserToOtherUser(user);
-        }
+        return userConverter.fromUserToCurrentUser(user);
     }
 
     public User read(String email) throws UserNotFoundException {

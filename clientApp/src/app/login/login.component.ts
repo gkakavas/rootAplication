@@ -1,9 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AuthService } from './auth.service';
+import { AuthService } from '../services/auth.service';
 import { RouterOutlet } from '@angular/router';
-import { LoginRequest } from './login.request';
+import { LoginRequest } from '../models/requests/login.request';
 import { CommonModule } from '@angular/common';
+import { map } from 'rxjs/internal/operators/map';
+import { AuthenticationResponse } from '../models/responses/login.response';
+import { LoginErrorResponse } from '../models/error/login.error.response';
+import { throwError } from 'rxjs/internal/observable/throwError';
+import { catchError } from 'rxjs/internal/operators/catchError';
+import { ServerErrorResponse } from '../models/error/server.error.response';
+import { UserService } from '../services/user.service';
 
 @Component({
     standalone: true,
@@ -12,39 +19,77 @@ import { CommonModule } from '@angular/common';
     styleUrls: ['./login.component.css'],
     imports: [RouterOutlet, ReactiveFormsModule,CommonModule]
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
 
-  loginForm = new FormGroup({
-    username: new FormControl('',[Validators.required, Validators.email]),
-    password: new FormControl('',[Validators.required, Validators.pattern(new RegExp('^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$'))]),
-  });
-  
+  @Output() successfulLogin = new EventEmitter<string>();
+
+  loginForm!: FormGroup;
+
+  submitted: boolean = false;
+
   constructor(
-    private authService: AuthService
-    ) {}
+    private authService: AuthService,
+    private userService: UserService
+  ) {
+  }
+
+  errorResponse: LoginErrorResponse | null = null;
+
+  ngOnInit(): void {
+    this.loginForm = new FormGroup({
+      username: new FormControl(
+        null,
+        [
+          Validators.required,
+          Validators.email
+        ]
+      ),
+      password: new FormControl(
+        null,
+        [
+          Validators.required,
+          Validators.pattern(new RegExp('^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$'))
+        ]
+      )
+    })
+  }
 
   login(): void {
-    
+    this.submitted = true;
     if (this.loginForm.valid) {
-      const loginRequest =  new LoginRequest(
-        this.loginForm.value.username!,
-        this.loginForm.value.password!
-        );
-
-      this.authService.login(loginRequest).subscribe({
-        next: (response) => {
-          const jwtToken = response.jwtToken;
-          localStorage.setItem('jwtToken', jwtToken);
-          // Optionally, navigate to a different route or perform other actions
-        },
-        error: (error) => {
+      const loginRequest: LoginRequest = {
+        email: this.loginForm.value.username,
+        password: this.loginForm.value.password
+      };
+      this.authService.login(loginRequest).pipe(
+        map((response) => {
+          if (response.token) {
+            return new AuthenticationResponse(response.token);
+          } else {
+            return new ServerErrorResponse(response.message, response.status);
+          }
+        }),
+        catchError((error: any) => {
+          console.error('Error during authentication response mapping:', error);
+          this.errorResponse = new LoginErrorResponse(error);
+          return throwError(() => new Error(error));
+        })
+      ).subscribe({
+        next: (response: AuthenticationResponse | ServerErrorResponse) => {
+          if (response instanceof AuthenticationResponse) {
+            if (localStorage.getItem("AuthToken")) {
+              localStorage.removeItem("AuthToken");
+            }
+            localStorage.setItem('AuthToken', 'Bearer ' + response.token);
+            console.info("Login successful: " + "The token is: " + localStorage.getItem('AuthToken'))
+            this.userService.retrieveConnectedUser();
+          } else {
+            console.error(response.message, response.status);
+          }},
+        error: (error: Error) => {
           console.error('Login failed:', error);
         }
       });
     }
-    else {
-      console.error('Invalid form submission:', this.loginForm.errors);
-    }
   }
 }
-

@@ -8,6 +8,7 @@ import org.postgresql.util.PSQLException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -31,6 +32,14 @@ public class ApplicationExceptionHandler {
                 .responseCode(HttpStatus.BAD_REQUEST)
                 .build());
         }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse<String>>  handleBadCredentialsException(BadCredentialsException ex){
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.<String>builder()
+                .message(ex.getMessage())
+                .responseCode(HttpStatus.NOT_FOUND)
+                .build());
+    }
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponse<String>> handleUserException(UserNotFoundException ex){
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.<String>builder()
@@ -182,6 +191,7 @@ public class ApplicationExceptionHandler {
                         .responseCode(HttpStatus.BAD_REQUEST)
                         .build());
     }
+
 
     //helper method to extract field name
     public String extractColumnName(String constraint){

@@ -3,6 +3,7 @@ package com.example.app.config;
 import com.example.app.security.CustomAccessDeniedHandler;
 import com.example.app.security.IpAddressFilter;
 import com.example.app.security.JwtAuthenticationFilter;
+import com.example.app.security.RequestLoggingFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,10 +15,12 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.access.channel.ChannelProcessingFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import static org.springframework.http.HttpMethod.*;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -27,8 +30,9 @@ public class SecurityConfig implements WebMvcConfigurer {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
     private final IpAddressFilter ipAddressFilter;
+    private final RequestLoggingFilter requestLoggingFilter;
     @Bean
-    AccessDeniedHandler accessDeniedHandler() {
+    public AccessDeniedHandler accessDeniedHandler() {
         return new CustomAccessDeniedHandler();
     }
 
@@ -39,8 +43,7 @@ public class SecurityConfig implements WebMvcConfigurer {
                         .requestMatchers(POST,"/auth/authenticate").permitAll()
                         .requestMatchers(POST,"/auth/register").permitAll()
                         .requestMatchers(GET,"/access-denied").permitAll()
-                        .requestMatchers(GET,"/test/authPrincipal").permitAll()
-                        .requestMatchers(GET,"/test/principal").permitAll()
+                        .requestMatchers(OPTIONS).permitAll()
 
                         .requestMatchers(POST,"/user/create").hasAuthority("user::create")
                         .requestMatchers(GET,"/user/all").hasAuthority("user::readAll")
@@ -49,7 +52,7 @@ public class SecurityConfig implements WebMvcConfigurer {
                         .requestMatchers(DELETE,"/user/delete/{id}").hasAuthority("user::delete")
                         .requestMatchers(PATCH,"/user/patch/{id}").hasAuthority("user::patch")
                         .requestMatchers(GET,"/user/{id}/events").hasAuthority("user::readUserEvents")
-                        .requestMatchers(PATCH,"/user/changePassword").authenticated()
+                        .requestMatchers(POST,"/user/changePassword").authenticated()
                         .requestMatchers(GET,"/user/currentUser").authenticated()
 
                         .requestMatchers(POST,"/event/create").hasAuthority("event::create")
@@ -85,6 +88,7 @@ public class SecurityConfig implements WebMvcConfigurer {
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
+                .addFilterBefore(requestLoggingFilter, ChannelProcessingFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(ipAddressFilter, JwtAuthenticationFilter.class)
                 .exceptionHandling(customizer -> customizer.accessDeniedHandler(accessDeniedHandler()));

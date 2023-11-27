@@ -2,59 +2,64 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 300px;
+    justify-content: center;
+    width: 270px;
     height: 330px;
-    margin: 10px auto;
+    margin: 0 auto;
     padding: 20px;
-    border: 1px solid #fff799;
-    background-color: #fff799;
+    border: 1px solid rgb(153, 241, 255);
+    background-color: rgba(153, 245, 255, 0.789);
     grid-column: 2;
     border-radius: 10px;
 }
 
-.loginLabel {
+.loginFormContainer h1 {
     font-family: serif;
     font-size: large;
+    margin-bottom: 30px;
+    color: #333;
 }
 
 .loginFormContainer form {
-    width: 100%;
+    display: flex;
+    flex-direction: column;
     align-items: center;
+    width: 100%;
+    row-gap: 5px;
 }
-
-.loginFormContainer label {
-    display: block;
-    margin-bottom: 5px;
-    font-family: serif;
-    margin-top: 20px;
+.usernameGroup{
+    width: 100%;
+}
+.passwordGroup{
+    width: 100%;
 }
 
 .loginFormContainer input {
     width: calc(100% - 20px);
-    padding: 10px;
-    margin-bottom: 10px;
+    padding: 6px;
     border: none;
     border-radius: 10px;
     background-color: #eef7f8;
 }
 
 .loginFormContainer button {
-    position: relative;
     width: calc(100% - 20px);
-    padding: 10px;
-    margin-top: 40px;
+    padding: 6px;
     background-color: #333;
     color: #eef7f8;
     border: none;
     cursor: pointer;
     border-radius: 10px;
+    margin-top: 30px;
+    width: 33.3%;
 }
 
 .loginFormContainer button:hover {
     background-color: #555;
 }
 
-.error-message {
+.errorMessage {
     color: red;
     font-size: 12px;
+    margin-top: 5px;
 }

@@ -8,6 +8,7 @@ import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.user.AdminUserResponse;
 import com.example.app.models.responses.user.OtherUserResponse;
 import com.example.app.repositories.UserRepository;
+import com.example.app.utils.converters.event.EntityResponseEventConverter;
 import com.example.app.utils.converters.user.EntityResponseUserConverterImpl;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.AfterEach;
@@ -45,10 +46,13 @@ public class UserConverterPositiveUnitTest {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private Clock clock;
+    @Mock
+    private EntityResponseEventConverter eventConverter;
+
     @BeforeEach
     public void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
-        userConverter = new EntityResponseUserConverterImpl(userRepository,passwordEncoder,clock);
+        userConverter = new EntityResponseUserConverterImpl(userRepository,passwordEncoder,clock,eventConverter);
     }
 
     @AfterEach
