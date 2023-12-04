@@ -7,13 +7,13 @@ export enum Role {
 
 function parseRole(roleString: string): Role | undefined {
   switch (roleString) {
-    case "ADMIN":
+    case 'ADMIN':
       return Role.ADMIN;
-    case "HR":
+    case 'HR':
       return Role.HR;
-    case "MANAGER":
+    case 'MANAGER':
       return Role.MANAGER;
-    case "USER":
+    case 'USER':
       return Role.USER;
     default:
       return undefined;

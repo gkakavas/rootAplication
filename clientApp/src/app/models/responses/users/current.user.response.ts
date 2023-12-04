@@ -1,6 +1,4 @@
 import {parseRole, Role} from "../user/Role";
-import {parseEnum} from "@angular/compiler-cli/linker/src/file_linker/partial_linkers/util";
-import {Observable} from "rxjs";
 
 export class CurrentUserResponse {
 
@@ -12,6 +10,7 @@ export class CurrentUserResponse {
     #currentProject: string;
     #groupName: string;
     #role: Role | undefined;
+    #authorities: string[] = [];
 
   constructor(
     userId: string,
@@ -21,7 +20,8 @@ export class CurrentUserResponse {
     specialization: string,
     currentProject: string,
     groupName: string,
-    role: string
+    role: string,
+    authorities: string []
   ) {
     this.#userId = userId;
     this.#firstname = firstname;
@@ -31,6 +31,14 @@ export class CurrentUserResponse {
     this.#currentProject = currentProject;
     this.#groupName = groupName;
     this.#role = parseRole(role);
+    try {
+      for (const authority of authorities) {
+        this.#authorities.push(authority);
+      }
+    } catch (error) {
+      console.error('Error parsing authorities JSON:', error);
+      this.#authorities = [];
+    }
   }
 
   get userId(): string {
@@ -97,33 +105,12 @@ export class CurrentUserResponse {
     this.#role = parseRole(value);
   }
 
+  get authorities(): string []  {
+    return this.#authorities;
+  }
 
-  toJSON(): any {
-    return {
-      userId: this.userId,
-      firstname: this.firstname,
-      lastname: this.lastname,
-      email: this.email,
-      specialization: this.specialization,
-      currentProject: this.currentProject,
-      groupName: this.groupName,
-      role: this.role
-    };
+  set authorities(authorities :string []) {
+    this.#authorities = authorities;
   }
 }
 
-function getCurrentUser():CurrentUserResponse{
-  const currentUser = localStorage.getItem('ConnectedUserDetails')!;
-  let parsedCurrentUser = JSON.parse(currentUser);
-  return new CurrentUserResponse(
-    parsedCurrentUser.userId,
-    parsedCurrentUser.firstname,
-    parsedCurrentUser.lastname,
-    parsedCurrentUser.email,
-    parsedCurrentUser.specialization,
-    parsedCurrentUser.currentProject,
-    parsedCurrentUser.groupName,
-    parsedCurrentUser.role
-  );
-}
-export {getCurrentUser};
