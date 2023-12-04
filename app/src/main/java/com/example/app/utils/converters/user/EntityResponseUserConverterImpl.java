@@ -8,9 +8,9 @@ import com.example.app.models.responses.user.AdminUserResponse;
 import com.example.app.models.responses.user.CurrentUserResponse;
 import com.example.app.models.responses.user.OtherUserResponse;
 import com.example.app.repositories.UserRepository;
-import com.example.app.utils.converters.event.EntityResponseEventConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -30,7 +30,6 @@ public class EntityResponseUserConverterImpl implements EntityResponseUserConver
     private final Clock clock;
     @Value("${default.password}")
     private String defaultPasswordForUserCreation;
-    private final EntityResponseEventConverter eventConverter;
 
 
     @Override
@@ -43,13 +42,16 @@ public class EntityResponseUserConverterImpl implements EntityResponseUserConver
                 .specialization(user.getSpecialization())
                 .currentProject(user.getCurrentProject())
                 .groupName(null)
-                .registerDate(user.getRegisterDate())
+                .registerDate(user.getRegisterDate().truncatedTo(ChronoUnit.SECONDS))
                 .createdBy(null)
-                .lastLogin(user.getLastLogin())
+                .lastLogin(null)
                 .role(user.getRole())
                 .build();
             if(user.getGroup()!=null){
                 response.setGroupName(user.getGroup().getGroupName());
+            }
+            if(user.getLastLogin()!= null){
+                response.setLastLogin(user.getLastLogin().truncatedTo(ChronoUnit.SECONDS));
             }
             if(user.getCreatedBy()!=null) {
                 userRepo.findById(user.getCreatedBy()).ifPresent(
@@ -123,15 +125,20 @@ public class EntityResponseUserConverterImpl implements EntityResponseUserConver
 
     @Override
     public CurrentUserResponse fromUserToCurrentUser(User user) {
-        return CurrentUserResponse.builder()
+        var response = CurrentUserResponse.builder()
                 .userId(user.getUserId())
                 .firstname(user.getFirstname())
                 .lastname(user.getLastname())
                 .email(user.getEmail())
                 .specialization(user.getSpecialization())
                 .currentProject(user.getCurrentProject())
-                .groupName(user.getGroup().getGroupName())
+                .groupName(null)
                 .role(user.getRole())
+                .authorities(user.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
                 .build();
+        if(user.getGroup()!=null){
+            response.setGroupName(user.getGroup().getGroupName());
+        }
+        return response;
     }
 }

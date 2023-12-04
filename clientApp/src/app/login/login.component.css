@@ -4,12 +4,11 @@
     align-items: center;
     justify-content: center;
     width: 270px;
-    height: 330px;
-    margin: 0 auto;
+    height: 250px;
+    margin-top: 100px;
     padding: 20px;
     border: 1px solid rgb(153, 241, 255);
     background-color: rgba(153, 245, 255, 0.789);
-    grid-column: 2;
     border-radius: 10px;
 }
 

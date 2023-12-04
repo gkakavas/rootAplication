@@ -1,7 +1,6 @@
 version: '3.9'
 
 services:
-
   backend:
     container_name: SpringBootApp
     image: spring_boot_app
@@ -31,6 +30,7 @@ services:
         - db
     ports:
       - "5050:5050"
+
 
 
 

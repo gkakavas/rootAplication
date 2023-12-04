@@ -1,12 +1,12 @@
-<div class="container">
-    <header class="top-bar">
-        <div class="title">HR Management System</div>
-        @if(!isCenteredLayout()){
-        <div class="profile-manager">
-            <div class="connectedUser">Connected User</div>
-            <mat-icon>person</mat-icon>
-        </div>
-        }
-    </header>
+<div [ngStyle]= "mainPage">
+  <header class="top-bar">
+    <div class="title">HR Management System</div>
+    <div class="profile-manager">
+      <div class="connectedUser">Connected User</div>
+      <mat-icon>person</mat-icon>
+    </div>
+  </header>
+  <main class="main-page">
     <router-outlet></router-outlet>
+  </main>
 </div>

@@ -26,13 +26,14 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
+
 @ActiveProfiles("integration")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class GroupPositiveIntegrationTest {
@@ -120,8 +121,7 @@ public class GroupPositiveIntegrationTest {
                             .specialization(user.getSpecialization())
                             .currentProject(user.getCurrentProject())
                             .groupName(createRequest.getGroupName())
-                            .createdBy(null)
-                            .registerDate(user.getRegisterDate())
+                            .registerDate(user.getRegisterDate().truncatedTo(ChronoUnit.SECONDS))
                             .lastLogin(user.getLastLogin())
                             .role(user.getRole())
                             .build())
@@ -157,15 +157,14 @@ public class GroupPositiveIntegrationTest {
                         .specialization(user.getSpecialization())
                         .currentProject(user.getCurrentProject())
                         .groupName(user.getGroup().getGroupName())
-                        .registerDate(user.getRegisterDate())
-                        .lastLogin(user.getLastLogin())
+                        .registerDate(user.getRegisterDate().truncatedTo(ChronoUnit.SECONDS))
                         .role(user.getRole())
                         .build()
         ).collect(Collectors.toSet());
         var expectedResponse = AdminGroupResponse.builder()
                 .groupId(existingGroup.getGroupId())
                 .groupName(existingGroup.getGroupName())
-                .groupCreationDate(existingGroup.getGroupCreationDate())
+                .groupCreationDate(existingGroup.getGroupCreationDate().truncatedTo(ChronoUnit.SECONDS))
                 .users(expectedResponseUserList)
                 .build();
         assertEquals(expectedResponse,actualResponse);
@@ -185,7 +184,7 @@ public class GroupPositiveIntegrationTest {
                 AdminGroupResponse.builder()
                         .groupId(group.getGroupId())
                         .groupName(group.getGroupName())
-                        .groupCreationDate(group.getGroupCreationDate())
+                        .groupCreationDate(group.getGroupCreationDate().truncatedTo(ChronoUnit.SECONDS))
                         .users(group.getGroupHasUsers().stream().map(user ->
                                 AdminUserResponse.builder()
                                         .userId(user.getUserId())
@@ -195,8 +194,7 @@ public class GroupPositiveIntegrationTest {
                                         .specialization(user.getSpecialization())
                                         .currentProject(user.getCurrentProject())
                                         .groupName(user.getGroup().getGroupName())
-                                        .registerDate(user.getRegisterDate())
-                                        .lastLogin(user.getLastLogin())
+                                        .registerDate(user.getRegisterDate().truncatedTo(ChronoUnit.SECONDS))
                                         .role(user.getRole())
                                         .build()
                                 ).collect(Collectors.toSet())
@@ -222,7 +220,7 @@ public class GroupPositiveIntegrationTest {
         var expectedResponse = AdminGroupResponse.builder()
                 .groupId(existingGroup.getGroupId())
                 .groupName(updateRequest.getGroupName())
-                .groupCreationDate(existingGroup.getGroupCreationDate())
+                .groupCreationDate(existingGroup.getGroupCreationDate().truncatedTo(ChronoUnit.SECONDS))
                 .users(existingGroup.getGroupHasUsers().stream().map(user ->
                         AdminUserResponse.builder()
                                 .userId(user.getUserId())
@@ -232,8 +230,7 @@ public class GroupPositiveIntegrationTest {
                                 .specialization(user.getSpecialization())
                                 .currentProject(user.getCurrentProject())
                                 .groupName(updateRequest.getGroupName())
-                                .registerDate(user.getRegisterDate())
-                                .lastLogin(user.getLastLogin())
+                                .registerDate(user.getRegisterDate().truncatedTo(ChronoUnit.SECONDS))
                                 .role(user.getRole())
                                 .build()
                 ).collect(Collectors.toSet()))
@@ -259,6 +256,8 @@ public class GroupPositiveIntegrationTest {
                 String.class);
         assertEquals(response.getStatusCode(), HttpStatusCode.valueOf(204));
         assertFalse(groupRepo.existsById(existingGroup.getGroupId()));
+        groupRepo.save(existingGroup);
+        assertNotNull(groupRepo.findByGroupName("group1"));
     }
 }
 

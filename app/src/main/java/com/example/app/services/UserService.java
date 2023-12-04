@@ -75,10 +75,13 @@ public class UserService implements CrudService<UserResponseEntity, UserRequestE
     @Override
     public UserResponseEntity update(UUID id, UserRequestEntity request) throws UserNotFoundException {
         var user = userRepo.findById(id).orElseThrow(UserNotFoundException::new);
-            var updatedUser = userConverter.updateSetting(user,request,
-                    groupRepo.findById(request.getGroup()).orElse(null));
-            var response = userRepo.save(updatedUser);
-            return userConverter.fromUserToAdminUser(response);
+        var updatedUser = userConverter.updateSetting(
+                user,
+                request,
+                groupRepo.findById(request.getGroup()).orElse(null)
+        );
+        var response = userRepo.save(updatedUser);
+        return userConverter.fromUserToAdminUser(response);
     }
 
     @Override

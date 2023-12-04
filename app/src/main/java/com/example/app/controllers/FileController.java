@@ -25,6 +25,7 @@ import java.util.UUID;
 @RequestMapping("/file")
 @RequiredArgsConstructor
 public class FileController {
+
     private final FileStorageService fileStorageService;
 
     @PostMapping("/upload")
@@ -32,7 +33,6 @@ public class FileController {
             IllegalTypeOfFileException, IOException {
             return new ResponseEntity<>(fileStorageService.upload(file,connectedUser), HttpStatus.CREATED);
     }
-
     @GetMapping("/download/evaluation/{fileId}")
     public ResponseEntity<Resource> downloadEvaluation(@PathVariable UUID fileId,@AuthenticationPrincipal User connectedUser) throws FileNotFoundException, IOException {
         FileResourceResponse response = (FileResourceResponse) fileStorageService.download(fileId,FileKind.EVALUATION,connectedUser);

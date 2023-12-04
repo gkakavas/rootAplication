@@ -11,7 +11,6 @@ export class AuthService {
   private authenticateApiUrl = "http://localhost:8080/auth/authenticate";
 
   constructor(private http: HttpClient) {}
-  
 
   login(loginRequest: LoginRequest): Observable<any> {
     return this.http.post<AuthenticationResponse>(this.authenticateApiUrl, loginRequest);

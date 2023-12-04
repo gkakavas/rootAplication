@@ -19,8 +19,10 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class EntityResponseGroupConverterImpl implements EntityResponseGroupConverter{
+
     private final EntityResponseUserConverter userConverter;
     private final UserRepository userRepo;
+
     @Override
     public ManagerGroupResponse fromGroupToMngGroup(Group group){
         return ManagerGroupResponse.builder()
@@ -38,7 +40,7 @@ public class EntityResponseGroupConverterImpl implements EntityResponseGroupConv
         var response = AdminGroupResponse.builder()
                 .groupId(group.getGroupId())
                 .groupName(group.getGroupName())
-                .groupCreationDate(group.getGroupCreationDate())
+                .groupCreationDate(group.getGroupCreationDate().truncatedTo(ChronoUnit.SECONDS))
                 .users(userConverter.fromUserListToAdminList(group.getGroupHasUsers()))
                 .build();
         if(group.getGroupCreator()!=null) {

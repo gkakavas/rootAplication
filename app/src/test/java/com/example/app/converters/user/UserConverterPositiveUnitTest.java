@@ -8,7 +8,6 @@ import com.example.app.models.requests.UserRequestEntity;
 import com.example.app.models.responses.user.AdminUserResponse;
 import com.example.app.models.responses.user.OtherUserResponse;
 import com.example.app.repositories.UserRepository;
-import com.example.app.utils.converters.event.EntityResponseEventConverter;
 import com.example.app.utils.converters.user.EntityResponseUserConverterImpl;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.AfterEach;
@@ -46,13 +45,11 @@ public class UserConverterPositiveUnitTest {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private Clock clock;
-    @Mock
-    private EntityResponseEventConverter eventConverter;
 
     @BeforeEach
     public void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
-        userConverter = new EntityResponseUserConverterImpl(userRepository,passwordEncoder,clock,eventConverter);
+        userConverter = new EntityResponseUserConverterImpl(userRepository,passwordEncoder,clock);
     }
 
     @AfterEach
@@ -73,9 +70,9 @@ public class UserConverterPositiveUnitTest {
                 .currentProject(user.getCurrentProject())
                 .groupName(user.getGroup().getGroupName())
                 .createdBy(createdBy.getEmail())
-                .registerDate(user.getRegisterDate())
+                .registerDate(user.getRegisterDate().truncatedTo(ChronoUnit.SECONDS))
                 .role(user.getRole())
-                .lastLogin(user.getLastLogin())
+                .lastLogin(user.getLastLogin().truncatedTo(ChronoUnit.SECONDS))
                 .build();
         when(userRepository.findById(user.getCreatedBy())).thenReturn(Optional.of(createdBy));
         var result = userConverter.fromUserToAdminUser(user);
@@ -114,9 +111,9 @@ public class UserConverterPositiveUnitTest {
                 .specialization(user.getSpecialization())
                 .currentProject(user.getCurrentProject())
                 .groupName(user.getGroup().getGroupName())
-                .registerDate(user.getRegisterDate())
+                .registerDate(user.getRegisterDate().truncatedTo(ChronoUnit.SECONDS))
                 .role(user.getRole())
-                .lastLogin(user.getLastLogin())
+                .lastLogin(user.getLastLogin().truncatedTo(ChronoUnit.SECONDS))
                 .build())
                 .collect(Collectors.toSet());
         var result = userConverter.fromUserListToAdminList(users);

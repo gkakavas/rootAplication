@@ -33,6 +33,8 @@ public enum Role {
             USER_READ_ONE,
             USER_READ_ALL,
             READ_USER_EVENTS,
+            USER_UPDATE,
+            USER_PATCH,
             EVENT_CREATE,
             EVENT_CREATE_BY_GROUP,
             EVENT_READ_ONE,

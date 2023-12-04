@@ -1,4 +1,4 @@
-import {parseRole, Role} from "../user/Role";
+import {parseRole, Role} from "./Role";
 
 export class CurrentUserResponse {
 

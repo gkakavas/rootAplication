@@ -36,8 +36,8 @@ public class ApplicationExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse<String>>  handleBadCredentialsException(BadCredentialsException ex){
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.<String>builder()
-                .message(ex.getMessage())
-                .responseCode(HttpStatus.NOT_FOUND)
+                .message("Wrong password or username. Please try again")
+                .responseCode(HttpStatus.UNAUTHORIZED)
                 .build());
     }
     @ExceptionHandler(UserNotFoundException.class)

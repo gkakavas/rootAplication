@@ -1,27 +1,28 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import {CurrentUserResponse, getCurrentUser} from '../models/responses/current.user.response';
+import {CurrentUserResponse} from '../models/responses/users/current.user.response';
 import {map} from "rxjs/internal/operators/map";
 import {ServerErrorResponse} from "../models/error/server.error.response";
 import {catchError} from "rxjs/internal/operators/catchError";
 import {throwError} from "rxjs/internal/observable/throwError";
-import {parseJson} from "@angular/cli/src/utilities/json-file";
+import {Observable} from "rxjs";
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
   private getCurrentUserApiUrl = "http://localhost:8080/user/currentUser";
+  private getUserByIdApiUrl = "http://localhost:8080/user/";
+  private token:string ='';
 
-  constructor(private http: HttpClient) {}
-
+  constructor(private http: HttpClient) {
+  }
 
   retrieveConnectedUser(): void {
-    const token = localStorage.getItem("AuthToken")!;
-
+    this.token = localStorage.getItem("AuthToken")!;
     this.http.get<any>(this.getCurrentUserApiUrl, {
       headers: {
-        'Authorization' : `${token}`,
+        'Authorization' : this.token /*`${token}`*/,
       }}).pipe(
       map((response) => {
         if (response.userId) {
@@ -33,7 +34,8 @@ export class UserService {
             response.specialization,
             response.currentProject,
             response.groupName,
-            response.role
+            response.role,
+            response.authorities
           );
         }
         else {
@@ -44,12 +46,21 @@ export class UserService {
         console.error('Error during mapping current User object:', error);
         return throwError(() => new Error(error));
       })
-    )
-      .subscribe({
+    ).subscribe({
         next: (response) => {
           if(response instanceof CurrentUserResponse){
-            localStorage.setItem("ConnectedUserDetails", response.toJSON());
-            console.log(getCurrentUser().toJSON());
+            const connectedUser = {
+              userId: response.userId,
+              firstname:response.firstname,
+              lastname:response.lastname,
+              email:response.email,
+              specialization: response.specialization,
+              currentProject: response.currentProject,
+              groupName:response.groupName,
+              role:response.role,
+              authorities: response.authorities
+            }
+            localStorage.setItem("ConnectedUserDetails", JSON.stringify(connectedUser));
           }
           else {
             console.error(response.message,response.status);
@@ -60,4 +71,23 @@ export class UserService {
         }
       });
    }
+
+   retrieveUserDetailsById(userId: string): Observable<any>  {
+    return this.http.get<any>(this.getUserByIdApiUrl.concat(userId));
+   }
+
+    getCurrentUser(): CurrentUserResponse {
+    const currentUser: any = JSON.parse(localStorage.getItem('ConnectedUserDetails')!);
+    return new CurrentUserResponse(
+      currentUser.userId,
+      currentUser.firstname,
+      currentUser.lastname,
+      currentUser.email,
+      currentUser.specialization,
+      currentUser.currentProject,
+      currentUser.groupName,
+      currentUser.role,
+      currentUser.authorities
+    );
+  }
 }

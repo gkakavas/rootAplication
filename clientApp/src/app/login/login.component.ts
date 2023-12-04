@@ -1,16 +1,17 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AuthService } from '../services/auth.service';
-import { RouterOutlet } from '@angular/router';
-import { LoginRequest } from '../models/requests/login.request';
-import { CommonModule } from '@angular/common';
-import { map } from 'rxjs/internal/operators/map';
-import { AuthenticationResponse } from '../models/responses/login.response';
-import { LoginErrorResponse } from '../models/error/login.error.response';
-import { throwError } from 'rxjs/internal/observable/throwError';
-import { catchError } from 'rxjs/internal/operators/catchError';
-import { ServerErrorResponse } from '../models/error/server.error.response';
-import { UserService } from '../services/user.service';
+import {Component, EventEmitter, OnInit, Output} from '@angular/core';
+import {FormControl, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
+import {AuthService} from '../services/auth.service';
+import {Router, RouterOutlet} from '@angular/router';
+import {LoginRequest} from '../models/requests/login.request';
+import {CommonModule} from '@angular/common';
+import {map} from 'rxjs/internal/operators/map';
+import {AuthenticationResponse} from '../models/responses/login.response';
+import {LoginErrorResponse} from '../models/error/login.error.response';
+import {throwError} from 'rxjs/internal/observable/throwError';
+import {catchError} from 'rxjs/internal/operators/catchError';
+import {ServerErrorResponse} from '../models/error/server.error.response';
+import {UserService} from '../services/user.service';
+import {EventBusService} from "../services/event.bus.service";
 
 @Component({
     standalone: true,
@@ -21,15 +22,14 @@ import { UserService } from '../services/user.service';
 })
 export class LoginComponent implements OnInit {
 
-  @Output() successfulLogin = new EventEmitter<string>();
-
   loginForm!: FormGroup;
 
   submitted: boolean = false;
 
   constructor(
     private authService: AuthService,
-    private userService: UserService
+    private userService: UserService,
+    private eventBusService: EventBusService,
   ) {
   }
 
@@ -81,8 +81,9 @@ export class LoginComponent implements OnInit {
               localStorage.removeItem("AuthToken");
             }
             localStorage.setItem('AuthToken', 'Bearer ' + response.token);
-            console.info("Login successful: " + "The token is: " + localStorage.getItem('AuthToken'))
+            console.info("Login successful: " + localStorage.getItem('AuthToken'));
             this.userService.retrieveConnectedUser();
+            this.eventBusService.triggerLoginSuccess();
           } else {
             console.error(response.message, response.status);
           }},
@@ -93,3 +94,27 @@ export class LoginComponent implements OnInit {
     }
   }
 }
+
+
+/*
+navigate():void{
+  const currentUser = this.userService.getCurrentUser();
+  switch (currentUser!.role){
+case Role.ADMIN: {
+    this.router.navigate(['/admin/dashboard']);
+    break;
+  }
+case Role.HR: {
+    this.router.navigate(['/hr/dashboard']);
+    break;
+  }
+case Role.MANAGER: {
+    this.router.navigate(['/manager/dashboard']);
+    break;
+  }
+case Role.USER: {
+    this.router.navigate(['/dashboard']);
+    break;
+  }
+}
+}*/

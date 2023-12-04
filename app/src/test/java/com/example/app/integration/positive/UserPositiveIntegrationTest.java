@@ -31,6 +31,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 
 import java.io.IOException;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -154,7 +155,7 @@ public class UserPositiveIntegrationTest {
                     .specialization(retrievedUser.getSpecialization())
                     .currentProject(retrievedUser.getCurrentProject())
                     .groupName(retrievedUser.getGroup().getGroupName())
-                    .registerDate(retrievedUser.getRegisterDate())
+                    .registerDate(retrievedUser.getRegisterDate().truncatedTo(ChronoUnit.SECONDS))
                     .role(Role.valueOf(retrievedUser.getRoleValue()))
                     .build();
             var actualResponse = objectMapper.readValue(response.getBody(),AdminUserResponse.class);
@@ -177,7 +178,7 @@ public class UserPositiveIntegrationTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"ADMIN","HR","MANAGER","USER"})
-    @DisplayName("when a read all request dispatched should read all users from database and return " +
+    @DisplayName("when a read all request is dispatched should read all users from database and return " +
             "these users in form that corresponds in user type")
     void shouldReadAllUsersFromDatabaseAndReturnThem(String roleValue) throws IOException {
         this.roleValue = roleValue;
@@ -198,8 +199,7 @@ public class UserPositiveIntegrationTest {
                                     .email(user1.getEmail())
                                     .specialization(user1.getSpecialization())
                                     .currentProject(user1.getCurrentProject())
-                                    .registerDate(user1.getRegisterDate())
-                                    .lastLogin(user1.getLastLogin())
+                                    .registerDate(user1.getRegisterDate().truncatedTo(ChronoUnit.SECONDS))
                                     .groupName(user1.getGroup().getGroupName())
                                     .role(Role.valueOf(user1.getRoleValue()))
                                     .build()
@@ -251,7 +251,7 @@ public class UserPositiveIntegrationTest {
                 .specialization(updateRequest.getSpecialization())
                 .currentProject(updateRequest.getCurrentProject())
                 .groupName(groupForUpdatingUser.getGroupName())
-                .registerDate(userToUpdate.getRegisterDate())
+                .registerDate(userToUpdate.getRegisterDate().truncatedTo(ChronoUnit.SECONDS))
                 .role(userToUpdate.getRole())
                 .build();
         assertEquals(expectedResponse,actualResponse);
@@ -307,7 +307,7 @@ public class UserPositiveIntegrationTest {
                 .specialization(patchRequest.get("specialization"))
                 .currentProject(patchRequest.get("currentProject"))
                 .groupName(existingGroup.getGroupName())
-                .registerDate(existingUser.getRegisterDate())
+                .registerDate(existingUser.getRegisterDate().truncatedTo(ChronoUnit.SECONDS))
                 .role(Role.valueOf(patchRequest.get("role")))
                 .build();
         assertEquals(expectedResponse,actualResponse);

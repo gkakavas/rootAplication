@@ -1,8 +1,14 @@
 import {inject} from "@angular/core";
 import {UserService} from "../services/user.service";
-import {Role} from "../models/responses/users/Role";
+import {CanActivateFn} from "@angular/router";
+import {CurrentUserResponse} from "../models/responses/users/current.user.response";
 
-export function authGuard = () => {
-  const userService = inject(UserService);
-  return userService.getCurrentUser().role == Role.ADMIN;
+export const authGuard: CanActivateFn = (route) => {
+    const userService: UserService = inject(UserService);
+    const currentUser: CurrentUserResponse = userService.getCurrentUser();
+    if (currentUser.authorities.includes(route.data['requiredAuthority'])) {
+        return true;
+    } else {
+        return false;
+    }
 }

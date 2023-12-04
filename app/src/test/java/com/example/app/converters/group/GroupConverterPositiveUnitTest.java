@@ -105,7 +105,7 @@ public class GroupConverterPositiveUnitTest {
         var expectedResponse = AdminGroupResponse.builder()
                 .groupId(group.getGroupId())
                 .groupName(group.getGroupName())
-                .groupCreationDate(group.getGroupCreationDate())
+                .groupCreationDate(group.getGroupCreationDate().truncatedTo(ChronoUnit.SECONDS))
                 .groupCreator(groupCreator.getEmail())
                 .users(group.getGroupHasUsers().stream().map(user -> AdminUserResponse.builder()
                         .userId(user.getUserId())
@@ -115,8 +115,8 @@ public class GroupConverterPositiveUnitTest {
                         .specialization(user.getSpecialization())
                         .currentProject(user.getCurrentProject())
                         .groupName(group.getGroupName())
-                        .lastLogin(user.getLastLogin())
-                        .registerDate(user.getRegisterDate())
+                        .lastLogin(user.getLastLogin().truncatedTo(ChronoUnit.SECONDS))
+                        .registerDate(user.getRegisterDate().truncatedTo(ChronoUnit.SECONDS))
                         .createdBy("creator with uuid" +user.getCreatedBy())
                         .role(user.getRole())
                         .build()).collect(Collectors.toSet()))
@@ -141,7 +141,7 @@ public class GroupConverterPositiveUnitTest {
                     .groupId(group.getGroupId())
                     .groupName(group.getGroupName())
                     .groupCreator(groupCreator.getEmail())
-                    .groupCreationDate(group.getGroupCreationDate())
+                    .groupCreationDate(group.getGroupCreationDate().truncatedTo(ChronoUnit.SECONDS))
                     .users(group.getGroupHasUsers().stream().map(user -> AdminUserResponse.builder()
                             .userId(user.getUserId())
                             .firstname(user.getFirstname())
@@ -150,8 +150,8 @@ public class GroupConverterPositiveUnitTest {
                             .specialization(user.getSpecialization())
                             .currentProject(user.getCurrentProject())
                             .groupName(group.getGroupName())
-                            .lastLogin(user.getLastLogin())
-                            .registerDate(user.getRegisterDate())
+                            .lastLogin(user.getLastLogin().truncatedTo(ChronoUnit.SECONDS))
+                            .registerDate(user.getRegisterDate().truncatedTo(ChronoUnit.SECONDS))
                             .createdBy("creator with uuid" +user.getCreatedBy())
                             .role(user.getRole())
                             .build()
@@ -162,10 +162,7 @@ public class GroupConverterPositiveUnitTest {
             expectedResponse.add(groupExpectedResponse);
         }
         var response = groupConverter.fromGroupListToAdminGroupList(groups);
-        System.out.println(expectedResponse);
-        System.out.println(response);
         assertEquals(expectedResponse,response);
-
     }
 
     @Test
