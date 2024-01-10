@@ -11,10 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,35 +19,44 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/leave")
 @RequiredArgsConstructor
-public class LeaveController implements CrudController<LeaveResponseEntity, LeaveRequestEntity, LeaveNotFoundException> {
+public class LeaveController {
 
     private final LeaveService service;
 
-    @Override
-    public ResponseEntity<LeaveResponseEntity> create(@Validated LeaveRequestEntity request, @AuthenticationPrincipal User connectedUser) throws UserNotFoundException {
+    @PostMapping("/create")
+    public ResponseEntity<LeaveResponseEntity> create(
+            @Validated LeaveRequestEntity request,
+            @AuthenticationPrincipal User connectedUser) throws UserNotFoundException {
         return new ResponseEntity<>(service.create(request,connectedUser), HttpStatus.CREATED);
     }
 
-    @Override
-    public ResponseEntity<LeaveResponseEntity> readOne(UUID id, @AuthenticationPrincipal User connectedUser) throws LeaveNotFoundException {
+    @GetMapping("/{id}")
+    public ResponseEntity<LeaveResponseEntity> readOne(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal User connectedUser) throws LeaveNotFoundException {
         return new ResponseEntity<>(service.read(id,connectedUser),HttpStatus.OK);
     }
 
-    @Override
+    @GetMapping ("/all")
     public ResponseEntity<List<LeaveResponseEntity>> readAll(@AuthenticationPrincipal User connectedUser) {
         return new ResponseEntity<>(service.read(connectedUser),HttpStatus.OK) ;
     }
 
-    @Override
-    public ResponseEntity<LeaveResponseEntity> update(UUID id, @Validated LeaveRequestEntity request)
+    @PutMapping("/update/{id}")
+    public ResponseEntity<LeaveResponseEntity> update(
+            @PathVariable UUID id,
+            @Validated LeaveRequestEntity request,
+            @AuthenticationPrincipal User connectedUser)
     throws LeaveNotFoundException{
-        return new ResponseEntity<>(service.update(id,request), HttpStatus.OK);
+        return new ResponseEntity<>(service.update(id,request,connectedUser), HttpStatus.OK);
     }
 
-    @Override
-    public ResponseEntity<LeaveResponseEntity> delete(UUID id)
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<LeaveResponseEntity> delete(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal User connectedUser)
     throws LeaveNotFoundException{
-        service.delete(id);
+        service.delete(id,connectedUser);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 

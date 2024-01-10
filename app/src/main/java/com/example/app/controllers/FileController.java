@@ -70,9 +70,12 @@ public class FileController {
     }
 
     @DeleteMapping("/delete/{fileId}")
-    public ResponseEntity<FileResponseEntity> delete(@PathVariable("fileId") UUID fileId)
+    public ResponseEntity<FileResponseEntity> delete(
+            @PathVariable("fileId") UUID fileId,
+            @AuthenticationPrincipal User connectedUser
+            )
             throws FileNotFoundException, UserNotFoundException {
-        fileStorageService.delete(fileId);
+        fileStorageService.delete(fileId,connectedUser);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 

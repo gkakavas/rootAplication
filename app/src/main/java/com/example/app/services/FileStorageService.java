@@ -114,8 +114,12 @@ public class FileStorageService {
        else throw new AccessDeniedException("You have not authority to access this resource");
     }
 
-    public boolean delete(UUID fileId) throws FileNotFoundException, UserNotFoundException {
+    public boolean delete(UUID fileId, User connectedUser) throws FileNotFoundException, UserNotFoundException {
         var file = fileRepo.findById(fileId).orElseThrow(FileNotFoundException::new);
+        if(connectedUser.getRole().equals(Role.ADMIN)
+        ||(connectedUser.getRole().equals(Role.USER)
+            && connectedUser.getUserHasFiles().stream().anyMatch(file1 -> file1.equals(file)))
+        ) {
             Path pathOfFile = Path.of(file.getAccessUrl());
             try {
                 Files.delete(pathOfFile);
@@ -126,6 +130,8 @@ public class FileStorageService {
                 e.printStackTrace();
                 return false;
             }
+        }
+        else throw new AccessDeniedException("You have not authority to delete this resource");
     }
 
     public FileResponseEntity approveEvaluation(UUID fileId,User connectedUser) throws FileNotFoundException {

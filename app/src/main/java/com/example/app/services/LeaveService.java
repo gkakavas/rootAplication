@@ -58,19 +58,30 @@ public class LeaveService {
     }
 
 
-    public LeaveResponseEntity update(UUID id, LeaveRequestEntity request) throws LeaveNotFoundException {
+    public LeaveResponseEntity update(UUID id, LeaveRequestEntity request, User connectedUser) throws LeaveNotFoundException {
         var leave = leaveRepo.findById(id).orElseThrow(LeaveNotFoundException::new);
-        var updatedLeave = leaveConverter.updateLeave(request,leave);
-        var newLeave = leaveRepo.save(updatedLeave);
-        return leaveConverter.fromLeaveToMyLeave(newLeave);
+        if(connectedUser.getRole().equals(Role.ADMIN)
+        ||(connectedUser.getRole().equals(Role.USER)
+           && connectedUser.getUserRequestedLeaves().stream().anyMatch(leave1 -> leave1.equals(leave)))) {
+
+            var updatedLeave = leaveConverter.updateLeave(request, leave);
+            var newLeave = leaveRepo.save(updatedLeave);
+            return leaveConverter.fromLeaveToMyLeave(newLeave);
+        }
+        else throw new AccessDeniedException("You have not authority to update this resource");
     }
 
 
-    public boolean delete(UUID id) throws LeaveNotFoundException {
+    public boolean delete(UUID id, User connectedUser) throws LeaveNotFoundException {
         var leave =  leaveRepo.findById(id).orElseThrow(LeaveNotFoundException::new);
-        leave.getRequestedBy().getUserRequestedLeaves().remove(leave);
-        leaveRepo.delete(leave);
-        return !leaveRepo.existsById(id);
+        if(connectedUser.getRole().equals(Role.ADMIN)
+          ||(connectedUser.getRole().equals(Role.USER)
+          && connectedUser.getUserRequestedLeaves().stream().anyMatch(leave1 -> leave1.equals(leave)))){
+            leave.getRequestedBy().getUserRequestedLeaves().remove(leave);
+            leaveRepo.delete(leave);
+            return !leaveRepo.existsById(id);
+        }
+        else throw new AccessDeniedException("You have not authority to delete this resource");
     }
 
     public LeaveResponseEntity approveLeave(UUID leaveId,User connectedUser) throws LeaveNotFoundException,UserNotFoundException{

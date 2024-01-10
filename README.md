@@ -7,7 +7,48 @@ interact with my API, the available endpoints, request and response formats, aut
 
 This API is a simple REST API for an HR Management System that provides operations about:
 
-## Authentication:
+## Authentication and Authorization:
+
+### Authentication:
+
+## Authorization
+| Authorities | ADMIN | HR | MANAGER | USER |
+|---|---|---|---|---|
+| user::create | AdminUserResponse
+| user::readOne | AdminUserResponse
+| user::readAll | AdminUserResponse
+| user::update | AdminUserResponse
+| user::delete | only 204
+| user::patch | AdminUserResponse
+| user::readUserEvents | MyEventResponse
+| event::create | AdminHrMngEventResponse
+| event::createByGroup | AdminHrMngEventResponse
+| event::readOne | AdminHrMngEventResponse
+| event::readAll | AdminHrMngEventResponse
+| event::update | AdminHrMngEventResponse 
+| event::delete | only 204
+| event::addUsersToEvent |
+| event::removeUsersFromEvent |
+| event::patchEventDetails |
+| group::create |
+| group::readOne |
+| group::readAll |
+| group::update |
+| group::delete |
+| leave::create |
+| leave::readOne |
+| leave::readAll |
+| leave::update |
+| leave::delete |
+| leave::approve |
+| file::upload |
+| file::downloadEvaluation |
+| file::downloadTimesheet |
+| file::readAllTimesheets |
+| file::readAllEvaluations |
+| file::delete |
+| file::approveEvaluation |
+
 ___
 * Authenticate:
 ### Authorities-Roles:
@@ -115,7 +156,7 @@ None
 ### Authorities-Roles:
 Required `ADMIN` role or authority `group::readOne` to access this endpoint.
 ### Endpoint:
-`POST /group/{groupId}`: Request parameter groupId should be a valid UUIDv4
+`GET /group/{groupId}`: Request parameter groupId should be a valid UUIDv4
 ### Request Headers:
 `'Authorization' : (JWT) 'Bearer ey....'`
 ### Request Body:
@@ -164,7 +205,7 @@ None
 ### Authorities-Roles:
 Required `ADMIN` role or authority `group::readAll` to access this endpoint.
 ### Endpoint:
-`POST /group/all`
+`GET /group/all`
 ### Request Headers:
 `'Authorization' : (JWT) 'Bearer ey....'`
 ### Request Body:
@@ -202,17 +243,17 @@ None
 ### Authorities-Roles:
 Required `ADMIN` role or authority `group::update` to access this endpoint.
 ### Endpoint:
-`POST /group/update/{groupId}`: Request parameter groupId should be a valid UUIDv4
+`PUT /group/update/{groupId}`: Request parameter groupId should be a valid UUIDv4
 ### Request Headers:
 `'Authorization' : (JWT) 'Bearer ey....'`
 ### Request Body:
 ```
-  {
+{
     "groupName":"Group",
     "idsSet":{
         "userIds":["dda820ae-db8b-4fac-a6b4-926bf20a7ba0"]
     }
-    }
+}
 ```
 ### Response Headers:
 None
@@ -243,9 +284,9 @@ None
 ---
 * Delete a group
 ### Authorities-Roles:
-Required `ADMIN` role or authority `group::update` to access this endpoint.
+Required `ADMIN` role or authority `group::delete` to access this endpoint.
 ### Endpoint:
-`POST /group/delete/{groupId}`: Request parameter groupId should be a valid UUIDv4.
+`DELETE /group/delete/{groupId}`: Request parameter groupId should be a valid UUIDv4.
 ### Request Headers:
 `'Authorization' : (JWT) 'Bearer ey....'`
 ### Request Body:
@@ -253,12 +294,112 @@ None
 ### Response Headers:
 None
 ### Response Body
-Only a response status 204 No Content to indicate that resource successfully completed.
+Only a response status 204 No Content to indicate that resource successfully deleted.
 __________________________________________________________________________________________
 ## Users:
 * Create a user
+### Authorities-Roles:
+Required `ADMIN` role or authority `user::create` to access this endpoint.
+### Endpoint:
+`POST /user/create`
+### Request Headers:
+`'Authorization' : (JWT) 'Bearer ey....'`
+### Request Body:
+```
+   {
+    "firstname":"test",
+    "lastname":"user",
+    "password":"TestPassword123",
+    "email":"test@user.com",
+    "specialization":"Developer",
+    "group":"19dd2267-8a90-47e5-9a2d-d9e767a109de",
+    "currentProject":"OneProject",
+    "role":"ADMIN"
+    }
+   ```
+### Response Headers:
+None
+### Response Body
+```
+{
+    "userId": "3fe148f9-ba86-4dee-b489-b08db9f1c7cc",
+    "firstname": "test",
+    "lastname": "user",
+    "email": "test@user.com",
+    "specialization": "Developer",
+    "currentProject": "OneProject",
+    "groupName": "Group",
+    "createdBy": "firstname1@email.com",
+    "registerDate": [2023,12,4,16,55,10],
+    "lastLogin": null,
+    "role": "ADMIN"
+}
+```
+---
 * Read connected user
+* ### Authorities-Roles:
+Requires only the user to be authenticated.
+### Endpoint:
+`GET /user/currentUser`
+### Request Headers:
+`'Authorization' : (JWT) 'Bearer ey....'`
+### Request Body:
+None
+### Response Headers:
+None
+### Response Body
+```
+{
+    "userId": "ca2d6dfd-8a5d-40f1-8b3b-b7b176ccdbf7",
+    "firstname": "test",
+    "lastname": "test",
+    "email": "test@test.com",
+    "specialization": "test_specialization",
+    "currentProject": "test_current_project",
+    "groupName": "Group",
+    "role": "ADMIN",
+    "authorities": [
+        "event::addUsersToEvent",
+        "group::update",
+        "group::readAll",
+        "user::readUserEvents",
+        "user::readOne",
+        "file::readAllTimesheets",
+        "leave::approve",
+        "file::downloadEvaluation",
+        "group::create",
+        "group::readOne",
+        "file::readAllEvaluations",
+        "file::approveEvaluation",
+        "user::patch",
+        "event::readOne",
+        "event::patchEventDetails",
+        "file::delete",
+        "user::readAll",
+        "user::delete",
+        "file::upload",
+        "event::createByGroup",
+        "event::create",
+        "leave::delete",
+        "group::delete",
+        "file::downloadTimesheet",
+        "event::removeUsersFromEvent",
+        "leave::readAll",
+        "event::readAll",
+        "user::create",
+        "event::update",
+        "user::update",
+        "leave::readOne",
+        "leave::create",
+        "leave::update",
+        "event::delete",
+        "ROLE_ADMIN"
+    ]
+}
+```
+---
 * Read a user
+
 * Read all users
 * Update a user
 * Delete a user
